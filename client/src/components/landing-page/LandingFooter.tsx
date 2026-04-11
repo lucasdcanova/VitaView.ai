@@ -59,7 +59,7 @@ export function LandingFooter() {
                             <span className="text-xl font-bold text-white">VitaView AI</span>
                         </div>
                         <p className="max-w-xs">
-                            O Prontuário que pensa com você. Simples, objetivo e completo.
+                            Prontuário eletrônico inteligente com IA para médicos e clínicas. Simples, objetivo e completo.
                         </p>
 
                         <div className="mt-4 hidden md:block">

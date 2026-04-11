@@ -292,8 +292,8 @@ export function LandingHero() {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.45, delay: 0.28, ease: [0.22, 1, 0.36, 1] }}
                     >
-                        Concentre-se no paciente enquanto o VitaView organiza a rotina clínica.
-                        Uma plataforma simples, objetiva e completa.
+                        Prontuário eletrônico com transcrição de consultas por voz, prescrição digital,
+                        análise de exames com IA e agenda médica integrada. Tudo em uma plataforma simples e completa.
                     </motion.p>
 
                     {/* Dual CTA */}

@@ -3,5 +3,15 @@ Allow: /
 Disallow: /auth
 Disallow: /dashboard
 Disallow: /api/
+Disallow: /atendimento
+Disallow: /agenda
+Disallow: /pacientes
+Disallow: /profile
+Disallow: /subscription
+Disallow: /results
+Disallow: /admin
+
+# Crawl-delay para não sobrecarregar
+Crawl-delay: 2
 
 Sitemap: https://vitaview.ai/sitemap.xml
