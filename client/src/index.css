@@ -4,6 +4,13 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Electron macOS: interactive elements inside drag regions must be no-drag */
+button, a, input, select, textarea, [role="button"], [role="combobox"],
+[role="menuitem"], [role="tab"], [role="checkbox"], [role="switch"],
+nav, .no-drag {
+  -webkit-app-region: no-drag;
+}
+
 :root {
   --safe-area-top: env(safe-area-inset-top, 0px);
   --safe-area-right: env(safe-area-inset-right, 0px);

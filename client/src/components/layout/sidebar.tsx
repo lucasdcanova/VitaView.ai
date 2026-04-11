@@ -389,8 +389,11 @@ export default function Sidebar(props: SidebarProps) {
           "relative bg-pureWhite/95 backdrop-blur-xl border-r border-lightGray flex flex-col flex-shrink-0 fixed left-0 top-0 h-[100svh] min-h-[100svh] md:h-[100dvh] md:min-h-[100dvh] pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] z-[70] transition-transform md:transition-all duration-300 ease-out will-change-transform transform-gpu sidebar-shadow overflow-hidden md:overflow-visible",
           isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0',
           isCollapsed ? 'w-[min(95vw,24rem)] md:w-20' : 'w-[min(95vw,24rem)] md:w-80',
+          // Extra top padding on macOS Electron for traffic lights
+          typeof window !== "undefined" && (window as any).vitaViewDesktop?.platform === "darwin" && "!pt-9",
           props.className
         )}
+        style={typeof window !== "undefined" && (window as any).vitaViewDesktop?.platform === "darwin" ? { WebkitAppRegion: "drag" } as React.CSSProperties : undefined}
       >
         {/* Safe-area gradient cap for iOS status bar transition */}
         <div className="pointer-events-none absolute inset-x-0 top-0 z-0 h-[calc(env(safe-area-inset-top)+2.5rem)] bg-gradient-to-b from-pureWhite via-pureWhite/95 to-pureWhite/0" />

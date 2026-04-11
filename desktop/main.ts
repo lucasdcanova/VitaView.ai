@@ -172,7 +172,9 @@ async function createMainWindow() {
     autoHideMenuBar: true,
     show: false,
     title: APP_NAME,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#111827",
+    titleBarStyle: "hiddenInset",
+    trafficLightPosition: { x: 16, y: 16 },
     webPreferences: {
       preload: preloadPath,
       contextIsolation: true,
