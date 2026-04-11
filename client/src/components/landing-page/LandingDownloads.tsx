@@ -5,62 +5,18 @@ import { platformDownloadLinks } from "./download-links";
 
 type Platform = {
     name: string;
-    subtitle: string;
-    meta: string;
     icon: React.ComponentType<any>;
     href: string;
     external: boolean;
 };
 
 const platforms: Platform[] = [
-    {
-        name: "macOS",
-        subtitle: "Apple Silicon & Intel",
-        meta: "Universal · .dmg",
-        icon: FaApple,
-        href: platformDownloadLinks.mac.href,
-        external: false,
-    },
-    {
-        name: "Windows",
-        subtitle: "Windows 10 ou superior",
-        meta: "Instalador · .exe",
-        icon: FaWindows,
-        href: platformDownloadLinks.windows.href,
-        external: false,
-    },
-    {
-        name: "iPhone",
-        subtitle: "iOS 15 ou superior",
-        meta: "App Store",
-        icon: FaApple,
-        href: platformDownloadLinks.ios.href,
-        external: true,
-    },
-    {
-        name: "iPad",
-        subtitle: "iPadOS 15 ou superior",
-        meta: "App Store",
-        icon: FaApple,
-        href: platformDownloadLinks.ipad.href,
-        external: true,
-    },
-    {
-        name: "Android",
-        subtitle: "Android 8 ou superior",
-        meta: "Google Play",
-        icon: FaAndroid,
-        href: platformDownloadLinks.android.href,
-        external: true,
-    },
-    {
-        name: "Web",
-        subtitle: "Acesso direto pelo navegador",
-        meta: "vitaview.ai",
-        icon: Globe,
-        href: platformDownloadLinks.web.href,
-        external: true,
-    },
+    { name: "macOS", icon: FaApple, href: platformDownloadLinks.mac.href, external: false },
+    { name: "Windows", icon: FaWindows, href: platformDownloadLinks.windows.href, external: false },
+    { name: "iPhone", icon: FaApple, href: platformDownloadLinks.ios.href, external: true },
+    { name: "iPad", icon: FaApple, href: platformDownloadLinks.ipad.href, external: true },
+    { name: "Android", icon: FaAndroid, href: platformDownloadLinks.android.href, external: true },
+    { name: "Web", icon: Globe, href: platformDownloadLinks.web.href, external: true },
 ];
 
 export function LandingDownloads() {
@@ -69,7 +25,7 @@ export function LandingDownloads() {
             id="downloads"
             className="relative bg-[#FAFAFA] overflow-hidden py-20 md:py-28 lg:py-32"
         >
-            {/* Grão sutil para textura editorial */}
+            {/* Grão sutil */}
             <div
                 className="absolute inset-0 opacity-[0.04] pointer-events-none mix-blend-multiply"
                 style={{
@@ -86,7 +42,7 @@ export function LandingDownloads() {
             />
 
             <div className="container mx-auto px-5 sm:px-6 lg:px-8 relative">
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 xl:gap-20">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 xl:gap-20 items-center">
                     {/* COLUNA ESQUERDA — COPY EDITORIAL */}
                     <motion.div
                         initial={{ opacity: 0, y: 18 }}
@@ -113,30 +69,10 @@ export function LandingDownloads() {
                             </span>
                         </h2>
 
-                        <p className="font-body text-[15px] md:text-base text-[#616161] leading-relaxed max-w-md mb-10">
-                            Um prontuário, todos os dispositivos. Instale o VitaView no computador,
-                            celular ou tablet — ou use direto pelo navegador. Sincronização
-                            automática, sem complicação.
+                        <p className="font-body text-[15px] md:text-base text-[#616161] leading-relaxed max-w-md">
+                            Um prontuário, todos os dispositivos. Sincronização automática, sem
+                            complicação.
                         </p>
-
-                        <div className="flex items-start gap-10 pt-6 border-t border-[#212121]/10">
-                            <div>
-                                <div className="font-heading text-[10px] tracking-[0.18em] uppercase text-[#9E9E9E]">
-                                    Versão
-                                </div>
-                                <div className="font-heading text-sm font-semibold text-[#212121] mt-1.5">
-                                    1.3 · build 254
-                                </div>
-                            </div>
-                            <div>
-                                <div className="font-heading text-[10px] tracking-[0.18em] uppercase text-[#9E9E9E]">
-                                    Atualizado
-                                </div>
-                                <div className="font-heading text-sm font-semibold text-[#212121] mt-1.5">
-                                    Abril · 2026
-                                </div>
-                            </div>
-                        </div>
                     </motion.div>
 
                     {/* COLUNA DIREITA — GRID DE PLATAFORMAS */}
@@ -159,46 +95,25 @@ export function LandingDownloads() {
                                             delay: 0.05 + i * 0.06,
                                             ease: [0.22, 1, 0.36, 1],
                                         }}
-                                        className="group relative bg-[#FAFAFA] hover:bg-white p-7 md:p-8 flex flex-col justify-between min-h-[220px] transition-colors duration-500"
+                                        className="group relative bg-[#FAFAFA] hover:bg-white px-7 py-8 md:px-8 md:py-9 flex items-center justify-between transition-colors duration-500"
                                     >
-                                        {/* Cabeçalho: ícone + índice */}
-                                        <div className="flex items-start justify-between">
-                                            <div className="relative w-12 h-12 rounded-full flex items-center justify-center bg-[#212121]/[0.04] group-hover:bg-[#212121] transition-colors duration-500">
+                                        <div className="flex items-center gap-5">
+                                            <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#212121]/[0.04] group-hover:bg-[#212121] transition-colors duration-500">
                                                 <Icon
                                                     className="w-[22px] h-[22px] text-[#212121] group-hover:text-white transition-colors duration-500"
                                                     strokeWidth={1.8}
                                                 />
                                             </div>
-                                            <span className="font-heading text-[10px] tracking-[0.18em] uppercase text-[#9E9E9E]">
-                                                0{i + 1}
-                                            </span>
-                                        </div>
-
-                                        {/* Conteúdo */}
-                                        <div className="mt-10">
-                                            <h3 className="font-heading text-[22px] font-bold text-[#212121] leading-none mb-2 tracking-tight">
+                                            <h3 className="font-heading text-[22px] font-bold text-[#212121] leading-none tracking-tight">
                                                 {p.name}
                                             </h3>
-                                            <p className="font-body text-[13px] text-[#757575] leading-snug">
-                                                {p.subtitle}
-                                            </p>
+                                        </div>
 
-                                            <div className="mt-6 flex items-center justify-between pt-4 border-t border-[#212121]/8">
-                                                <span className="font-heading text-[10px] tracking-[0.18em] uppercase text-[#9E9E9E]">
-                                                    {p.meta}
-                                                </span>
-                                                <div className="flex items-center gap-2 text-[#212121]">
-                                                    <span className="font-heading text-[10px] font-bold tracking-[0.18em] uppercase opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-500">
-                                                        Baixar
-                                                    </span>
-                                                    <div className="w-8 h-8 rounded-full border border-[#212121]/15 group-hover:border-[#212121] group-hover:bg-[#212121] flex items-center justify-center transition-all duration-500">
-                                                        <Arrow
-                                                            className="w-[14px] h-[14px] text-[#212121] group-hover:text-white transition-colors duration-500"
-                                                            strokeWidth={2.2}
-                                                        />
-                                                    </div>
-                                                </div>
-                                            </div>
+                                        <div className="w-9 h-9 rounded-full border border-[#212121]/15 group-hover:border-[#212121] group-hover:bg-[#212121] flex items-center justify-center transition-all duration-500">
+                                            <Arrow
+                                                className="w-[14px] h-[14px] text-[#212121] group-hover:text-white transition-colors duration-500"
+                                                strokeWidth={2.2}
+                                            />
                                         </div>
                                     </motion.a>
                                 );
@@ -206,32 +121,6 @@ export function LandingDownloads() {
                         </div>
                     </div>
                 </div>
-
-                {/* Rodapé da seção */}
-                <motion.div
-                    initial={{ opacity: 0, y: 12 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 0.6, delay: 0.2 }}
-                    className="mt-16 lg:mt-20 pt-8 border-t border-[#212121]/10 flex flex-col md:flex-row md:items-center justify-between gap-5"
-                >
-                    <p className="font-body text-[13px] text-[#757575] max-w-md leading-relaxed">
-                        Builds assinados digitalmente e notarizados pela Apple. Conformidade com
-                        LGPD e criptografia de ponta a ponta para dados clínicos.
-                    </p>
-                    <a
-                        href="mailto:contato@vitaview.ai"
-                        className="group inline-flex items-center gap-2 font-heading text-[11px] tracking-[0.18em] uppercase text-[#212121] self-start md:self-auto"
-                    >
-                        <span className="text-[#9E9E9E] group-hover:text-[#212121] transition-colors">
-                            Problemas com o download?
-                        </span>
-                        <span className="underline underline-offset-[6px] decoration-[#212121]/30 group-hover:decoration-[#212121] transition-all">
-                            contato@vitaview.ai
-                        </span>
-                        <ArrowUpRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" strokeWidth={2.2} />
-                    </a>
-                </motion.div>
             </div>
         </section>
     );
