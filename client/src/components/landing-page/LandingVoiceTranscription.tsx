@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { Mic, Lock, Wand2, RefreshCcw, FileSearch } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { tokens } from "./landing-tokens";
 
 function VoiceListeningMockup({ stable = false }: { stable?: boolean }) {
     return (
@@ -55,7 +56,7 @@ export function LandingVoiceTranscription() {
     const isMobile = useIsMobile();
 
     return (
-        <section id="anamnese-ia" className="py-10 md:py-20 bg-[#F5F5F5] relative overflow-hidden md:min-h-[100dvh] flex flex-col justify-center">
+        <section id="anamnese-ia" className={`${tokens.section.lightAlt} ${tokens.section.paddingFull} relative overflow-hidden`}>
             <div className="container mx-auto px-5 sm:px-6 lg:px-8 relative z-10">
                 <div className="flex flex-col md:flex-row items-center gap-6 md:gap-16 lg:gap-24">
 
@@ -133,18 +134,17 @@ export function LandingVoiceTranscription() {
                         viewport={{ once: true }}
                         transition={{ duration: 0.6, delay: 0.2 }}
                     >
-                        <div className="mb-4 inline-flex items-center gap-3 text-[10px] md:text-[11px] font-semibold uppercase tracking-[0.2em] text-[#666666]">
-                            <span aria-hidden="true" className="h-px w-8 md:w-12 bg-gradient-to-r from-transparent to-[#9E9E9E]" />
-                            <span>Anotações em linguagem clínica</span>
-                            <span aria-hidden="true" className="h-px w-8 md:w-12 bg-gradient-to-l from-transparent to-[#9E9E9E]" />
+                        <div className="flex items-center gap-3 mb-6">
+                            <span className={tokens.eyebrow.lineLight} />
+                            <span className={tokens.eyebrow.light}>Anotações em linguagem clínica</span>
                         </div>
 
-                        <h2 className="text-3xl sm:text-4xl md:text-5xl font-heading font-bold text-[#212121] leading-[1.1] mb-5 tracking-tight">
+                        <h2 className={`${tokens.h2.light} mb-6`}>
                             Sua consulta vira <br />
-                            <span className="text-[#9E9E9E]">anamnese organizada.</span>
+                            <span className={tokens.h2.splitLight}>anamnese organizada.</span>
                         </h2>
 
-                        <p className="text-base md:text-lg text-[#616161] leading-relaxed mb-6 max-w-lg">
+                        <p className={`${tokens.body.light} max-w-xl mb-6`}>
                             Foque apenas no paciente. O VitaView transforma áudio em texto clínico, lapida anotações rápidas e destaca o núcleo de históricos médicos extensos automaticamente.
                         </p>
 

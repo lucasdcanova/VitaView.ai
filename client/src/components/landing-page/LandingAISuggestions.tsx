@@ -2,10 +2,11 @@ import { motion } from "framer-motion";
 import { Sparkles, Zap, Brain, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
+import { tokens } from "./landing-tokens";
 
 export function LandingAISuggestions() {
     return (
-        <section id="dose-inteligente" className="py-10 md:py-20 bg-[#0A0A0A] relative overflow-hidden text-white md:min-h-[100dvh] flex flex-col justify-center">
+        <section id="dose-inteligente" className={`${tokens.section.dark} ${tokens.section.paddingFull} relative overflow-hidden text-white`}>
             {/* Background Effects - Subtle Monochrome */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none hidden md:block">
                 <div className="absolute top-0 right-1/4 w-96 h-96 bg-white/5 rounded-full blur-[100px] opacity-20"></div>
@@ -127,18 +128,17 @@ export function LandingAISuggestions() {
                             viewport={{ once: true }}
                             transition={{ duration: 0.5 }}
                         >
-                            <div className="mb-4 inline-flex items-center gap-3 text-[10px] md:text-[11px] font-semibold uppercase tracking-[0.24em] text-white/55">
-                                <span aria-hidden="true" className="h-px w-8 md:w-12 bg-gradient-to-r from-transparent to-white/45" />
-                                <span>Preenchimento assistido na prescrição</span>
-                                <span aria-hidden="true" className="h-px w-8 md:w-12 bg-gradient-to-l from-transparent to-white/45" />
+                            <div className="flex items-center gap-3 mb-6">
+                                <span className={tokens.eyebrow.lineDark} />
+                                <span className={tokens.eyebrow.dark}>Preenchimento assistido na prescrição</span>
                             </div>
-                            <h2 className="text-2xl sm:text-4xl md:text-5xl font-heading font-bold text-white leading-tight mb-5 md:mb-6">
+                            <h2 className={`${tokens.h2.dark} mb-6`}>
                                 Sugestão de dose <br />
-                                <span className="text-white/50">
+                                <span className={tokens.h2.splitDark}>
                                     pronta para revisar.
                                 </span>
                             </h2>
-                            <p className="text-sm md:text-lg text-white/70 mb-7 md:mb-8 leading-relaxed">
+                            <p className={`${tokens.body.dark} max-w-xl mb-10`}>
                                 Esqueça a busca manual por posologias. O VitaView considera o contexto do paciente e antecipa a dose mais provável diretamente no campo de prescrição. O controle e a decisão final são sempre seus.
                             </p>
 

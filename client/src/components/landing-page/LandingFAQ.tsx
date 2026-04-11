@@ -1,6 +1,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown, Clock, ShieldCheck } from "lucide-react";
 import { useState } from "react";
+import { tokens } from "./landing-tokens";
 
 export function LandingFAQ() {
     const [activeFaq, setActiveFaq] = useState<number | null>(null);
@@ -37,26 +38,32 @@ export function LandingFAQ() {
     ];
 
     return (
-        <section id="faq" className="py-8 md:py-10 bg-gradient-to-b from-[#212121] to-[#424242] text-white relative overflow-hidden">
+        <section id="faq" className={`${tokens.section.dark} ${tokens.section.padding} text-white relative overflow-hidden`}>
             {/* Elementos decorativos */}
             <div className="absolute inset-0 pointer-events-none hidden md:block">
-                <div className="absolute right-0 top-20 w-64 h-64 bg-[#F4F4F4] rounded-full opacity-10 blur-3xl"></div>
-                <div className="absolute left-20 bottom-10 w-72 h-72 bg-[#F4F4F4] rounded-full opacity-10 blur-3xl"></div>
+                <div className="absolute right-0 top-20 w-64 h-64 bg-white rounded-full opacity-[0.04] blur-3xl"></div>
+                <div className="absolute left-20 bottom-10 w-72 h-72 bg-white rounded-full opacity-[0.04] blur-3xl"></div>
             </div>
 
             <div className="container mx-auto px-5 sm:px-6 lg:px-8 relative z-10">
                 <motion.div
-                    initial={{ opacity: 0, y: 20 }}
+                    initial={{ opacity: 0, y: 24 }}
                     whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 0.5 }}
-                    className="text-center mb-6 md:mb-7"
+                    viewport={{ once: true, margin: "-80px" }}
+                    transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+                    className="text-center mb-12 md:mb-16"
                 >
-                    <h2 className="text-2xl md:text-4xl lg:text-[2.8rem] font-heading font-bold text-white mb-3 leading-[1.08] tracking-tight">
-                        Perguntas <span className="text-[#9E9E9E]">Frequentes.</span>
+                    <div className="flex items-center justify-center gap-3 mb-6">
+                        <span className={tokens.eyebrow.lineDark} />
+                        <span className={tokens.eyebrow.dark}>Perguntas frequentes</span>
+                        <span className={tokens.eyebrow.lineDark} />
+                    </div>
+                    <h2 className={`${tokens.h2.dark} mb-6`}>
+                        Tire suas{" "}
+                        <span className={tokens.h2.splitDark}>dúvidas.</span>
                     </h2>
-                    <p className="text-sm md:text-[15px] text-white/60 max-w-2xl mx-auto px-2">
-                        Tire suas dúvidas sobre as ferramentas do VitaView e como elas se encaixam na sua rotina clínica.
+                    <p className={`${tokens.body.dark} mx-auto max-w-2xl`}>
+                        Entenda como as ferramentas do VitaView se encaixam na sua rotina clínica.
                     </p>
                 </motion.div>
 

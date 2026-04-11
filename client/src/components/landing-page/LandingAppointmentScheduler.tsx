@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { Calendar, ChevronDown, ChevronRight, Brain, Check } from "lucide-react";
 import { Link } from "wouter";
+import { tokens } from "./landing-tokens";
 
 const mobileAgendaSignals = [
     { title: "Retornos do dia", description: "Paciente, horário e contexto principal visíveis sem abrir outra tela." },
@@ -10,17 +11,25 @@ const mobileAgendaSignals = [
 
 export function LandingAppointmentScheduler() {
     return (
-        <section id="agenda" className="py-10 md:py-14 bg-[#F5F5F5] text-[#212121] relative overflow-hidden scroll-mt-16 md:min-h-[100dvh] flex flex-col justify-center">
+        <section id="agenda" className={`${tokens.section.lightAlt} ${tokens.section.paddingFull} text-[#212121] relative overflow-hidden scroll-mt-16`}>
             <div className="container mx-auto px-5 sm:px-6 lg:px-8">
                 <motion.div
-                    initial={{ opacity: 0, y: 20 }}
+                    initial={{ opacity: 0, y: 24 }}
                     whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 0.6 }}
-                    className="text-center mb-6 md:mb-8 max-w-3xl mx-auto"
+                    viewport={{ once: true, margin: "-80px" }}
+                    transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+                    className="text-center mb-12 md:mb-16 max-w-3xl mx-auto"
                 >
-                    <h2 className="text-2xl md:text-4xl font-bold text-[#212121] mb-3 md:mb-4">Agenda Clínica</h2>
-                    <p className="text-base md:text-lg text-[#616161] max-w-2xl mx-auto px-2">
+                    <div className="flex items-center justify-center gap-3 mb-6">
+                        <span className={tokens.eyebrow.lineLight} />
+                        <span className={tokens.eyebrow.light}>Visão geral da rotina</span>
+                        <span className={tokens.eyebrow.lineLight} />
+                    </div>
+                    <h2 className={`${tokens.h2.light} mb-6`}>
+                        Agenda que organiza{" "}
+                        <span className={tokens.h2.splitLight}>sem atrapalhar.</span>
+                    </h2>
+                    <p className={`${tokens.body.light} max-w-2xl mx-auto`}>
                         Visualize consultas, horários livres e prioridades em uma única agenda, com contexto suficiente para organizar a rotina sem retrabalho.
                     </p>
                 </motion.div>
@@ -43,9 +52,9 @@ export function LandingAppointmentScheduler() {
                         </div>
                         <div className="p-4 space-y-3">
                             {[
-                                { time: "09:00", name: "Maria Silva", type: "Consulta", color: "border-[#3B82F6]", bg: "bg-[#E8F1FB]" },
-                                { time: "14:30", name: "João Santos", type: "Retorno", color: "border-[#22C55E]", bg: "bg-[#EAF7EE]" },
-                                { time: "10:00", name: "Ana Costa", type: "Exames", color: "border-[#F59E0B]", bg: "bg-[#FFF4E5]" },
+                                { time: "09:00", name: "Maria Silva", type: "Consulta", color: "border-[#212121]", bg: "bg-[#F4F4F4]" },
+                                { time: "14:30", name: "João Santos", type: "Retorno", color: "border-[#9E9E9E]", bg: "bg-[#F4F4F4]" },
+                                { time: "10:00", name: "Ana Costa", type: "Exames", color: "border-[#616161]", bg: "bg-[#F4F4F4]" },
                             ].map((apt, i) => (
                                 <div key={i} className={`${apt.bg} border-l-4 ${apt.color} rounded-lg p-3 flex items-center justify-between`}>
                                     <div>
@@ -155,7 +164,7 @@ export function LandingAppointmentScheduler() {
                                 {/* Monday - 2 appointments */}
                                 <div className="bg-[#F4F4F4] rounded-lg p-1 md:p-2 min-h-[110px] md:min-h-[160px] space-y-1 md:space-y-2">
                                     <motion.div
-                                        className="bg-[#E8F1FB] border-l-4 border-[#3B82F6] rounded p-2 cursor-pointer hover:shadow-md transition-shadow"
+                                        className="bg-white border-l-4 border-[#212121] rounded p-2 cursor-pointer hover:shadow-md transition-shadow"
                                         whileHover={{ scale: 1.012 }}
                                     >
                                         <div className="text-xs font-semibold text-[#212121]">09:00</div>
@@ -163,7 +172,7 @@ export function LandingAppointmentScheduler() {
                                         <div className="text-xs text-[#212121]">Consulta</div>
                                     </motion.div>
                                     <motion.div
-                                        className="bg-[#EAF7EE] border-l-4 border-[#22C55E] rounded p-2 cursor-pointer hover:shadow-md transition-shadow"
+                                        className="bg-white border-l-4 border-[#616161] rounded p-2 cursor-pointer hover:shadow-md transition-shadow"
                                         whileHover={{ scale: 1.012 }}
                                     >
                                         <div className="text-xs font-semibold text-[#212121]">14:30</div>
@@ -175,7 +184,7 @@ export function LandingAppointmentScheduler() {
                                 {/* Tuesday - 1 appointment */}
                                 <div className="bg-[#F4F4F4] rounded-lg p-1 md:p-2 min-h-[110px] md:min-h-[160px]">
                                     <motion.div
-                                        className="bg-[#FFF4E5] border-l-4 border-[#F59E0B] rounded p-2 cursor-pointer hover:shadow-md transition-shadow"
+                                        className="bg-white border-l-4 border-[#9E9E9E] rounded p-2 cursor-pointer hover:shadow-md transition-shadow"
                                         whileHover={{ scale: 1.012 }}
                                     >
                                         <div className="text-xs font-semibold text-[#212121]">10:00</div>
@@ -187,7 +196,7 @@ export function LandingAppointmentScheduler() {
                                 {/* Wednesday - 3 appointments */}
                                 <div className="bg-[#F4F4F4] rounded-lg p-1 md:p-2 min-h-[110px] md:min-h-[160px] space-y-1 md:space-y-2">
                                     <motion.div
-                                        className="bg-[#FDECEC] border-l-4 border-[#EF4444] rounded p-2 cursor-pointer hover:shadow-md transition-shadow"
+                                        className="bg-[#F4F4F4] border-l-4 border-[#212121] rounded p-2 cursor-pointer hover:shadow-md transition-shadow"
                                         whileHover={{ scale: 1.012 }}
                                     >
                                         <div className="text-xs font-semibold text-[#212121]">08:00</div>
@@ -195,7 +204,7 @@ export function LandingAppointmentScheduler() {
                                         <div className="text-xs text-[#424242]">Urgência</div>
                                     </motion.div>
                                     <motion.div
-                                        className="bg-[#E8F1FB] border-l-4 border-[#3B82F6] rounded p-2 cursor-pointer hover:shadow-md transition-shadow"
+                                        className="bg-white border-l-4 border-[#212121] rounded p-2 cursor-pointer hover:shadow-md transition-shadow"
                                         whileHover={{ scale: 1.012 }}
                                     >
                                         <div className="text-xs font-semibold text-[#212121]">11:00</div>
@@ -203,7 +212,7 @@ export function LandingAppointmentScheduler() {
                                         <div className="text-xs text-[#212121]">Consulta</div>
                                     </motion.div>
                                     <motion.div
-                                        className="bg-[#EAF7EE] border-l-4 border-[#22C55E] rounded p-2 cursor-pointer hover:shadow-md transition-shadow"
+                                        className="bg-white border-l-4 border-[#616161] rounded p-2 cursor-pointer hover:shadow-md transition-shadow"
                                         whileHover={{ scale: 1.012 }}
                                     >
                                         <div className="text-xs font-semibold text-[#212121]">15:00</div>
@@ -215,7 +224,7 @@ export function LandingAppointmentScheduler() {
                                 {/* Thursday - 2 appointments */}
                                 <div className="bg-[#F4F4F4] rounded-lg p-1 md:p-2 min-h-[110px] md:min-h-[160px] space-y-1 md:space-y-2">
                                     <motion.div
-                                        className="bg-[#E8F1FB] border-l-4 border-[#3B82F6] rounded p-2 cursor-pointer hover:shadow-md transition-shadow"
+                                        className="bg-white border-l-4 border-[#212121] rounded p-2 cursor-pointer hover:shadow-md transition-shadow"
                                         whileHover={{ scale: 1.012 }}
                                     >
                                         <div className="text-xs font-semibold text-[#212121]">09:30</div>
@@ -223,7 +232,7 @@ export function LandingAppointmentScheduler() {
                                         <div className="text-xs text-[#212121]">Consulta</div>
                                     </motion.div>
                                     <motion.div
-                                        className="bg-[#FFF4E5] border-l-4 border-[#F59E0B] rounded p-2 cursor-pointer hover:shadow-md transition-shadow"
+                                        className="bg-white border-l-4 border-[#9E9E9E] rounded p-2 cursor-pointer hover:shadow-md transition-shadow"
                                         whileHover={{ scale: 1.012 }}
                                     >
                                         <div className="text-xs font-semibold text-[#212121]">13:00</div>
@@ -235,7 +244,7 @@ export function LandingAppointmentScheduler() {
                                 {/* Friday - 1 appointment */}
                                 <div className="bg-[#F4F4F4] rounded-lg p-1 md:p-2 min-h-[110px] md:min-h-[160px]">
                                     <motion.div
-                                        className="bg-[#EAF7EE] border-l-4 border-[#22C55E] rounded p-2 cursor-pointer hover:shadow-md transition-shadow"
+                                        className="bg-white border-l-4 border-[#616161] rounded p-2 cursor-pointer hover:shadow-md transition-shadow"
                                         whileHover={{ scale: 1.012 }}
                                     >
                                         <div className="text-xs font-semibold text-[#212121]">10:30</div>
@@ -249,21 +258,21 @@ export function LandingAppointmentScheduler() {
                             </div>
 
                             {/* Legend */}
-                            <div className="mt-5 flex flex-wrap gap-4 justify-center">
+                            <div className="mt-5 flex flex-wrap gap-5 justify-center">
                                 <div className="flex items-center gap-2">
-                                    <div className="w-3 h-3 bg-[#3B82F6] rounded"></div>
+                                    <div className="w-0.5 h-3 bg-[#212121]"></div>
                                     <span className="text-xs text-[#9E9E9E]">Consulta</span>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                    <div className="w-3 h-3 bg-[#22C55E] rounded"></div>
+                                    <div className="w-0.5 h-3 bg-[#616161]"></div>
                                     <span className="text-xs text-[#9E9E9E]">Retorno</span>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                    <div className="w-3 h-3 bg-[#F59E0B] rounded"></div>
+                                    <div className="w-0.5 h-3 bg-[#9E9E9E]"></div>
                                     <span className="text-xs text-[#9E9E9E]">Exames</span>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                    <div className="w-3 h-3 bg-[#EF4444] rounded"></div>
+                                    <div className="w-0.5 h-3 bg-[#212121]"></div>
                                     <span className="text-xs text-[#9E9E9E]">Urgência</span>
                                 </div>
                             </div>

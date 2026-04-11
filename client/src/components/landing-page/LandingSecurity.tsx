@@ -8,6 +8,7 @@ import {
     ShieldCheck,
 } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { tokens } from "./landing-tokens";
 
 const securityStates = [
     {
@@ -75,7 +76,7 @@ export function LandingSecurity() {
     const currentState = securityStates[activeState];
 
     return (
-        <section id="seguranca" className="py-10 md:py-20 bg-white relative overflow-hidden md:min-h-[100dvh] flex flex-col justify-center">
+        <section id="seguranca" className={`${tokens.section.lightWhite} ${tokens.section.paddingFull} relative overflow-hidden`}>
             <div className="absolute inset-0 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px] opacity-20 pointer-events-none" />
 
             <div className="container mx-auto px-5 sm:px-6 lg:px-8 relative z-10">
@@ -87,18 +88,17 @@ export function LandingSecurity() {
                         viewport={{ once: true }}
                         transition={{ duration: 0.5 }}
                     >
-                        <div className="inline-flex items-center gap-3 text-[10px] md:text-[11px] font-semibold uppercase tracking-[0.24em] text-[#666666]">
-                            <span aria-hidden="true" className="h-px w-8 md:w-12 bg-gradient-to-r from-transparent to-[#9E9E9E]" />
-                            <ShieldCheck className="w-3.5 h-3.5 text-[#212121]" />
-                            <span>Controles ativos na operação</span>
-                            <span aria-hidden="true" className="h-px w-8 md:w-12 bg-gradient-to-l from-transparent to-[#9E9E9E]" />
+                        <div className="flex items-center gap-3 mb-6">
+                            <span className={tokens.eyebrow.lineLight} />
+                            <span className={tokens.eyebrow.light}>Controles ativos na operação</span>
                         </div>
 
-                        <h2 className="mt-5 text-3xl sm:text-4xl md:text-[3.15rem] md:whitespace-nowrap font-heading font-bold text-[#212121] leading-[1.02] tracking-tight">
-                            Segurança <span className="text-[#9E9E9E]">Inegociável.</span>
+                        <h2 className={`${tokens.h2.light} mb-6`}>
+                            Segurança{" "}
+                            <span className={tokens.h2.splitLight}>inegociável.</span>
                         </h2>
 
-                        <p className="mt-5 max-w-xl text-base md:text-[17px] leading-relaxed text-[#616161]">
+                        <p className={`${tokens.body.light} max-w-xl`}>
                             A proteção no VitaView não depende de uma única barreira. Ela se distribui entre acesso,
                             sessão, aplicação e armazenamento de documentos sensíveis, com controles presentes no fluxo da plataforma.
                         </p>

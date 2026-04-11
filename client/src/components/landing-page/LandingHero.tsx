@@ -275,19 +275,19 @@ export function LandingHero() {
 
                     {/* Headline */}
                     <motion.h1
-                        className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-heading font-bold text-[#212121] leading-[1.08] tracking-tight mb-6"
+                        className="font-heading font-bold text-4xl sm:text-5xl md:text-6xl lg:text-7xl text-[#212121] leading-[1.02] tracking-[-0.02em] mb-6"
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.58, delay: 0.16, ease: [0.22, 1, 0.36, 1] }}
                     >
                         O Prontuário que{" "}
                         <br className="hidden sm:block" />
-                        <span className="text-[#9E9E9E]">pensa com você.</span>
+                        <span className="text-[#9E9E9E] italic font-light">pensa com você.</span>
                     </motion.h1>
 
                     {/* Subtitle */}
                     <motion.p
-                        className="text-base md:text-lg text-[#757575] font-body max-w-xl leading-relaxed mb-10"
+                        className="font-body text-[15px] md:text-[17px] text-[#616161] max-w-xl leading-relaxed mb-10"
                         initial={{ opacity: 0, y: 16 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.45, delay: 0.28, ease: [0.22, 1, 0.36, 1] }}

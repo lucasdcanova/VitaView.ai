@@ -2,10 +2,11 @@ import { motion } from "framer-motion";
 import { FileText, Zap, Shield, RefreshCw, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
+import { tokens } from "./landing-tokens";
 
 export function LandingPrescription() {
     return (
-        <section id="prescricao-digital" className="py-10 md:py-20 bg-[#FAFAFA] relative overflow-hidden md:min-h-[100dvh] flex flex-col justify-center">
+        <section id="prescricao-digital" className={`${tokens.section.light} ${tokens.section.paddingFull} relative overflow-hidden`}>
             <div className="container mx-auto px-5 sm:px-6 lg:px-8 relative z-10">
                 <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-20">
 
@@ -17,16 +18,15 @@ export function LandingPrescription() {
                             viewport={{ once: true }}
                             transition={{ duration: 0.5 }}
                         >
-                            <div className="mb-4 inline-flex items-center gap-3 text-[10px] md:text-[11px] font-semibold uppercase tracking-[0.2em] text-[#666666]">
-                                <span aria-hidden="true" className="h-px w-8 md:w-12 bg-gradient-to-r from-transparent to-[#9E9E9E]" />
-                                <span>Revisão de prescrição em fluxo</span>
-                                <span aria-hidden="true" className="h-px w-8 md:w-12 bg-gradient-to-l from-transparent to-[#9E9E9E]" />
+                            <div className="flex items-center gap-3 mb-6">
+                                <span className={tokens.eyebrow.lineLight} />
+                                <span className={tokens.eyebrow.light}>Revisão de prescrição em fluxo</span>
                             </div>
-                            <h2 className="text-3xl sm:text-4xl md:text-5xl font-heading font-bold text-[#212121] leading-tight mb-6">
+                            <h2 className={`${tokens.h2.light} mb-6`}>
                                 Renovação de receitas <br />
-                                <span className="text-[#757575]">em segundos.</span>
+                                <span className={tokens.h2.splitLight}>em segundos.</span>
                             </h2>
-                            <p className="text-lg text-[#616161] mb-8 leading-relaxed">
+                            <p className={`${tokens.body.light} max-w-xl mb-10`}>
                                 Renove tratamentos contínuos com velocidade e segurança.
                                 O VitaView cruza medicamentos, histórico e alergias antes de gerar a prescrição, destacando interações relevantes no momento da revisão.
                             </p>

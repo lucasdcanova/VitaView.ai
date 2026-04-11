@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { ClipboardList, Plus, FlaskConical, ShieldCheck, Sparkles, CheckCircle2 } from "lucide-react";
+import { tokens } from "./landing-tokens";
 
 export function LandingExamProtocols() {
     const protocolItems = [
@@ -30,7 +31,7 @@ export function LandingExamProtocols() {
     return (
         <section
             id="protocolos-exames"
-            className="py-10 md:py-20 bg-[#0A0A0A] relative overflow-hidden text-white md:min-h-[100dvh] flex flex-col justify-center"
+            className={`${tokens.section.dark} ${tokens.section.paddingFull} relative overflow-hidden text-white`}
         >
             <div className="absolute inset-0 overflow-hidden pointer-events-none hidden md:block">
                 <div className="absolute top-16 left-[8%] w-72 h-72 bg-white/5 rounded-full blur-[100px] opacity-20" />
@@ -46,19 +47,17 @@ export function LandingExamProtocols() {
                         viewport={{ once: true }}
                         transition={{ duration: 0.5 }}
                     >
-                        <div className="mb-4 inline-flex items-center gap-3 text-[10px] md:text-[11px] font-semibold uppercase tracking-[0.24em] text-white/55">
-                            <span aria-hidden="true" className="h-px w-8 md:w-12 bg-gradient-to-r from-transparent to-white/45" />
-                            <FlaskConical className="w-3.5 h-3.5 text-white/70" />
-                            <span>Protocolos para pedidos recorrentes</span>
-                            <span aria-hidden="true" className="h-px w-8 md:w-12 bg-gradient-to-l from-transparent to-white/45" />
+                        <div className="flex items-center gap-3 mb-6">
+                            <span className={tokens.eyebrow.lineDark} />
+                            <span className={tokens.eyebrow.dark}>Protocolos para pedidos recorrentes</span>
                         </div>
 
-                        <h2 className="text-2xl sm:text-4xl md:text-5xl font-heading font-bold text-white leading-[1.1] mb-5 tracking-tight">
+                        <h2 className={`${tokens.h2.dark} mb-6`}>
                             Exames laboratoriais <br />
-                            <span className="text-white/45">sem retrabalho.</span>
+                            <span className={tokens.h2.splitDark}>sem retrabalho.</span>
                         </h2>
 
-                        <p className="text-sm md:text-lg text-white/65 leading-relaxed mb-8 max-w-xl">
+                        <p className={`${tokens.body.dark} max-w-xl mb-10`}>
                             Crie protocolos personalizados para os cenários que mais se repetem na sua rotina
                             e transforme a solicitação de exames em um fluxo rápido, organizado e seguro.
                         </p>
@@ -85,23 +84,17 @@ export function LandingExamProtocols() {
                                     <div
                                         className={`p-2 rounded-xl border ${
                                             index === 0
-                                                ? "bg-[#7BE0C3]/10 text-[#7BE0C3] border-[#7BE0C3]/20"
-                                                : "bg-white/6 text-white border-white/10"
+                                                ? "bg-white text-[#0A0A0A] border-white"
+                                                : "bg-white/[0.04] text-white border-white/10"
                                         }`}
                                     >
                                         {benefit.icon}
                                     </div>
                                     <div>
-                                        <h4
-                                            className={`font-bold text-lg ${
-                                                index === 0
-                                                    ? "text-[#7BE0C3] underline decoration-[#7BE0C3]/40 underline-offset-4 decoration-1"
-                                                    : "text-white"
-                                            }`}
-                                        >
+                                        <h4 className="font-heading font-bold text-[17px] text-white tracking-tight">
                                             {benefit.title}
                                         </h4>
-                                        <p className="text-sm text-white/55 leading-relaxed">{benefit.desc}</p>
+                                        <p className="mt-1 text-[14px] text-white/55 leading-relaxed">{benefit.desc}</p>
                                     </div>
                                 </motion.div>
                             ))}
@@ -148,7 +141,7 @@ export function LandingExamProtocols() {
                                                     Pronto para reutilizar em consultas de acompanhamento e primeira avaliação.
                                                 </p>
                                             </div>
-                                            <div className="rounded-full border border-[#7BE0C3]/20 bg-[#7BE0C3]/12 text-[#7BE0C3] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide">
+                                            <div className="rounded-full border border-white/20 bg-white/10 text-white px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.18em]">
                                                 Modelo
                                             </div>
                                         </div>

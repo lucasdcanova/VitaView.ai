@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { CheckCircle2, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
+import { tokens } from "./landing-tokens";
 
 export function LandingPricing() {
     const freeFeatures = [
@@ -14,7 +15,7 @@ export function LandingPricing() {
     ];
 
     return (
-        <section id="precos" className="relative flex md:min-h-[100dvh] flex-col justify-center overflow-hidden bg-[#F4F4F4] py-10 md:py-20">
+        <section id="precos" className={`relative overflow-hidden bg-[#F4F4F4] ${tokens.section.paddingFull}`}>
             {/* Elementos decorativos de fundo */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none hidden md:block">
                 <div className="absolute top-1/2 right-0 w-96 h-96 bg-[#E0E0E0] rounded-full opacity-30 blur-3xl -translate-y-1/2 translate-x-1/2"></div>
@@ -22,19 +23,24 @@ export function LandingPricing() {
             </div>
 
             <div className="container mx-auto px-5 sm:px-6 lg:px-8 relative z-10">
-                <div className="mx-auto mb-6 max-w-3xl text-center md:mb-8">
+                <div className="mx-auto mb-12 max-w-3xl text-center md:mb-16">
                     <motion.div
-                        initial={{ opacity: 0, y: 20 }}
+                        initial={{ opacity: 0, y: 24 }}
                         whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 0.5 }}
+                        viewport={{ once: true, margin: "-80px" }}
+                        transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
                     >
-                        <h2 className="mb-3 text-3xl font-heading font-bold leading-[1.05] tracking-tight text-[#212121] sm:text-4xl md:text-[2.8rem] lg:text-[3.2rem]">
-                            Comece grátis, e evolua
+                        <div className="flex items-center justify-center gap-3 mb-6">
+                            <span className={tokens.eyebrow.lineLight} />
+                            <span className={tokens.eyebrow.light}>Planos</span>
+                            <span className={tokens.eyebrow.lineLight} />
+                        </div>
+                        <h2 className={`${tokens.h2.light} mb-6`}>
+                            Comece grátis, evolua
                             <br className="hidden sm:block" />
-                            <span className="text-[#9E9E9E] font-medium">no seu ritmo.</span>
+                            <span className={tokens.h2.splitLight}>no seu ritmo.</span>
                         </h2>
-                        <p className="mx-auto max-w-2xl font-body text-[13px] text-[#757575] md:text-[14px]">
+                        <p className={`${tokens.body.light} mx-auto max-w-2xl`}>
                             Você pode entrar no VitaView sem custo com o plano gratuito. Se depois fizer sentido
                             ampliar a capacidade da rotina, o volume de pacientes e as automações, o Vita Pro entra como próximo passo.
                         </p>

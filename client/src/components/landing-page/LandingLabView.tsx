@@ -2,6 +2,7 @@ import { motion, useInView, useReducedMotion, AnimatePresence } from "framer-mot
 import { Link } from "wouter";
 import { LineChart, ArrowRight, Upload, FileText, Brain, CheckCircle2, Sparkles, FileUp, Zap } from "lucide-react";
 import { useRef, useState, useEffect } from "react";
+import { tokens } from "./landing-tokens";
 
 type TrendBarProps = {
     delay: number;
@@ -529,7 +530,7 @@ export function LandingLabView() {
     const prefersReducedMotion = useReducedMotion() ?? false;
 
     return (
-        <section id="como-funciona" className="py-6 md:py-8 md:min-h-[100dvh] flex flex-col justify-center bg-[#0A0A0A] relative overflow-hidden">
+        <section id="como-funciona" className={`${tokens.section.dark} ${tokens.section.paddingFull} relative overflow-hidden`}>
             {/* Background decorative elements */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none hidden md:block">
                 <div className="absolute left-0 top-20 w-72 h-72 bg-white rounded-full opacity-5 blur-3xl"></div>
@@ -542,26 +543,19 @@ export function LandingLabView() {
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
                     transition={{ duration: 0.5 }}
-                    className="text-center mb-6 md:mb-10"
+                    className="text-center mb-12 md:mb-16"
                 >
-                    <motion.div
-                        className="mb-4 md:mb-5 flex justify-center"
-                        initial={{ opacity: 0, y: 20 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true }}
-                        transition={{ delay: 0.2 }}
-                    >
-                        <div className="inline-flex items-center gap-3 text-[10px] md:text-[11px] font-semibold uppercase tracking-[0.24em] text-white/55">
-                            <span aria-hidden="true" className="h-px w-8 md:w-12 bg-gradient-to-r from-transparent to-white/45" />
-                            <span>Exames integrados ao prontuário</span>
-                            <span aria-hidden="true" className="h-px w-8 md:w-12 bg-gradient-to-l from-transparent to-white/45" />
-                        </div>
-                    </motion.div>
+                    <div className="flex items-center justify-center gap-3 mb-6">
+                        <span className={tokens.eyebrow.lineDark} />
+                        <span className={tokens.eyebrow.dark}>Exames integrados ao prontuário</span>
+                        <span className={tokens.eyebrow.lineDark} />
+                    </div>
 
-                    <h2 className="text-2xl md:text-4xl font-bold text-white mb-3 md:mb-4">
-                        Envie exames, <span className="text-[#9E9E9E]">tudo entra estruturado</span>
+                    <h2 className={`${tokens.h2.dark} mb-6 max-w-4xl mx-auto`}>
+                        Envie exames,{" "}
+                        <span className={tokens.h2.splitDark}>tudo entra estruturado.</span>
                     </h2>
-                    <p className="text-sm md:text-base text-[#E0E0E0] mb-4 md:mb-6 max-w-2xl mx-auto px-2">
+                    <p className={`${tokens.body.dark} max-w-2xl mx-auto`}>
                         Arraste PDFs ou imagens de exames e o VitaView extrai, interpreta e integra todos os resultados
                         diretamente no prontuário do paciente — com gráficos de evolução automáticos.
                     </p>

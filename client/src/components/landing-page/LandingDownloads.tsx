@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { ArrowDown, ArrowUpRight, Globe } from "lucide-react";
 import { FaApple, FaWindows, FaAndroid } from "react-icons/fa";
 import { platformDownloadLinks } from "./download-links";
+import { tokens } from "./landing-tokens";
 
 type Platform = {
     name: string;
@@ -23,7 +24,7 @@ export function LandingDownloads() {
     return (
         <section
             id="downloads"
-            className="relative bg-[#FAFAFA] overflow-hidden py-20 md:py-28 lg:py-32"
+            className={`relative ${tokens.section.light} overflow-hidden ${tokens.section.padding}`}
         >
             {/* Grão sutil */}
             <div
@@ -51,25 +52,21 @@ export function LandingDownloads() {
                         transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
                         className="lg:col-span-5"
                     >
-                        <div className="flex items-center gap-3 mb-8">
-                            <span className="h-px w-10 bg-[#212121]" />
-                            <span className="font-heading text-[11px] tracking-[0.22em] uppercase text-[#212121]">
-                                Downloads
-                            </span>
+                        <div className="flex items-center gap-3 mb-6">
+                            <span className={tokens.eyebrow.lineLight} />
+                            <span className={tokens.eyebrow.light}>Downloads</span>
                         </div>
 
-                        <h2 className="font-heading text-4xl sm:text-5xl lg:text-[3.6rem] xl:text-6xl font-bold text-[#212121] leading-[0.98] tracking-[-0.02em] mb-6">
+                        <h2 className={`${tokens.h2.light} mb-6`}>
                             Onde você
                             <br />
                             atende,{" "}
-                            <span className="text-[#9E9E9E] italic font-light">
-                                o VitaView
-                                <br />
-                                está.
+                            <span className={tokens.h2.splitLight}>
+                                o VitaView está.
                             </span>
                         </h2>
 
-                        <p className="font-body text-[15px] md:text-base text-[#616161] leading-relaxed max-w-md">
+                        <p className={`${tokens.body.light} max-w-md`}>
                             Um prontuário, todos os dispositivos. Sincronização automática, sem
                             complicação.
                         </p>

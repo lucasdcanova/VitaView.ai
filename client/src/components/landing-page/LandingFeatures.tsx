@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ArrowRight, ArrowUp, Brain, FileText, MessageSquare, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
+import { tokens } from "./landing-tokens";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 const mockupStates = [
@@ -73,7 +74,7 @@ export function LandingFeatures() {
     return (
         <section
             id="recursos"
-            className="py-10 md:py-20 bg-[#0A0A0A] relative overflow-hidden md:min-h-[100dvh] flex flex-col justify-center"
+            className={`${tokens.section.dark} ${tokens.section.paddingFull} relative overflow-hidden`}
         >
             <div className="absolute inset-0 pointer-events-none hidden md:block">
                 <div className="absolute left-[10%] top-16 w-72 h-72 rounded-full bg-white/[0.04] blur-[120px]" />
@@ -89,18 +90,17 @@ export function LandingFeatures() {
                         viewport={{ once: true, margin: "-120px" }}
                         transition={{ duration: 0.5 }}
                     >
-                        <div className="inline-flex items-center gap-3 text-[10px] md:text-[11px] font-semibold uppercase tracking-[0.24em] text-white/55">
-                            <span aria-hidden="true" className="h-px w-8 md:w-12 bg-gradient-to-r from-transparent to-white/45" />
-                            <span>Assistente clínico contextual</span>
-                            <span aria-hidden="true" className="h-px w-8 md:w-12 bg-gradient-to-l from-transparent to-white/45" />
+                        <div className="flex items-center gap-3 mb-6">
+                            <span className={tokens.eyebrow.lineDark} />
+                            <span className={tokens.eyebrow.dark}>Assistente clínico contextual</span>
                         </div>
 
-                        <h2 className="mt-5 text-2xl md:text-4xl lg:text-[3.1rem] font-heading font-bold text-white leading-[1.04] tracking-tight">
+                        <h2 className={`${tokens.h2.dark} mb-6`}>
                             Vita Assist <br />
-                            <span className="text-white/45">na rotina do atendimento.</span>
+                            <span className={tokens.h2.splitDark}>na rotina do atendimento.</span>
                         </h2>
 
-                        <p className="mt-5 max-w-xl text-sm md:text-[17px] leading-relaxed text-white/65">
+                        <p className={`${tokens.body.dark} max-w-xl`}>
                             Um assistente clínico dentro da plataforma, com contexto do paciente, chat contínuo e apoio
                             para resumir, organizar e documentar melhor cada consulta.
                         </p>

@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "wouter";
+import { tokens } from "./landing-tokens";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 // ─── Types ─────────────────────────────────────────────────────────────────
@@ -292,7 +293,7 @@ export function LandingMigration() {
   return (
     <section
       id="migracao"
-      className="relative overflow-hidden bg-[#F5F5F5] py-8 md:py-12 md:min-h-[100dvh] flex flex-col justify-center text-[#212121]"
+      className={`relative overflow-hidden ${tokens.section.lightAlt} ${tokens.section.paddingFull} text-[#212121]`}
     >
       {/* Background blobs */}
       <div className="pointer-events-none absolute inset-0">
@@ -312,24 +313,22 @@ export function LandingMigration() {
             viewport={{ once: true, amount: 0.3 }}
             transition={{ duration: 0.52, ease: [0.22, 1, 0.36, 1] }}
           >
-            <div className="mb-4 inline-flex items-center gap-3 text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.2em] sm:tracking-[0.22em] text-[#666666]">
-              <span aria-hidden="true" className="h-px w-8 sm:w-12 bg-gradient-to-r from-transparent to-[#9E9E9E]" />
-              <Sparkles className="h-3 sm:h-3.5 w-3 sm:w-3.5 text-[#212121]" />
-              <span>{"Entrada assistida a partir de outro sistema"}</span>
-              <span aria-hidden="true" className="h-px w-8 sm:w-12 bg-gradient-to-l from-transparent to-[#9E9E9E]" />
+            <div className="flex items-center gap-3 mb-6">
+              <span className={tokens.eyebrow.lineLight} />
+              <span className={tokens.eyebrow.light}>Entrada assistida a partir de outro sistema</span>
             </div>
 
-            <h2 className="max-w-2xl text-2xl font-heading font-bold leading-[1.06] tracking-tight text-[#212121] sm:text-3xl md:text-4xl lg:text-[42px]">
+            <h2 className={`${tokens.h2.light} mb-6 max-w-2xl`}>
               {"Troque de sistema "}
-              <span className="block text-[#8A8A8A]">{"sem começar do zero."}</span>
+              <span className={`block ${tokens.h2.splitLight}`}>{"sem começar do zero."}</span>
             </h2>
 
-            <p className="mt-4 max-w-xl text-sm sm:text-base leading-relaxed text-[#555555]">
+            <p className={`${tokens.body.light} max-w-xl mb-4`}>
               {"Se hoje seus dados estão em outro prontuário, a mudança não cai no colo da sua equipe. "}
               {"O time do VitaView cuida da migração completa para você."}
             </p>
 
-            <p className="mt-3 max-w-xl text-xs sm:text-sm leading-6 sm:leading-7 text-[#6A6A6A]">
+            <p className={`${tokens.body.light} max-w-xl text-[14px] md:text-[15px]`}>
               {"Pacientes, consultas, horários, telefones, prontuários e informações do sistema antigo "}
               {"entram organizados no VitaView, para sua clínica continuar operando com continuidade, "}
               {"não com retrabalho."}
