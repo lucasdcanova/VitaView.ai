@@ -4,7 +4,19 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Electron macOS: interactive elements inside drag regions must be no-drag */
+/* Electron macOS: top drag region for window movement */
+.electron-drag-bar {
+  -webkit-app-region: drag;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2.25rem;
+  z-index: 9999;
+  pointer-events: auto;
+}
+
+/* Electron macOS: interactive elements must be no-drag */
 button, a, input, select, textarea, [role="button"], [role="combobox"],
 [role="menuitem"], [role="tab"], [role="checkbox"], [role="switch"],
 nav, .no-drag {

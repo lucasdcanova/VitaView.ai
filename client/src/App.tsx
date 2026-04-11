@@ -421,6 +421,11 @@ function AppRouter() {
 // ============================================
 // APP PRINCIPAL
 // ============================================
+const isElectronMac =
+  typeof window !== "undefined" &&
+  !!(window as any).vitaViewDesktop?.isDesktop &&
+  (window as any).vitaViewDesktop?.platform === "darwin";
+
 function App() {
   return (
     <ErrorBoundary
@@ -434,6 +439,7 @@ function App() {
         }
       }}
     >
+      {isElectronMac && <div className="electron-drag-bar" />}
       <QueryClientProvider client={queryClient}>
         <AppRouter />
       </QueryClientProvider>

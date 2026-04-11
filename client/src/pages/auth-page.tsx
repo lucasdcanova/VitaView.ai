@@ -309,7 +309,7 @@ export default function AuthPage() {
         <Button
           variant="outline"
           type="button"
-          className="absolute left-4 top-[calc(env(safe-area-inset-top)+0.75rem)] z-50 flex h-10 w-10 items-center justify-center rounded-full border-border/70 bg-background/85 p-0 shadow-sm backdrop-blur-sm hover:bg-background"
+          className="absolute left-4 top-[calc(env(safe-area-inset-top)+2.75rem)] z-50 flex h-10 w-10 items-center justify-center rounded-full border-border/70 bg-background/85 p-0 shadow-sm backdrop-blur-sm hover:bg-background"
           onClick={() => navigate("/")}
           aria-label="Voltar para a landing page"
         >
@@ -317,7 +317,7 @@ export default function AuthPage() {
         </Button>
       )}
 
-      <div className="absolute right-4 top-[calc(env(safe-area-inset-top)+0.75rem)] z-50">
+      <div className="absolute right-4 top-[calc(env(safe-area-inset-top)+2.75rem)] z-50">
         <Button
           variant="ghost"
           type="button"

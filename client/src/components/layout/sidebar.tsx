@@ -393,7 +393,6 @@ export default function Sidebar(props: SidebarProps) {
           typeof window !== "undefined" && (window as any).vitaViewDesktop?.platform === "darwin" && "!pt-9",
           props.className
         )}
-        style={typeof window !== "undefined" && (window as any).vitaViewDesktop?.platform === "darwin" ? { WebkitAppRegion: "drag" } as React.CSSProperties : undefined}
       >
         {/* Safe-area gradient cap for iOS status bar transition */}
         <div className="pointer-events-none absolute inset-x-0 top-0 z-0 h-[calc(env(safe-area-inset-top)+2.5rem)] bg-gradient-to-b from-pureWhite via-pureWhite/95 to-pureWhite/0" />
