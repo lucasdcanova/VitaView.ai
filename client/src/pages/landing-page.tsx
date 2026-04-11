@@ -16,6 +16,7 @@ import { LandingExamProtocols } from "@/components/landing-page/LandingExamProto
 import { LandingAISuggestions } from "@/components/landing-page/LandingAISuggestions";
 import { LandingVoiceTranscription } from "@/components/landing-page/LandingVoiceTranscription";
 import { LandingFAQ } from "@/components/landing-page/LandingFAQ";
+import { LandingDownloads } from "@/components/landing-page/LandingDownloads";
 import { LandingFooter } from "@/components/landing-page/LandingFooter";
 
 export default function LandingPage() {
@@ -56,6 +57,7 @@ export default function LandingPage() {
             <LandingTestimonials />
             <LandingPricing />
             <LandingFAQ />
+            <LandingDownloads />
           </main>
 
           <LandingFooter />
