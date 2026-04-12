@@ -212,7 +212,7 @@ export default function ActivePatientIndicator({
                 className={cn(
                     "group relative overflow-hidden rounded-lg transition-all duration-200",
                     surface === "glass"
-                        ? "bg-pureWhite/42 backdrop-blur-md border border-lightGray/70 hover:border-charcoal/60 shadow-[0_1px_0_rgba(255,255,255,0.75)_inset]"
+                        ? "bg-pureWhite/42 backdrop-blur-md border border-lightGray/70 hover:border-charcoal/60 shadow-[0_1px_0_rgba(255,255,255,0.75)_inset] dark:shadow-none"
                         : "bg-pureWhite border border-lightGray hover:border-charcoal hover:shadow-sm",
                     className
                 )}
@@ -305,24 +305,24 @@ export default function ActivePatientIndicator({
                     className={cn(
                         "group/atendimento relative flex cursor-pointer items-center justify-between gap-3 overflow-hidden rounded-[18px] border px-4 py-3 transition-all duration-300",
                         location === "/atendimento"
-                            ? "border-white/70 bg-[#f7f7f6] text-[#111827] shadow-[0_12px_28px_rgba(0,0,0,0.16)]"
-                            : "border-white/75 bg-[#f8f8f7] text-[#111827] shadow-[0_14px_34px_rgba(0,0,0,0.24)] hover:-translate-y-[1px] hover:shadow-[0_18px_40px_rgba(0,0,0,0.28)] active:translate-y-0"
+                            ? "border-white/70 bg-[#f7f7f6] text-[#111827] shadow-[0_12px_28px_rgba(0,0,0,0.16)] dark:border-[#353D49]/50 dark:bg-[#1D2129] dark:text-white"
+                            : "border-white/75 bg-[#f8f8f7] text-[#111827] shadow-[0_14px_34px_rgba(0,0,0,0.24)] hover:-translate-y-[1px] hover:shadow-[0_18px_40px_rgba(0,0,0,0.28)] active:translate-y-0 dark:border-[#353D49]/60 dark:bg-[#171A20] dark:text-[#D8DDE8]"
                     )}
                 >
-                    <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_left_center,rgba(255,255,255,0.92),transparent_46%)] opacity-35" />
-                    <div className="absolute inset-y-3 left-0 w-[3px] rounded-r-full bg-[#111827]/80" />
+                    <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_left_center,rgba(255,255,255,0.92),transparent_46%)] dark:bg-[radial-gradient(circle_at_left_center,rgba(255,255,255,0.06),transparent_46%)] opacity-35" />
+                    <div className="absolute inset-y-3 left-0 w-[3px] rounded-r-full bg-[#111827]/80 dark:bg-[#EEF2F8]/80" />
                     <div className="relative flex min-w-0 flex-1 items-center gap-3 pl-1.5">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#111827] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.10)]">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#111827] text-white dark:bg-[#F2F4F8] dark:text-[#111827] shadow-[inset_0_1px_0_rgba(255,255,255,0.10)]">
                             <Heart className="h-[17px] w-[17px]" />
                         </div>
                         <div className="min-w-0">
-                            <span className="block whitespace-normal break-words font-heading text-[12px] font-extrabold leading-none tracking-[0.01em] text-[#111827] sm:text-[13px] md:text-[14px]">
+                            <span className="block whitespace-normal break-words font-heading text-[12px] font-extrabold leading-none tracking-[0.01em] text-[#111827] dark:text-[#F2F4F8] sm:text-[13px] md:text-[14px]">
                                 Ir para atendimento
                             </span>
                         </div>
                     </div>
                     <div className="relative flex items-center">
-                        <div className="flex h-9 w-9 items-center justify-center rounded-full border border-[#111827]/12 bg-white/80 text-[#111827] shadow-[inset_0_1px_0_rgba(255,255,255,0.92)] transition-transform duration-300 group-hover/atendimento:translate-x-0.5">
+                        <div className="flex h-9 w-9 items-center justify-center rounded-full border border-[#111827]/12 bg-white/80 text-[#111827] dark:border-white/10 dark:bg-[#2A3039] dark:text-[#F2F4F8] shadow-[inset_0_1px_0_rgba(255,255,255,0.92)] dark:shadow-none transition-transform duration-300 group-hover/atendimento:translate-x-0.5">
                             <ChevronRight className="h-4 w-4" />
                         </div>
                     </div>

@@ -386,7 +386,7 @@ export default function Sidebar(props: SidebarProps) {
 
       <aside
         className={cn(
-          "relative bg-pureWhite/95 backdrop-blur-xl border-r border-lightGray flex flex-col flex-shrink-0 fixed left-0 top-0 h-[100svh] min-h-[100svh] md:h-[100dvh] md:min-h-[100dvh] pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] z-[70] transition-transform md:transition-all duration-300 ease-out will-change-transform transform-gpu sidebar-shadow overflow-hidden md:overflow-visible",
+          "relative bg-pureWhite/95 backdrop-blur-xl border-r border-lightGray flex flex-col flex-shrink-0 fixed left-0 top-0 h-[100svh] min-h-[100svh] md:h-[100dvh] md:min-h-[100dvh] pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] z-[70] md:z-40 transition-transform md:transition-all duration-300 ease-out will-change-transform transform-gpu sidebar-shadow overflow-hidden md:overflow-visible",
           isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0',
           isCollapsed ? 'w-[min(95vw,24rem)] md:w-20' : 'w-[min(95vw,24rem)] md:w-80',
           // Extra top padding on macOS Electron for traffic lights
