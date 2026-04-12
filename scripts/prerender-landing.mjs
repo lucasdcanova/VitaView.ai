@@ -45,18 +45,20 @@ function htmlTemplate(title, description, bodyHtml, cssContent) {
   <meta property="og:type" content="website">
   <meta property="og:title" content="${title}">
   <meta property="og:description" content="${description}">
-  <meta property="og:image" content="/LOGO%20COM%20TEXTO.PNG">
+  <meta property="og:image" content="https://vitaview.ai/og-image.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
 
   <!-- Twitter -->
   <meta property="twitter:card" content="summary_large_image">
   <meta property="twitter:title" content="${title}">
   <meta property="twitter:description" content="${description}">
-  <meta property="twitter:image" content="/LOGO%20COM%20TEXTO.PNG">
+  <meta property="twitter:image" content="https://vitaview.ai/og-image.jpg">
 
   <!-- Theme and Icons -->
   <meta name="theme-color" content="#212121">
-  <link rel="icon" type="image/png" href="/logo_rounded.png" />
-  <link rel="apple-touch-icon" href="/logo_rounded.png" />
+  <link rel="icon" type="image/png" href="/icon-192x192.png" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
