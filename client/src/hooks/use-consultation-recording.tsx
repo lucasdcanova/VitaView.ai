@@ -385,57 +385,90 @@ export function ConsultationRecordingProvider({
     audioChunksRef.current = [consolidated];
   }, []);
 
-  // Envia um segmento isolado para transcrição e armazena o texto na ordem.
-  // Roda em background — falhas vão para uploadFailureRef e são checadas no
-  // finalize. Não usa AbortSignal próprio porque cada chamada deve ser curta
-  // (<60s) e o servidor já tem timeout de 90s.
+  // Envia um segmento isolado para transcrição com retry automático.
+  // Cada consulta é única — perder um segmento é inaceitável. Tentamos
+  // 3 vezes com backoff exponencial (2s, 4s, 8s) antes de desistir.
+  // Erros de quota (TRANSCRIPTION_LIMIT_EXCEEDED) são fatais imediatos.
+  const UPLOAD_MAX_RETRIES = 3;
+
   const uploadSegment = useCallback(async (segment: Blob, index: number) => {
-    const formData = new FormData();
-    formData.append(
-      "audio",
-      segment,
-      `consultation-${index}.${recordingFormatRef.current.extension}`
-    );
+    let lastError: Error | null = null;
 
-    try {
-      const response = await fetch("/api/consultation/transcribe-segment", {
-        method: "POST",
-        body: formData,
-        credentials: "include",
-      });
+    for (let attempt = 1; attempt <= UPLOAD_MAX_RETRIES; attempt++) {
+      try {
+        const formData = new FormData();
+        formData.append(
+          "audio",
+          segment,
+          `consultation-${index}.${recordingFormatRef.current.extension}`
+        );
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
+        const response = await fetch("/api/consultation/transcribe-segment", {
+          method: "POST",
+          body: formData,
+          credentials: "include",
+        });
 
-        if (
-          response.status === 403 &&
-          errorData.code === "TRANSCRIPTION_LIMIT_EXCEEDED"
-        ) {
-          const limitError = new Error("TRANSCRIPTION_LIMIT_EXCEEDED");
-          (limitError as any).code = "TRANSCRIPTION_LIMIT_EXCEEDED";
-          throw limitError;
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+
+          // Limite de quota: fatal, sem retry
+          if (
+            response.status === 403 &&
+            errorData.code === "TRANSCRIPTION_LIMIT_EXCEEDED"
+          ) {
+            const limitError = new Error("TRANSCRIPTION_LIMIT_EXCEEDED");
+            (limitError as any).code = "TRANSCRIPTION_LIMIT_EXCEEDED";
+            throw limitError;
+          }
+
+          // 413 (muito grande): fatal, retry não vai ajudar
+          if (response.status === 413) {
+            throw new Error(errorData.message || "Segmento de áudio excede o limite de tamanho");
+          }
+
+          throw new Error(errorData.message || `Erro ${response.status} ao enviar segmento`);
         }
 
-        throw new Error(errorData.message || `Erro ${response.status} ao enviar segmento`);
-      }
+        const result = await response.json();
+        if (!result?.success || typeof result.text !== "string") {
+          throw new Error("Resposta inválida da transcrição de segmento");
+        }
 
-      const result = await response.json();
-      if (!result?.success || typeof result.text !== "string") {
-        throw new Error("Resposta inválida da transcrição de segmento");
-      }
+        segmentTranscriptionsRef.current[index] = result.text;
+        console.log("[Recording] Segmento transcrito", {
+          index,
+          chars: result.text.length,
+          attempt,
+        });
+        return; // Sucesso — sai do loop
+      } catch (err) {
+        lastError = err instanceof Error ? err : new Error(String(err));
 
-      segmentTranscriptionsRef.current[index] = result.text;
-      console.log("[Recording] Segmento transcrito", {
-        index,
-        chars: result.text.length,
-      });
-    } catch (err) {
-      if (!uploadFailureRef.current) {
-        uploadFailureRef.current = err instanceof Error ? err : new Error(String(err));
+        // Erros fatais: não fazer retry
+        if (
+          (lastError as any).code === "TRANSCRIPTION_LIMIT_EXCEEDED" ||
+          lastError.message.includes("excede o limite")
+        ) {
+          break;
+        }
+
+        console.warn(`[Recording] Segmento ${index} tentativa ${attempt}/${UPLOAD_MAX_RETRIES} falhou:`, lastError.message);
+
+        if (attempt < UPLOAD_MAX_RETRIES) {
+          // Backoff exponencial: 2s, 4s, 8s
+          await new Promise((r) => setTimeout(r, 1000 * Math.pow(2, attempt)));
+        }
       }
-      console.error("[Recording] Falha no upload do segmento", { index, err });
-      throw err;
     }
+
+    // Todas as tentativas falharam
+    if (lastError && !uploadFailureRef.current) {
+      uploadFailureRef.current = lastError;
+    }
+    console.error(`[Recording] Segmento ${index} falhou após ${UPLOAD_MAX_RETRIES} tentativas`);
+    // Não throw — permite que outros segmentos continuem processando.
+    // O processAudio() checará segmentTranscriptionsRef e montará o que conseguir.
   }, []);
 
   const saveCurrentSegment = useCallback(() => {
@@ -487,7 +520,7 @@ export function ConsultationRecordingProvider({
       // Aguarda todos os uploads em background terminarem.
       await Promise.all(pendingUploadsRef.current);
 
-      // Se algum upload falhou irrecuperavelmente, abortamos com mensagem clara.
+      // Quota excedida: fatal, mostra upgrade dialog
       if (uploadFailureRef.current) {
         const failure = uploadFailureRef.current;
         if ((failure as any).code === "TRANSCRIPTION_LIMIT_EXCEEDED") {
@@ -496,16 +529,24 @@ export function ConsultationRecordingProvider({
           resetSessionState();
           return;
         }
-        throw failure;
+        // Para outros erros: NÃO abortar se temos transcrições parciais.
+        // Uma consulta de 30min com 1 segmento falhado ainda produz
+        // 5 segmentos úteis — melhor que perder tudo.
       }
 
+      const totalSegments = segmentsRef.current.length;
       const transcripts = segmentTranscriptionsRef.current.filter(
         (t) => typeof t === "string" && t.trim().length > 0
       );
+      const failedCount = totalSegments - transcripts.length;
+
+      if (failedCount > 0) {
+        console.warn(`[Recording] ${failedCount}/${totalSegments} segmentos falharam, prosseguindo com ${transcripts.length} válidos`);
+      }
 
       if (transcripts.length === 0) {
         throw new Error(
-          "Não foi possível transcrever nenhum trecho da gravação. Verifique a qualidade do áudio."
+          "Não foi possível transcrever nenhum trecho da gravação. Verifique a qualidade do áudio e a conexão com a internet."
         );
       }
 

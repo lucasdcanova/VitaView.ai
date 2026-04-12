@@ -2582,55 +2582,33 @@ async function extractAppointmentsFromPDF(file: any): Promise<string> {
  * @param mimeType Tipo MIME do áudio (audio/webm, audio/mp3, etc.)
  * @returns Texto transcrito
  */
-export async function transcribeConsultationAudio(audioBuffer: Buffer, mimeType: string, userId?: number, clinicId?: number): Promise<string> {
-  if (!openai) {
-    throw new Error("OpenAI client not initialized. API key may be missing.");
-  }
+// ── Transcription with dual-API fallback ──────────────────────────────────────
+// Primary: OpenAI Whisper-1 (3 retries)
+// Fallback: Google Gemini 2.0 Flash (audio-native, 2 retries)
+//
+// Cada consulta médica é única e irrepetível. A prioridade absoluta é retornar
+// alguma transcrição, mesmo que imperfeita, em vez de perder o áudio.
 
-  // Validação preventiva: Whisper rejeita arquivos > 25MB com erro pouco descritivo.
-  const WHISPER_MAX_BYTES = 25 * 1024 * 1024;
-  if (audioBuffer.length > WHISPER_MAX_BYTES) {
-    throw new Error(
-      `Arquivo de áudio excede 25MB (limite Whisper). Tamanho: ${(audioBuffer.length / (1024 * 1024)).toFixed(1)}MB`
-    );
-  }
+const AUDIO_EXTENSION_MAP: Record<string, string> = {
+  'audio/webm': 'webm', 'audio/mp3': 'mp3', 'audio/mpeg': 'mp3',
+  'audio/wav': 'wav', 'audio/x-wav': 'wav', 'audio/wave': 'wav',
+  'audio/ogg': 'ogg', 'audio/m4a': 'm4a', 'audio/x-m4a': 'm4a',
+  'audio/aac': 'aac', 'audio/mp4a-latm': 'm4a', 'audio/mp4': 'mp4',
+  'video/mp4': 'mp4',
+};
 
-  // Determinar extensão do arquivo baseada no mime type
-  const extensionMap: Record<string, string> = {
-    'audio/webm': 'webm',
-    'audio/mp3': 'mp3',
-    'audio/mpeg': 'mp3',
-    'audio/wav': 'wav',
-    'audio/x-wav': 'wav',
-    'audio/wave': 'wav',
-    'audio/ogg': 'ogg',
-    'audio/m4a': 'm4a',
-    'audio/x-m4a': 'm4a',
-    'audio/aac': 'aac',
-    'audio/mp4a-latm': 'm4a',
-    'audio/mp4': 'mp4',
-    'video/mp4': 'mp4',
-  };
+async function transcribeWithWhisper(audioBuffer: Buffer, mimeType: string, filename: string): Promise<string> {
+  if (!openai) throw new Error("OpenAI client not initialized");
 
-  const extension = extensionMap[mimeType] || 'webm';
-  const filename = `consultation-${Date.now()}.${extension}`;
-
-  // Retry com backoff exponencial — Whisper pode falhar transitivamente por
-  // rede, rate-limit ou indisponibilidade momentânea.
   const MAX_ATTEMPTS = 3;
   let lastError: unknown = null;
 
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
     try {
-      // Criar File object novo a cada tentativa (Buffer pode ser consumido)
-      const audioUint8Array = new Uint8Array(audioBuffer);
-      const audioFile = new File([audioUint8Array], filename, { type: mimeType });
+      const audioFile = new File([new Uint8Array(audioBuffer)], filename, { type: mimeType });
 
-      logger.info("[OpenAI Whisper] Iniciando transcrição", {
-        filename,
-        mimeType,
-        bufferSize: audioBuffer.length,
-        attempt,
+      logger.info("[Whisper] Tentativa de transcrição", {
+        filename, mimeType, bufferSize: audioBuffer.length, attempt,
       });
 
       const transcription = await openai.audio.transcriptions.create({
@@ -2641,35 +2619,148 @@ export async function transcribeConsultationAudio(audioBuffer: Buffer, mimeType:
         prompt: "Transcrição de consulta médica em português brasileiro. Termos médicos, medicamentos, diagnósticos, sintomas."
       });
 
-      const estimatedTokens = Math.ceil(transcription.length / 4);
-      ModelRouter.trackUsage("transcribeConsultationAudio", "whisper-1", {
-        prompt_tokens: 0,
-        completion_tokens: estimatedTokens
-      }, userId, clinicId);
-
-      logger.info("[OpenAI Whisper] Transcrição concluída", {
-        transcriptionLength: transcription.length,
-        attempt,
+      logger.info("[Whisper] Transcrição concluída", {
+        chars: transcription.length, attempt,
       });
 
       return transcription;
     } catch (error) {
       lastError = error;
-      logger.warn("[OpenAI Whisper] Tentativa falhou", {
-        attempt,
-        message: error instanceof Error ? error.message : String(error),
+      logger.warn("[Whisper] Tentativa falhou", {
+        attempt, message: error instanceof Error ? error.message : String(error),
       });
       if (attempt < MAX_ATTEMPTS) {
-        // backoff: 1s, 2s, 4s
         await new Promise((r) => setTimeout(r, 1000 * Math.pow(2, attempt - 1)));
       }
     }
   }
 
-  logger.error("[OpenAI Whisper] Erro na transcrição após retries", {
-    message: lastError instanceof Error ? lastError.message : String(lastError)
-  });
-  throw new Error(`Falha na transcrição do áudio: ${lastError instanceof Error ? lastError.message : 'Erro desconhecido'}`);
+  throw lastError instanceof Error ? lastError : new Error(String(lastError));
+}
+
+async function transcribeWithGemini(audioBuffer: Buffer, mimeType: string): Promise<string> {
+  const geminiKey = process.env.GEMINI_API_KEY;
+  if (!geminiKey) throw new Error("GEMINI_API_KEY not configured");
+
+  const MAX_ATTEMPTS = 2;
+  let lastError: unknown = null;
+
+  // Gemini aceita áudio inline via base64
+  const base64Audio = audioBuffer.toString("base64");
+
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    try {
+      logger.info("[Gemini] Tentativa de transcrição (fallback)", {
+        mimeType, bufferSize: audioBuffer.length, attempt,
+      });
+
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiKey}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{
+              parts: [
+                {
+                  inlineData: {
+                    mimeType,
+                    data: base64Audio,
+                  },
+                },
+                {
+                  text: "Transcreva este áudio de consulta médica em português brasileiro. Retorne APENAS o texto transcrito, sem comentários ou formatação. Preserve termos médicos, nomes de medicamentos e diagnósticos exatamente como falados.",
+                },
+              ],
+            }],
+            generationConfig: {
+              temperature: 0.1,
+              maxOutputTokens: 8000,
+            },
+          }),
+          signal: AbortSignal.timeout(120_000),
+        }
+      );
+
+      if (!response.ok) {
+        const errBody = await response.text().catch(() => "");
+        throw new Error(`Gemini API ${response.status}: ${errBody.slice(0, 200)}`);
+      }
+
+      const data = await response.json();
+      const text = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+
+      if (!text) throw new Error("Gemini retornou resposta vazia");
+
+      logger.info("[Gemini] Transcrição concluída (fallback)", {
+        chars: text.length, attempt,
+      });
+
+      return text;
+    } catch (error) {
+      lastError = error;
+      logger.warn("[Gemini] Tentativa falhou", {
+        attempt, message: error instanceof Error ? error.message : String(error),
+      });
+      if (attempt < MAX_ATTEMPTS) {
+        await new Promise((r) => setTimeout(r, 2000));
+      }
+    }
+  }
+
+  throw lastError instanceof Error ? lastError : new Error(String(lastError));
+}
+
+export async function transcribeConsultationAudio(audioBuffer: Buffer, mimeType: string, userId?: number, clinicId?: number): Promise<string> {
+  // Validação preventiva de tamanho
+  const MAX_BYTES = 25 * 1024 * 1024;
+  if (audioBuffer.length > MAX_BYTES) {
+    throw new Error(
+      `Arquivo de áudio excede 25MB. Tamanho: ${(audioBuffer.length / (1024 * 1024)).toFixed(1)}MB`
+    );
+  }
+
+  const extension = AUDIO_EXTENSION_MAP[mimeType] || 'webm';
+  const filename = `consultation-${Date.now()}.${extension}`;
+  let provider = "whisper-1";
+
+  // ── Tentativa 1: OpenAI Whisper (primário) ──
+  try {
+    const text = await transcribeWithWhisper(audioBuffer, mimeType, filename);
+
+    ModelRouter.trackUsage("transcribeConsultationAudio", "whisper-1", {
+      prompt_tokens: 0,
+      completion_tokens: Math.ceil(text.length / 4),
+    }, userId, clinicId);
+
+    return text;
+  } catch (whisperError) {
+    logger.error("[Transcription] Whisper falhou após retries, tentando Gemini", {
+      message: whisperError instanceof Error ? whisperError.message : String(whisperError),
+    });
+  }
+
+  // ── Tentativa 2: Google Gemini (fallback) ──
+  try {
+    provider = "gemini-2.0-flash";
+    const text = await transcribeWithGemini(audioBuffer, mimeType);
+
+    ModelRouter.trackUsage("transcribeConsultationAudio", "gemini-2.0-flash", {
+      prompt_tokens: 0,
+      completion_tokens: Math.ceil(text.length / 4),
+    }, userId, clinicId);
+
+    return text;
+  } catch (geminiError) {
+    logger.error("[Transcription] Gemini também falhou", {
+      message: geminiError instanceof Error ? geminiError.message : String(geminiError),
+    });
+  }
+
+  // ── Ambas as APIs falharam ──
+  throw new Error(
+    "Não foi possível transcrever o áudio. Tanto o Whisper quanto o Gemini falharam. Verifique sua conexão e tente novamente."
+  );
 }
 
 /**
