@@ -90,24 +90,6 @@ const FILE_BATCHES = [
     ],
 ];
 
-const EXTRACTION_BATCHES = [
-    [
-        { label: "Hemograma completo", count: "18 marcadores" },
-        { label: "Perfil lipídico", count: "6 marcadores" },
-        { label: "Evolução comparativa", count: "gerada" },
-    ],
-    [
-        { label: "Glicemia em jejum", count: "3 marcadores" },
-        { label: "Exame de urina", count: "12 parâmetros" },
-        { label: "Alertas clínicos", count: "2 gerados" },
-    ],
-    [
-        { label: "Função tireoidiana", count: "4 marcadores" },
-        { label: "Coagulograma", count: "8 parâmetros" },
-        { label: "Tendência temporal", count: "atualizada" },
-    ],
-];
-
 const MOBILE_LAB_SUMMARY = [
     { title: "Hemoglobina", description: "Comparativo rápido entre exames anteriores e o resultado atual.", tone: "text-emerald-300" },
     { title: "Glicemia", description: "Sinalização de atenção quando a evolução foge do padrão esperado.", tone: "text-amber-300" },
@@ -130,8 +112,6 @@ function UploadAnimationPanel({
     // step: 0 = idle/files falling, 1 = files landed, 2 = uploading, 3 = AI processing, 4 = done
 
     const currentFiles = FILE_BATCHES[cycle % FILE_BATCHES.length];
-    const currentExtractions = EXTRACTION_BATCHES[cycle % EXTRACTION_BATCHES.length];
-
     useEffect(() => {
         if (!isActive) return;
         if (prefersReducedMotion) {
@@ -479,41 +459,6 @@ function UploadAnimationPanel({
                         ))}
                     </AnimatePresence>
                 </div>
-
-                {/* AI Extraction Results */}
-                <AnimatePresence mode="wait">
-                    {step >= 4 && !mobileCompact && (
-                        <motion.div
-                            key={`results-${cycle}`}
-                            initial={{ opacity: 0, height: 0 }}
-                            animate={{ opacity: 1, height: "auto" }}
-                            exit={{ opacity: 0, height: 0 }}
-                            transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-                            className="overflow-hidden"
-                        >
-                            <div className="bg-emerald-500/[0.08] border border-emerald-500/20 rounded-lg p-3">
-                                <div className="flex items-center gap-2 mb-2">
-                                    <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
-                                    <span className="text-[11px] text-emerald-300 font-semibold">Dados estruturados para o prontuário</span>
-                                </div>
-                                <div className="space-y-1.5">
-                                    {currentExtractions.map((item, i) => (
-                                        <motion.div
-                                            key={`${item.label}-${cycle}`}
-                                            className="flex items-center justify-between"
-                                            initial={{ opacity: 0, x: -8 }}
-                                            animate={{ opacity: 1, x: 0 }}
-                                            transition={{ delay: 0.12 + i * 0.08 }}
-                                        >
-                                            <span className="text-[10px] md:text-[11px] text-white/60">{item.label}</span>
-                                            <span className="text-[10px] md:text-[11px] text-emerald-300/80 font-medium">{item.count}</span>
-                                        </motion.div>
-                                    ))}
-                                </div>
-                            </div>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
             </div>
         </div>
     );
