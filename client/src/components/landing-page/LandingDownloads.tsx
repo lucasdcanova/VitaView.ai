@@ -9,6 +9,7 @@ type Platform = {
     icon: React.ComponentType<any>;
     href: string;
     external: boolean;
+    comingSoon?: boolean;
 };
 
 const platforms: Platform[] = [
@@ -16,7 +17,7 @@ const platforms: Platform[] = [
     { name: "Windows", icon: FaWindows, href: platformDownloadLinks.windows.href, external: false },
     { name: "iPhone", icon: FaApple, href: platformDownloadLinks.ios.href, external: true },
     { name: "iPad", icon: FaApple, href: platformDownloadLinks.ipad.href, external: true },
-    { name: "Android", icon: FaAndroid, href: platformDownloadLinks.android.href, external: true },
+    { name: "Android", icon: FaAndroid, href: "#", external: false, comingSoon: true },
     { name: "Web", icon: Globe, href: platformDownloadLinks.web.href, external: true },
 ];
 
@@ -78,12 +79,15 @@ export function LandingDownloads() {
                             {platforms.map((p, i) => {
                                 const Icon = p.icon;
                                 const Arrow = p.external ? ArrowUpRight : ArrowDown;
+                                const Tag = p.comingSoon ? motion.div : motion.a;
                                 return (
-                                    <motion.a
+                                    <Tag
                                         key={p.name}
-                                        href={p.href}
-                                        target={p.external ? "_blank" : undefined}
-                                        rel={p.external ? "noopener noreferrer" : undefined}
+                                        {...(!p.comingSoon && {
+                                            href: p.href,
+                                            target: p.external ? "_blank" : undefined,
+                                            rel: p.external ? "noopener noreferrer" : undefined,
+                                        })}
                                         initial={{ opacity: 0, y: 16 }}
                                         whileInView={{ opacity: 1, y: 0 }}
                                         viewport={{ once: true, margin: "-60px" }}
@@ -92,27 +96,48 @@ export function LandingDownloads() {
                                             delay: 0.05 + i * 0.06,
                                             ease: [0.22, 1, 0.36, 1],
                                         }}
-                                        className="group relative bg-[#FAFAFA] hover:bg-white px-7 py-8 md:px-8 md:py-9 flex items-center justify-between transition-colors duration-500"
+                                        className={`group relative px-7 py-8 md:px-8 md:py-9 flex items-center justify-between transition-colors duration-500 ${
+                                            p.comingSoon
+                                                ? "bg-[#F5F5F5] cursor-default"
+                                                : "bg-[#FAFAFA] hover:bg-white"
+                                        }`}
                                     >
                                         <div className="flex items-center gap-5">
-                                            <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#212121]/[0.04] group-hover:bg-[#212121] transition-colors duration-500">
+                                            <div className={`w-12 h-12 rounded-full flex items-center justify-center transition-colors duration-500 ${
+                                                p.comingSoon
+                                                    ? "bg-[#212121]/[0.03]"
+                                                    : "bg-[#212121]/[0.04] group-hover:bg-[#212121]"
+                                            }`}>
                                                 <Icon
-                                                    className="w-[22px] h-[22px] text-[#212121] group-hover:text-white transition-colors duration-500"
+                                                    className={`w-[22px] h-[22px] transition-colors duration-500 ${
+                                                        p.comingSoon
+                                                            ? "text-[#9E9E9E]"
+                                                            : "text-[#212121] group-hover:text-white"
+                                                    }`}
                                                     strokeWidth={1.8}
                                                 />
                                             </div>
-                                            <h3 className="font-heading text-[22px] font-bold text-[#212121] leading-none tracking-tight">
-                                                {p.name}
-                                            </h3>
+                                            <div>
+                                                <h3 className={`font-heading text-[22px] font-bold leading-none tracking-tight ${
+                                                    p.comingSoon ? "text-[#9E9E9E]" : "text-[#212121]"
+                                                }`}>
+                                                    {p.name}
+                                                </h3>
+                                                {p.comingSoon && (
+                                                    <span className="text-xs font-medium text-[#BDBDBD] mt-1 block">Em breve</span>
+                                                )}
+                                            </div>
                                         </div>
 
-                                        <div className="w-9 h-9 rounded-full border border-[#212121]/15 group-hover:border-[#212121] group-hover:bg-[#212121] flex items-center justify-center transition-all duration-500">
-                                            <Arrow
-                                                className="w-[14px] h-[14px] text-[#212121] group-hover:text-white transition-colors duration-500"
-                                                strokeWidth={2.2}
-                                            />
-                                        </div>
-                                    </motion.a>
+                                        {!p.comingSoon && (
+                                            <div className="w-9 h-9 rounded-full border border-[#212121]/15 group-hover:border-[#212121] group-hover:bg-[#212121] flex items-center justify-center transition-all duration-500">
+                                                <Arrow
+                                                    className="w-[14px] h-[14px] text-[#212121] group-hover:text-white transition-colors duration-500"
+                                                    strokeWidth={2.2}
+                                                />
+                                            </div>
+                                        )}
+                                    </Tag>
                                 );
                             })}
                         </div>
