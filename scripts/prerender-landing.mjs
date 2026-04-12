@@ -25,7 +25,7 @@ const PAGES = [
 ];
 
 // Template HTML base
-function htmlTemplate(title, description, bodyHtml, cssContent) {
+function htmlTemplate(title, description, canonicalUrl, bodyHtml, cssContent) {
   return `<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -34,12 +34,11 @@ function htmlTemplate(title, description, bodyHtml, cssContent) {
 
   <!-- Primary Meta Tags -->
   <title>${title}</title>
-  <meta name="title" content="${title}">
   <meta name="description" content="${description}">
-  <meta name="keywords" content="exames médicos, análise bioquímica, inteligência artificial, saúde, laboratório, diagnóstico, prontuário eletrônico">
   <meta name="robots" content="index, follow">
-  <meta name="language" content="Portuguese">
+  <meta name="language" content="pt-BR">
   <meta name="author" content="VitaView AI">
+  <link rel="canonical" href="${canonicalUrl}" />
 
   <!-- Open Graph / Facebook -->
   <meta property="og:type" content="website">
@@ -216,9 +215,12 @@ async function main() {
         '/quick-summary': 'Resumo rápido sobre a plataforma VitaView AI.',
       };
 
+      const canonicalUrl = `https://vitaview.ai${page.route}`;
+
       const html = htmlTemplate(
         titles[page.route],
         descriptions[page.route],
+        canonicalUrl,
         bodyHtml,
         cssContent
       );

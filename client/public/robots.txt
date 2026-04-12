@@ -11,7 +11,4 @@ Disallow: /subscription
 Disallow: /results
 Disallow: /admin
 
-# Crawl-delay para não sobrecarregar
-Crawl-delay: 2
-
 Sitemap: https://vitaview.ai/sitemap.xml

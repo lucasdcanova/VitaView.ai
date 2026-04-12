@@ -157,12 +157,7 @@
     "@type": "WebSite",
     "name": "VitaView AI",
     "url": "https://vitaview.ai",
-    "description": "Prontuário eletrônico inteligente com IA para médicos e clínicas",
-    "potentialAction": {
-      "@type": "SearchAction",
-      "target": "https://vitaview.ai/?q={search_term_string}",
-      "query-input": "required name=search_term_string"
-    }
+    "description": "Prontuário eletrônico inteligente com IA para médicos e clínicas"
   }
   </script>
 
@@ -260,10 +255,98 @@
 
 <body>
   <div id="root">
-    <!-- Loading state while React loads -->
-    <div class="loading-spinner">
-      <div class="spinner"></div>
-      <div class="loading-text">Carregando VitaView AI...</div>
+    <!-- SEO fallback: semantic HTML visible to crawlers before React mounts -->
+    <div class="loading-spinner" style="display:none"></div>
+    <div id="seo-fallback" style="max-width:1200px;margin:0 auto;padding:2rem 1.5rem;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#212121">
+      <nav aria-label="Navegação principal">
+        <a href="/" style="font-weight:700;font-size:1.25rem;text-decoration:none;color:#212121">VitaView AI</a>
+        <span style="margin:0 0.5rem">—</span>
+        <a href="#como-funciona">Exames</a>
+        <a href="#anamnese-ia" style="margin-left:1rem">Anamnese</a>
+        <a href="#prescricao-digital" style="margin-left:1rem">Prescri��ão</a>
+        <a href="#agenda" style="margin-left:1rem">Agenda</a>
+        <a href="#recursos" style="margin-left:1rem">Vita Assist</a>
+        <a href="#seguranca" style="margin-left:1rem">Segurança</a>
+        <a href="#precos" style="margin-left:1rem">Planos</a>
+        <a href="/auth" style="margin-left:1.5rem;font-weight:700">Acessar</a>
+      </nav>
+
+      <main>
+        <section style="padding:3rem 0;text-align:center">
+          <h1 style="font-size:2.5rem;font-weight:700;line-height:1.05">O Prontuário que pensa com você.</h1>
+          <p style="max-width:580px;margin:1rem auto;color:#616161;line-height:1.6">Prontuário eletrônico com transcrição de consultas por voz, prescrição digital, análise de exames com IA e agenda médica integrada. Tudo em uma plataforma simples e completa.</p>
+          <a href="/auth" style="font-weight:700">Entrar</a>
+        </section>
+
+        <section id="como-funciona" style="padding:2rem 0">
+          <h2 style="font-size:1.75rem;font-weight:700">Envie exames, tudo entra estruturado.</h2>
+          <p style="color:#616161">Arraste PDFs ou imagens de exames e o VitaView extrai, interpreta e integra todos os resultados diretamente no prontuário do paciente — com gráficos de evolução automáticos.</p>
+        </section>
+
+        <section id="anamnese-ia" style="padding:2rem 0">
+          <h2 style="font-size:1.75rem;font-weight:700">Sua consulta vira anamnese organizada.</h2>
+          <p style="color:#616161">Foque apenas no paciente. O VitaView transforma áudio em texto clínico, lapida anotações rápidas e destaca o núcleo de históricos médicos extensos automaticamente.</p>
+        </section>
+
+        <section id="protocolos-exames" style="padding:2rem 0">
+          <h2 style="font-size:1.75rem;font-weight:700">Exames laboratoriais sem retrabalho.</h2>
+          <p style="color:#616161">Crie protocolos personalizados para os cenários que mais se repetem na sua rotina e transforme a solicitação de exames em um fluxo rápido, organizado e seguro.</p>
+        </section>
+
+        <section id="prescricao-digital" style="padding:2rem 0">
+          <h2 style="font-size:1.75rem;font-weight:700">Renovação de receitas em segundos.</h2>
+          <p style="color:#616161">Renove tratamentos contínuos com velocidade e segurança. O VitaView cruza medicamentos, histórico e alergias antes de gerar a prescrição, destacando interações relevantes no momento da revisão.</p>
+        </section>
+
+        <section id="dose-inteligente" style="padding:2rem 0">
+          <h2 style="font-size:1.75rem;font-weight:700">Sugestão de dose pronta para revisar.</h2>
+          <p style="color:#616161">Esqueça a busca manual por posologias. O VitaView considera o contexto do paciente e antecipa a dose mais provável diretamente no campo de prescrição. O controle e a decisão final são sempre seus.</p>
+        </section>
+
+        <section id="agenda" style="padding:2rem 0">
+          <h2 style="font-size:1.75rem;font-weight:700">Agenda que organiza sem atrapalhar.</h2>
+          <p style="color:#616161">Visualize consultas, horários livres e prioridades em uma única agenda, com contexto suficiente para organizar a rotina sem retrabalho.</p>
+        </section>
+
+        <section id="recursos" style="padding:2rem 0">
+          <h2 style="font-size:1.75rem;font-weight:700">Vita Assist na rotina do atendimento.</h2>
+          <p style="color:#616161">Um assistente clínico dentro da plataforma, com contexto do paciente, chat contínuo e apoio para resumir, organizar e documentar melhor cada consulta.</p>
+        </section>
+
+        <section id="seguranca" style="padding:2rem 0">
+          <h2 style="font-size:1.75rem;font-weight:700">Segurança inegociável.</h2>
+          <p style="color:#616161">A proteção no VitaView não depende de uma única barreira. Ela se distribui entre acesso, sessão, aplicação e armazenamento de documentos sensíveis, com controles presentes no fluxo da plataforma.</p>
+        </section>
+
+        <section id="migracao" style="padding:2rem 0">
+          <h2 style="font-size:1.75rem;font-weight:700">Troque de sistema sem começar do zero.</h2>
+          <p style="color:#616161">Se hoje seus dados estão em outro prontuário, a mudança não cai no colo da sua equipe. O time do VitaView cuida da migração completa para você.</p>
+        </section>
+
+        <section id="depoimentos" style="padding:2rem 0">
+          <h2 style="font-size:1.75rem;font-weight:700">Quem usa no dia a dia.</h2>
+          <p style="color:#616161">Relatos diretos de médicos que já colocaram o VitaView entre retorno, revisão de exames e acompanhamento contínuo.</p>
+        </section>
+
+        <section id="precos" style="padding:2rem 0">
+          <h2 style="font-size:1.75rem;font-weight:700">Comece grátis, evolua no seu ritmo.</h2>
+          <p style="color:#616161">Você pode entrar no VitaView sem custo com o plano gratuito. Se depois fizer sentido ampliar a capacidade da rotina, o volume de pacientes e as automações, o Vita Pro entra como próximo passo.</p>
+        </section>
+
+        <section id="faq" style="padding:2rem 0">
+          <h2 style="font-size:1.75rem;font-weight:700">Tire suas dúvidas.</h2>
+          <p style="color:#616161">Entenda como as ferramentas do VitaView se encaixam na sua rotina clínica.</p>
+        </section>
+
+        <section id="downloads" style="padding:2rem 0">
+          <h2 style="font-size:1.75rem;font-weight:700">Onde você atende, o VitaView está.</h2>
+        </section>
+      </main>
+
+      <footer style="padding:2rem 0;border-top:1px solid #E0E0E0;margin-top:2rem;color:#616161">
+        <p><strong>VitaView AI</strong> — Prontuário eletrônico inteligente com IA para médicos e clínicas.</p>
+        <p style="margin-top:0.5rem"><a href="/termos">Termos de Uso</a> · <a href="/privacidade">Privacidade</a> · <a href="mailto:contato@vitaview.ai">contato@vitaview.ai</a></p>
+      </footer>
     </div>
   </div>
 
