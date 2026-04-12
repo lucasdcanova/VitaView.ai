@@ -46,7 +46,7 @@ export function LandingAppointmentScheduler() {
                         <div className="bg-gradient-to-r from-[#212121] to-[#424242] p-4 text-white flex items-center gap-3">
                             <Calendar className="w-5 h-5" />
                             <div>
-                                <h3 className="text-base font-bold">Agenda da Semana</h3>
+                                <h3 className="text-base font-bold text-white">Agenda da Semana</h3>
                                 <p className="text-xs text-[#E0E0E0]">Próximas consultas</p>
                             </div>
                         </div>
@@ -127,7 +127,7 @@ export function LandingAppointmentScheduler() {
                                 <div className="flex items-center gap-4">
                                     <Calendar className="w-7 h-7" />
                                     <div>
-                                        <h3 className="text-xl font-bold">Agenda da Semana</h3>
+                                        <h3 className="text-xl font-bold text-white">Agenda da Semana</h3>
                                         <p className="text-sm text-[#E0E0E0]">Visão organizada dos próximos atendimentos</p>
                                     </div>
                                 </div>
@@ -293,7 +293,7 @@ export function LandingAppointmentScheduler() {
                     </div>
 
                     <motion.div
-                        className="absolute right-[calc(100%+16px)] bottom-8 hidden xl:block bg-white rounded-2xl shadow-xl border border-[#E0E0E0] px-5 py-4 w-[252px] z-20"
+                        className="absolute left-[-126px] top-[230px] hidden xl:block bg-white rounded-2xl shadow-xl border border-[#E0E0E0] px-5 py-4 w-[252px] z-20"
                         animate={{
                             y: [0, 10, 0],
                         }}
@@ -318,7 +318,7 @@ export function LandingAppointmentScheduler() {
                     </motion.div>
 
                     <motion.div
-                        className="absolute left-[calc(100%+16px)] top-14 hidden xl:block bg-white rounded-2xl shadow-xl border border-[#E0E0E0] px-5 py-4 w-[252px] z-20"
+                        className="absolute right-[-126px] top-[140px] hidden xl:block bg-white rounded-2xl shadow-xl border border-[#E0E0E0] px-5 py-4 w-[252px] z-20"
                         animate={{
                             y: [0, -8, 0],
                         }}
