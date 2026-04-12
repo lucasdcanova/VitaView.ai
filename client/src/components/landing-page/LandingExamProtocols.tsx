@@ -31,6 +31,7 @@ export function LandingExamProtocols() {
     return (
         <section
             id="protocolos-exames"
+            aria-labelledby="protocolos-exames-heading"
             className={`${tokens.section.dark} ${tokens.section.paddingFull} relative overflow-hidden text-white`}
         >
             <div className="absolute inset-0 overflow-hidden pointer-events-none hidden md:block">
@@ -52,7 +53,7 @@ export function LandingExamProtocols() {
                             <span className={tokens.eyebrow.dark}>Protocolos para pedidos recorrentes</span>
                         </div>
 
-                        <h2 className={`${tokens.h2.dark} mb-6`}>
+                        <h2 id="protocolos-exames-heading" className={`${tokens.h2.dark} mb-6`}>
                             Exames laboratoriais <br />
                             <span className={tokens.h2.splitDark}>sem retrabalho.</span>
                         </h2>
@@ -91,9 +92,9 @@ export function LandingExamProtocols() {
                                         {benefit.icon}
                                     </div>
                                     <div>
-                                        <h4 className="font-heading font-bold text-[17px] text-white tracking-tight">
+                                        <h3 className="font-heading font-bold text-[17px] text-white tracking-tight">
                                             {benefit.title}
-                                        </h4>
+                                        </h3>
                                         <p className="mt-1 text-[14px] text-white/55 leading-relaxed">{benefit.desc}</p>
                                     </div>
                                 </motion.div>

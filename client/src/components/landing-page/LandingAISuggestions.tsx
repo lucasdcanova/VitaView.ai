@@ -6,7 +6,7 @@ import { tokens } from "./landing-tokens";
 
 export function LandingAISuggestions() {
     return (
-        <section id="dose-inteligente" className={`${tokens.section.dark} ${tokens.section.paddingFull} relative overflow-hidden text-white`}>
+        <section id="dose-inteligente" aria-labelledby="dose-inteligente-heading" className={`${tokens.section.dark} ${tokens.section.paddingFull} relative overflow-hidden text-white`}>
             {/* Background Effects - Subtle Monochrome */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none hidden md:block">
                 <div className="absolute top-0 right-1/4 w-96 h-96 bg-white/5 rounded-full blur-[100px] opacity-20"></div>
@@ -132,7 +132,7 @@ export function LandingAISuggestions() {
                                 <span className={tokens.eyebrow.lineDark} />
                                 <span className={tokens.eyebrow.dark}>Preenchimento assistido na prescrição</span>
                             </div>
-                            <h2 className={`${tokens.h2.dark} mb-6`}>
+                            <h2 id="dose-inteligente-heading" className={`${tokens.h2.dark} mb-6`}>
                                 Sugestão de dose <br />
                                 <span className={tokens.h2.splitDark}>
                                     pronta para revisar.
@@ -176,7 +176,7 @@ export function LandingAISuggestions() {
                                             {feature.icon}
                                         </div>
                                         <div>
-                                            <h4 className="font-bold text-white text-lg">{feature.title}</h4>
+                                            <h3 className="font-bold text-white text-lg">{feature.title}</h3>
                                             <p className="text-sm text-white/50">{feature.desc}</p>
                                         </div>
                                     </div>

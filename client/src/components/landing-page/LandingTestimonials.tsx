@@ -44,6 +44,7 @@ export function LandingTestimonials() {
   return (
     <section
       id="depoimentos"
+      aria-labelledby="depoimentos-heading"
       className={`relative overflow-hidden ${tokens.section.darkAlt} ${tokens.section.paddingFull} scroll-mt-16`}
     >
       <div className="pointer-events-none absolute inset-0 hidden md:block">
@@ -64,7 +65,7 @@ export function LandingTestimonials() {
             <span className={tokens.eyebrow.dark}>Relatos de uso em rotina real</span>
             <span className={tokens.eyebrow.lineDark} />
           </div>
-          <h2 className={`${tokens.h2.dark} mb-6`}>
+          <h2 id="depoimentos-heading" className={`${tokens.h2.dark} mb-6`}>
             Quem usa no{" "}
             <span className={tokens.h2.splitDark}>dia a dia.</span>
           </h2>

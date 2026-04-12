@@ -15,7 +15,7 @@ export function LandingPricing() {
     ];
 
     return (
-        <section id="precos" className={`relative overflow-hidden bg-[#F4F4F4] ${tokens.section.paddingFull}`}>
+        <section id="precos" aria-labelledby="precos-heading" className={`relative overflow-hidden bg-[#F4F4F4] ${tokens.section.paddingFull}`}>
             {/* Elementos decorativos de fundo */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none hidden md:block">
                 <div className="absolute top-1/2 right-0 w-96 h-96 bg-[#E0E0E0] rounded-full opacity-30 blur-3xl -translate-y-1/2 translate-x-1/2"></div>
@@ -35,7 +35,7 @@ export function LandingPricing() {
                             <span className={tokens.eyebrow.light}>Planos</span>
                             <span className={tokens.eyebrow.lineLight} />
                         </div>
-                        <h2 className={`${tokens.h2.light} mb-6`}>
+                        <h2 id="precos-heading" className={`${tokens.h2.light} mb-6`}>
                             Comece grátis, evolua
                             <br className="hidden sm:block" />
                             <span className={tokens.h2.splitLight}>no seu ritmo.</span>

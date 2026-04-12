@@ -11,7 +11,7 @@ const mobileAgendaSignals = [
 
 export function LandingAppointmentScheduler() {
     return (
-        <section id="agenda" className={`${tokens.section.lightAlt} ${tokens.section.paddingFull} text-[#212121] relative overflow-hidden scroll-mt-16`}>
+        <section id="agenda" aria-labelledby="agenda-heading" className={`${tokens.section.lightAlt} ${tokens.section.paddingFull} text-[#212121] relative overflow-hidden scroll-mt-16`}>
             <div className="container mx-auto px-5 sm:px-6 lg:px-8">
                 <motion.div
                     initial={{ opacity: 0, y: 24 }}
@@ -25,7 +25,7 @@ export function LandingAppointmentScheduler() {
                         <span className={tokens.eyebrow.light}>Visão geral da rotina</span>
                         <span className={tokens.eyebrow.lineLight} />
                     </div>
-                    <h2 className={`${tokens.h2.light} mb-6`}>
+                    <h2 id="agenda-heading" className={`${tokens.h2.light} mb-6`}>
                         Agenda que organiza{" "}
                         <span className={tokens.h2.splitLight}>sem atrapalhar.</span>
                     </h2>

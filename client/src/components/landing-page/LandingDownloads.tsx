@@ -25,6 +25,7 @@ export function LandingDownloads() {
     return (
         <section
             id="downloads"
+            aria-labelledby="downloads-heading"
             className={`relative ${tokens.section.light} overflow-hidden ${tokens.section.padding}`}
         >
             {/* Grão sutil */}
@@ -58,7 +59,7 @@ export function LandingDownloads() {
                             <span className={tokens.eyebrow.light}>Downloads</span>
                         </div>
 
-                        <h2 className={`${tokens.h2.light} mb-6`}>
+                        <h2 id="downloads-heading" className={`${tokens.h2.light} mb-6`}>
                             Onde você
                             <br />
                             atende,{" "}

@@ -38,7 +38,7 @@ export function LandingFAQ() {
     ];
 
     return (
-        <section id="faq" className={`${tokens.section.dark} ${tokens.section.padding} text-white relative overflow-hidden`}>
+        <section id="faq" aria-labelledby="faq-heading" className={`${tokens.section.dark} ${tokens.section.padding} text-white relative overflow-hidden`}>
             {/* Elementos decorativos */}
             <div className="absolute inset-0 pointer-events-none hidden md:block">
                 <div className="absolute right-0 top-20 w-64 h-64 bg-white rounded-full opacity-[0.04] blur-3xl"></div>
@@ -58,7 +58,7 @@ export function LandingFAQ() {
                         <span className={tokens.eyebrow.dark}>Perguntas frequentes</span>
                         <span className={tokens.eyebrow.lineDark} />
                     </div>
-                    <h2 className={`${tokens.h2.dark} mb-6`}>
+                    <h2 id="faq-heading" className={`${tokens.h2.dark} mb-6`}>
                         Tire suas{" "}
                         <span className={tokens.h2.splitDark}>dúvidas.</span>
                     </h2>

@@ -6,7 +6,7 @@ import { tokens } from "./landing-tokens";
 
 export function LandingPrescription() {
     return (
-        <section id="prescricao-digital" className={`${tokens.section.light} ${tokens.section.paddingFull} relative overflow-hidden`}>
+        <section id="prescricao-digital" aria-labelledby="prescricao-digital-heading" className={`${tokens.section.light} ${tokens.section.paddingFull} relative overflow-hidden`}>
             <div className="container mx-auto px-5 sm:px-6 lg:px-8 relative z-10">
                 <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-20">
 
@@ -22,7 +22,7 @@ export function LandingPrescription() {
                                 <span className={tokens.eyebrow.lineLight} />
                                 <span className={tokens.eyebrow.light}>Revisão de prescrição em fluxo</span>
                             </div>
-                            <h2 className={`${tokens.h2.light} mb-6`}>
+                            <h2 id="prescricao-digital-heading" className={`${tokens.h2.light} mb-6`}>
                                 Renovação de receitas <br />
                                 <span className={tokens.h2.splitLight}>em segundos.</span>
                             </h2>
@@ -70,7 +70,7 @@ export function LandingPrescription() {
                                             {item.icon}
                                         </div>
                                         <div>
-                                            <h4 className={`font-bold text-sm ${item.featured ? "text-white" : "text-[#212121]"}`}>{item.title}</h4>
+                                            <h3 className={`font-bold text-sm ${item.featured ? "text-white" : "text-[#212121]"}`}>{item.title}</h3>
                                             <p className={`text-xs leading-relaxed ${item.featured ? "text-white/70" : "text-[#757575]"}`}>{item.desc}</p>
                                         </div>
                                     </motion.div>

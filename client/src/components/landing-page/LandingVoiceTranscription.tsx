@@ -56,7 +56,7 @@ export function LandingVoiceTranscription() {
     const isMobile = useIsMobile();
 
     return (
-        <section id="anamnese-ia" className={`${tokens.section.lightAlt} ${tokens.section.paddingFull} relative overflow-hidden`}>
+        <section id="anamnese-ia" aria-labelledby="anamnese-ia-heading" className={`${tokens.section.lightAlt} ${tokens.section.paddingFull} relative overflow-hidden`}>
             <div className="container mx-auto px-5 sm:px-6 lg:px-8 relative z-10">
                 <div className="flex flex-col md:flex-row items-center gap-6 md:gap-16 lg:gap-24">
 
@@ -139,7 +139,7 @@ export function LandingVoiceTranscription() {
                             <span className={tokens.eyebrow.light}>Anotações em linguagem clínica</span>
                         </div>
 
-                        <h2 className={`${tokens.h2.light} mb-6`}>
+                        <h2 id="anamnese-ia-heading" className={`${tokens.h2.light} mb-6`}>
                             Sua consulta vira <br />
                             <span className={tokens.h2.splitLight}>anamnese organizada.</span>
                         </h2>
@@ -169,7 +169,7 @@ export function LandingVoiceTranscription() {
                                     <Lock className="w-5 h-5 text-[#212121]" />
                                 </div>
                                 <div>
-                                    <h4 className="text-sm font-bold text-[#212121] mb-0.5">Gravação Segura</h4>
+                                    <h3 className="text-sm font-bold text-[#212121] mb-0.5">Gravação Segura</h3>
                                     <p className="text-xs text-[#616161] leading-relaxed">Camadas de proteção no acesso e no armazenamento das informações captadas.</p>
                                 </div>
                             </div>
@@ -179,7 +179,7 @@ export function LandingVoiceTranscription() {
                                     <Wand2 className="w-5 h-5 text-[#212121]" />
                                 </div>
                                 <div>
-                                    <h4 className="text-sm font-bold text-[#212121] mb-0.5">Refinamento Clínico</h4>
+                                    <h3 className="text-sm font-bold text-[#212121] mb-0.5">Refinamento Clínico</h3>
                                     <p className="text-xs text-[#616161] leading-relaxed">Transforma linguagem coloquial em termos médicos.</p>
                                 </div>
                             </div>
@@ -189,7 +189,7 @@ export function LandingVoiceTranscription() {
                                     <RefreshCcw className="w-5 h-5 text-[#212121]" />
                                 </div>
                                 <div>
-                                    <h4 className="text-sm font-bold text-[#212121] mb-0.5">Lapidar texto</h4>
+                                    <h3 className="text-sm font-bold text-[#212121] mb-0.5">Lapidar texto</h3>
                                     <p className="text-xs text-[#616161] leading-relaxed">Aprimora e formata textos digitados manualmente.</p>
                                 </div>
                             </div>
@@ -199,7 +199,7 @@ export function LandingVoiceTranscription() {
                                     <FileSearch className="w-5 h-5 text-[#212121]" />
                                 </div>
                                 <div>
-                                    <h4 className="text-sm font-bold text-[#212121] mb-0.5">Extrair contexto</h4>
+                                    <h3 className="text-sm font-bold text-[#212121] mb-0.5">Extrair contexto</h3>
                                     <p className="text-xs text-[#616161] leading-relaxed">Pinça sintomas e histórico de grandes blocos de texto.</p>
                                 </div>
                             </div>

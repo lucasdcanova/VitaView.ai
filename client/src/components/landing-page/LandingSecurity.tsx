@@ -76,7 +76,7 @@ export function LandingSecurity() {
     const currentState = securityStates[activeState];
 
     return (
-        <section id="seguranca" className={`${tokens.section.lightWhite} ${tokens.section.paddingFull} relative overflow-hidden`}>
+        <section id="seguranca" aria-labelledby="seguranca-heading" className={`${tokens.section.lightWhite} ${tokens.section.paddingFull} relative overflow-hidden`}>
             <div className="absolute inset-0 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px] opacity-20 pointer-events-none" />
 
             <div className="container mx-auto px-5 sm:px-6 lg:px-8 relative z-10">
@@ -93,7 +93,7 @@ export function LandingSecurity() {
                             <span className={tokens.eyebrow.light}>Controles ativos na operação</span>
                         </div>
 
-                        <h2 className={`${tokens.h2.light} mb-6`}>
+                        <h2 id="seguranca-heading" className={`${tokens.h2.light} mb-6`}>
                             Segurança{" "}
                             <span className={tokens.h2.splitLight}>inegociável.</span>
                         </h2>

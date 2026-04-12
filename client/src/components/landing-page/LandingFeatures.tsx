@@ -74,6 +74,7 @@ export function LandingFeatures() {
     return (
         <section
             id="recursos"
+            aria-labelledby="recursos-heading"
             className={`${tokens.section.dark} ${tokens.section.paddingFull} relative overflow-hidden`}
         >
             <div className="absolute inset-0 pointer-events-none hidden md:block">
@@ -95,7 +96,7 @@ export function LandingFeatures() {
                             <span className={tokens.eyebrow.dark}>Assistente clínico contextual</span>
                         </div>
 
-                        <h2 className={`${tokens.h2.dark} mb-6`}>
+                        <h2 id="recursos-heading" className={`${tokens.h2.dark} mb-6`}>
                             Vita Assist <br />
                             <span className={tokens.h2.splitDark}>na rotina do atendimento.</span>
                         </h2>

@@ -232,7 +232,7 @@ export function LandingHero() {
                         muted
                         loop={reduceMotion}
                         playsInline
-                        preload="auto"
+                        preload="metadata"
                         aria-hidden="true"
                         onTimeUpdate={handleVideoTimeUpdate(1)}
                         onEnded={handleVideoEnded(1)}

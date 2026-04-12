@@ -293,6 +293,7 @@ export function LandingMigration() {
   return (
     <section
       id="migracao"
+      aria-labelledby="migracao-heading"
       className={`relative overflow-hidden ${tokens.section.lightAlt} ${tokens.section.paddingFull} text-[#212121]`}
     >
       {/* Background blobs */}
@@ -318,7 +319,7 @@ export function LandingMigration() {
               <span className={tokens.eyebrow.light}>Entrada assistida a partir de outro sistema</span>
             </div>
 
-            <h2 className={`${tokens.h2.light} mb-6 max-w-2xl`}>
+            <h2 id="migracao-heading" className={`${tokens.h2.light} mb-6 max-w-2xl`}>
               {"Troque de sistema "}
               <span className={`block ${tokens.h2.splitLight}`}>{"sem começar do zero."}</span>
             </h2>

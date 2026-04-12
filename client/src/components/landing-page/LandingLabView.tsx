@@ -530,7 +530,7 @@ export function LandingLabView() {
     const prefersReducedMotion = useReducedMotion() ?? false;
 
     return (
-        <section id="como-funciona" className={`${tokens.section.dark} ${tokens.section.paddingFull} relative overflow-hidden`}>
+        <section id="como-funciona" aria-labelledby="como-funciona-heading" className={`${tokens.section.dark} ${tokens.section.paddingFull} relative overflow-hidden`}>
             {/* Background decorative elements */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none hidden md:block">
                 <div className="absolute left-0 top-20 w-72 h-72 bg-white rounded-full opacity-5 blur-3xl"></div>
@@ -551,7 +551,7 @@ export function LandingLabView() {
                         <span className={tokens.eyebrow.lineDark} />
                     </div>
 
-                    <h2 className={`${tokens.h2.dark} mb-6 max-w-4xl mx-auto`}>
+                    <h2 id="como-funciona-heading" className={`${tokens.h2.dark} mb-6 max-w-4xl mx-auto`}>
                         Envie exames,{" "}
                         <span className={tokens.h2.splitDark}>tudo entra estruturado.</span>
                     </h2>
