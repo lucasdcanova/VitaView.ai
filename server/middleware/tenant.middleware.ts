@@ -14,7 +14,8 @@ export async function ensureTenant(req: Request, res: Response, next: NextFuncti
     // Public API endpoints that must remain accessible without session auth
     if (
         req.originalUrl.startsWith("/api/webhook") ||
-        req.originalUrl.startsWith("/api/intake/lead")
+        req.originalUrl.startsWith("/api/intake/lead") ||
+        req.originalUrl.startsWith("/api/marketing/leads/export")
     ) {
         return next();
     }

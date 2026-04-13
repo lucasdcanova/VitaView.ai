@@ -1,5 +1,6 @@
 import type { Express, Request, Response } from "express";
 import { nanoid } from "nanoid";
+import { pool } from "../db";
 import logger from "../logger";
 import { sendEmail } from "../services/email.service";
 
@@ -11,6 +12,7 @@ const INTERNAL_LEADS_EMAIL =
   "contato@vitaview.ai";
 
 const APP_HOSTS = new Set(["vitaview.ai", "www.vitaview.ai", "app.vitaview.ai"]);
+let marketingLeadsTableReady: Promise<void> | null = null;
 
 function normalizeFields(body: unknown): LeadFieldMap {
   if (!body || typeof body !== "object") {
@@ -191,6 +193,127 @@ function successHtml(redirectTo: string | null) {
   </html>`;
 }
 
+async function ensureMarketingLeadsTable() {
+  if (!marketingLeadsTableReady) {
+    marketingLeadsTableReady = pool
+      .query(`
+        CREATE TABLE IF NOT EXISTS marketing_leads (
+          id SERIAL PRIMARY KEY,
+          lead_id TEXT NOT NULL UNIQUE,
+          lp_id TEXT NOT NULL,
+          offer TEXT,
+          name TEXT,
+          email TEXT NOT NULL,
+          phone TEXT,
+          crm TEXT,
+          specialty TEXT,
+          intent TEXT,
+          source TEXT,
+          source_detail TEXT,
+          utm_campaign TEXT,
+          utm_source TEXT,
+          utm_medium TEXT,
+          utm_content TEXT,
+          utm_term TEXT,
+          route_to_sales BOOLEAN NOT NULL DEFAULT FALSE,
+          redirect_to TEXT,
+          status TEXT NOT NULL DEFAULT 'new',
+          ip_address TEXT,
+          user_agent TEXT,
+          payload JSONB NOT NULL DEFAULT '{}'::jsonb,
+          created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+          updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_marketing_leads_created_at ON marketing_leads(created_at DESC);
+        CREATE INDEX IF NOT EXISTS idx_marketing_leads_email ON marketing_leads(email);
+        CREATE INDEX IF NOT EXISTS idx_marketing_leads_lp_id ON marketing_leads(lp_id);
+      `)
+      .then(() => undefined)
+      .catch((error) => {
+        marketingLeadsTableReady = null;
+        throw error;
+      });
+  }
+
+  await marketingLeadsTableReady;
+}
+
+async function persistLead(fields: LeadFieldMap, leadId: string, req: Request) {
+  await ensureMarketingLeadsTable();
+
+  await pool.query(
+    `
+      INSERT INTO marketing_leads (
+        lead_id,
+        lp_id,
+        offer,
+        name,
+        email,
+        phone,
+        crm,
+        specialty,
+        intent,
+        source,
+        source_detail,
+        utm_campaign,
+        utm_source,
+        utm_medium,
+        utm_content,
+        utm_term,
+        route_to_sales,
+        redirect_to,
+        ip_address,
+        user_agent,
+        payload
+      )
+      VALUES (
+        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
+        $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21::jsonb
+      )
+      ON CONFLICT (lead_id) DO NOTHING
+    `,
+    [
+      leadId,
+      fields.lp_id,
+      fields.offer || null,
+      fields.name || null,
+      fields.email,
+      fields.phone || null,
+      fields.crm || null,
+      fields.specialty || null,
+      fields.intent || null,
+      fields.source || null,
+      fields.source_detail || null,
+      fields.utm_campaign || null,
+      fields.utm_source || null,
+      fields.utm_medium || null,
+      fields.utm_content || null,
+      fields.utm_term || null,
+      isTruthy(fields.route_to_sales),
+      fields.redirect_to || null,
+      req.ip || null,
+      req.get("user-agent") || null,
+      JSON.stringify(fields),
+    ],
+  );
+}
+
+function hasMarketingExportAccess(req: Request) {
+  const configuredToken = process.env.MARKETING_EXPORT_TOKEN;
+  const providedToken =
+    req.get("x-marketing-export-token") ||
+    req.query.token?.toString() ||
+    req.get("authorization")?.replace(/^Bearer\s+/i, "") ||
+    "";
+
+  if (configuredToken && providedToken && providedToken === configuredToken) {
+    return true;
+  }
+
+  return Boolean(req.isAuthenticated?.() && req.user?.role === "admin");
+}
+
 export function registerMarketingRoutes(app: Express) {
   app.post("/api/intake/lead", async (req: Request, res: Response) => {
     const fields = normalizeFields(req.body);
@@ -211,8 +334,16 @@ export function registerMarketingRoutes(app: Express) {
     fields.email = email;
 
     try {
+      await persistLead(fields, leadId, req);
+    } catch (error) {
+      logger.error("[Marketing] Failed to persist lead intake", error);
+      return res.status(500).json({ message: "falha ao persistir lead" });
+    }
+
+    let emailDelivered = false;
+    try {
       const internalEmail = buildInternalEmail(fields, leadId);
-      await sendEmail({
+      const internalSent = await sendEmail({
         to: INTERNAL_LEADS_EMAIL,
         subject: internalEmail.subject,
         html: internalEmail.html,
@@ -220,12 +351,14 @@ export function registerMarketingRoutes(app: Express) {
       });
 
       const acknowledgementEmail = buildAcknowledgementEmail(fields);
-      await sendEmail({
+      const acknowledgementSent = await sendEmail({
         to: email,
         subject: acknowledgementEmail.subject,
         html: acknowledgementEmail.html,
         text: acknowledgementEmail.text,
       });
+
+      emailDelivered = internalSent && acknowledgementSent;
 
       logger.info("[Marketing] Lead intake registered", {
         leadId,
@@ -233,10 +366,10 @@ export function registerMarketingRoutes(app: Express) {
         offer,
         email,
         routeToSales: isTruthy(fields.route_to_sales),
+        emailDelivered,
       });
     } catch (error) {
-      logger.error("[Marketing] Failed to process lead intake", error);
-      return res.status(500).json({ message: "falha ao registrar lead" });
+      logger.error("[Marketing] Lead persisted but email delivery failed", error);
     }
 
     const payload = {
@@ -246,6 +379,8 @@ export function registerMarketingRoutes(app: Express) {
       offer,
       routeToSales: isTruthy(fields.route_to_sales),
       redirectTo,
+      persisted: true,
+      emailDelivered,
     };
 
     if (wantsJsonResponse(req, fields)) {
@@ -257,5 +392,68 @@ export function registerMarketingRoutes(app: Express) {
     }
 
     return res.status(200).type("html").send(successHtml(redirectTo));
+  });
+
+  app.get("/api/marketing/leads/export", async (req: Request, res: Response) => {
+    if (!hasMarketingExportAccess(req)) {
+      return res.status(401).json({ message: "unauthorized" });
+    }
+
+    const limit = Math.min(Math.max(Number(req.query.limit || 100), 1), 500);
+    const since = req.query.since?.toString();
+
+    try {
+      await ensureMarketingLeadsTable();
+      const params: unknown[] = [];
+      let whereClause = "";
+
+      if (since) {
+        params.push(since);
+        whereClause = `WHERE created_at >= $${params.length}::timestamptz`;
+      }
+
+      params.push(limit);
+
+      const result = await pool.query(
+        `
+          SELECT
+            lead_id,
+            lp_id,
+            offer,
+            name,
+            email,
+            phone,
+            crm,
+            specialty,
+            intent,
+            source,
+            source_detail,
+            utm_campaign,
+            utm_source,
+            utm_medium,
+            utm_content,
+            utm_term,
+            route_to_sales,
+            redirect_to,
+            status,
+            payload,
+            created_at,
+            updated_at
+          FROM marketing_leads
+          ${whereClause}
+          ORDER BY created_at DESC
+          LIMIT $${params.length}
+        `,
+        params,
+      );
+
+      return res.json({
+        leads: result.rows,
+        count: result.rowCount || 0,
+      });
+    } catch (error) {
+      logger.error("[Marketing] Failed to export leads", error);
+      return res.status(500).json({ message: "failed to export marketing leads" });
+    }
   });
 }
