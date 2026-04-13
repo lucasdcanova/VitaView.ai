@@ -59,6 +59,7 @@ import fs from "fs";
 import path from "path";
 import { notificationScheduler } from "./services/notification-scheduler";
 import { registerDocumentRoutes } from "./routes/documents";
+import { registerMarketingRoutes } from "./routes/marketing.routes";
 import { registerSecurityRoutes } from "./routes/security.routes";
 import { registerPatientRoutes } from "./routes/patient.routes";
 import { generateCertificateHTML, generatePrescriptionHTML, generateExamReportHTML, generateHealthReportHTML } from "./services/document-templates";
@@ -854,6 +855,9 @@ export async function registerRoutes(app: Express): Promise<void> {
 
   // Register security routes (Biometric, 2FA, WAF, Backup)
   registerSecurityRoutes(app);
+
+  // Register public marketing routes (landing pages, lead intake)
+  registerMarketingRoutes(app);
 
   // Register patient routes (Diagnoses, Surgeries, Evolutions, Habits, Profiles, Medications, Allergies)
   registerPatientRoutes(app);

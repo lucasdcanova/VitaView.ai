@@ -43,6 +43,7 @@ declare global {
 // Carregados independentemente, sem providers pesados
 // ============================================
 const Home = lazyWithRetry(() => import("@/pages/home"), "page-home");
+const MarketingOfferPage = lazyWithRetry(() => import("@/pages/marketing-offer-page"), "page-marketing-offer");
 const TermsPage = lazyWithRetry(() => import("@/pages/terms-page"), "page-terms");
 const PrivacyPage = lazyWithRetry(() => import("@/pages/privacy-page"), "page-privacy");
 const DeleteAccountPage = lazyWithRetry(() => import("@/pages/delete-account-page"), "page-delete-account");
@@ -133,6 +134,10 @@ function LandingRoutes() {
       <Switch>
         <Route path="/" component={Home} />
         <Route path="/landing-page" component={Home} />
+        <Route path="/trial-vita-assist" component={MarketingOfferPage} />
+        <Route path="/checklist-prontuario-5-min" component={MarketingOfferPage} />
+        <Route path="/modelo-prontuario-com-ia" component={MarketingOfferPage} />
+        <Route path="/calculadora-tempo-prontuario" component={MarketingOfferPage} />
         <Route path="/termos" component={TermsPage} />
         <Route path="/privacidade" component={PrivacyPage} />
         <Route path="/excluir-conta" component={DeleteAccountPage} />
@@ -333,7 +338,19 @@ function AppRouter() {
   const iosAppShell = isIOSAppShell() && !isNativeIOSAppOnMac();
 
   // Rotas da landing page (sem nenhum provider)
-  const landingPaths = ['/', '/landing-page', '/termos', '/privacidade', '/excluir-conta', '/delete-account', '/quick-summary'];
+  const landingPaths = [
+    '/',
+    '/landing-page',
+    '/trial-vita-assist',
+    '/checklist-prontuario-5-min',
+    '/modelo-prontuario-com-ia',
+    '/calculadora-tempo-prontuario',
+    '/termos',
+    '/privacidade',
+    '/excluir-conta',
+    '/delete-account',
+    '/quick-summary',
+  ];
   const isLandingRoute = landingPaths.some(path => location === path);
   // Páginas legais (Termos / Privacidade / Excluir conta) precisam ficar acessíveis dentro do
   // app shell iOS para atender Guideline 3.1.2(c) e a exigência da Google Play de URL público

@@ -12,7 +12,10 @@ declare global {
 
 export async function ensureTenant(req: Request, res: Response, next: NextFunction) {
     // Public API endpoints that must remain accessible without session auth
-    if (req.originalUrl.startsWith("/api/webhook")) {
+    if (
+        req.originalUrl.startsWith("/api/webhook") ||
+        req.originalUrl.startsWith("/api/intake/lead")
+    ) {
         return next();
     }
 
