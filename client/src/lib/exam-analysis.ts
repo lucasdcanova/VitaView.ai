@@ -71,6 +71,35 @@ const toText = (value: unknown) => {
   return "";
 };
 
+export const normalizeExamNarrative = (value: unknown) => {
+  const text = toText(value);
+  if (!text) return "";
+
+  let normalized = "";
+  let shouldCapitalize = true;
+
+  for (const character of text) {
+    if (shouldCapitalize && /\p{L}/u.test(character)) {
+      normalized += character.toLocaleUpperCase("pt-BR");
+      shouldCapitalize = false;
+      continue;
+    }
+
+    normalized += character;
+
+    if (/[.!?\n]/.test(character)) {
+      shouldCapitalize = true;
+      continue;
+    }
+
+    if (!/\s/.test(character) && character !== '"' && character !== "'" && character !== "•" && character !== "-") {
+      shouldCapitalize = false;
+    }
+  }
+
+  return normalized;
+};
+
 const stripCodeFence = (value: string) => {
   const cleaned = value.trim();
   if (!cleaned.startsWith("```")) return cleaned;
@@ -130,7 +159,7 @@ export const parseStructuredExamAnalysis = (value: unknown): StructuredExamAnaly
 
 export const splitRecommendations = (value: unknown) => {
   if (Array.isArray(value)) {
-    return value.map((item) => toText(item)).filter(Boolean);
+    return value.map((item) => normalizeExamNarrative(item)).filter(Boolean);
   }
 
   const text = toText(value);
@@ -138,7 +167,7 @@ export const splitRecommendations = (value: unknown) => {
 
   return text
     .split(/\n|[•*-]\s+/)
-    .map((item) => item.trim())
+    .map((item) => normalizeExamNarrative(item))
     .filter(Boolean);
 };
 
@@ -153,7 +182,7 @@ export const formatStructuredDate = (value?: NullableText) => {
 };
 
 export const buildFindingDescription = (finding: StructuredExamFinding) => {
-  const title = toText(finding.title);
+  const title = normalizeExamNarrative(finding.title);
   if (!title) return "";
 
   const parts = [title];
@@ -161,8 +190,8 @@ export const buildFindingDescription = (finding: StructuredExamFinding) => {
   const value = toText(finding.value);
   const unit = toText(finding.unit);
   const qualitativeResult = toText(finding.qualitativeResult);
-  const interpretation = toText(finding.interpretation);
-  const significance = toText(finding.significance);
+  const interpretation = normalizeExamNarrative(finding.interpretation);
+  const significance = normalizeExamNarrative(finding.significance);
 
   if (bodySite) parts.push(`em ${bodySite}`);
   if (value) parts.push(`(${value}${unit ? ` ${unit}` : ""})`);
@@ -170,27 +199,27 @@ export const buildFindingDescription = (finding: StructuredExamFinding) => {
   if (interpretation) parts.push(`- ${interpretation}`);
   if (significance) parts.push(`- ${significance}`);
 
-  return parts.join(" ");
+  return normalizeExamNarrative(parts.join(" "));
 };
 
 export const buildImpressionDescription = (item: StructuredExamImpression) => {
-  const description = toText(item.description);
+  const description = normalizeExamNarrative(item.description);
   if (!description) return "";
 
   const extras = [item.severity, item.chronicity, item.laterality, item.status]
     .map((value) => toText(value))
     .filter(Boolean);
 
-  return extras.length > 0 ? `${description} (${extras.join(" | ")})` : description;
+  return normalizeExamNarrative(extras.length > 0 ? `${description} (${extras.join(" | ")})` : description);
 };
 
 export const buildDiagnosisDescription = (diagnosis: StructuredExamDiagnosis) => {
-  const condition = toText(diagnosis.condition) || "Condição sugerida";
+  const condition = normalizeExamNarrative(diagnosis.condition) || "Condição sugerida";
   const extras = [
     diagnosis.cidCode ? `CID ${toText(diagnosis.cidCode)}` : "",
-    diagnosis.confidence ? `confiança ${toText(diagnosis.confidence)}` : "",
-    diagnosis.basis ? toText(diagnosis.basis) : ""
+    diagnosis.confidence ? `Confiança ${toText(diagnosis.confidence)}` : "",
+    diagnosis.basis ? normalizeExamNarrative(diagnosis.basis) : ""
   ].filter(Boolean);
 
-  return extras.length > 0 ? `${condition} (${extras.join(" | ")})` : condition;
+  return normalizeExamNarrative(extras.length > 0 ? `${condition} (${extras.join(" | ")})` : condition);
 };

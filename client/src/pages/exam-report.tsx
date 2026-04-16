@@ -99,6 +99,7 @@ import {
   buildFindingDescription,
   buildImpressionDescription,
   formatStructuredDate,
+  normalizeExamNarrative,
   parseStructuredExamAnalysis,
   splitRecommendations,
 } from "@/lib/exam-analysis";
@@ -430,8 +431,10 @@ export default function ExamReport() {
       : data?.result?.recommendations || structuredAnalysis?.recommendations || []
   );
   const narrativeAnalysis =
-    structuredAnalysis?.detailedAnalysis ||
-    (typeof data?.result?.detailedAnalysis === "string" ? data.result.detailedAnalysis : "");
+    normalizeExamNarrative(
+      structuredAnalysis?.detailedAnalysis ||
+      (typeof data?.result?.detailedAnalysis === "string" ? data.result.detailedAnalysis : "")
+    );
 
   const handleDownloadPdf = async () => {
     if (!data) return;
@@ -642,7 +645,7 @@ export default function ExamReport() {
                       {/* Summary Tab */}
                       <TabsContent value="summary" className="mt-6">
                         <p className="text-muted-foreground mb-4">
-                          {data?.result?.summary}
+                          {normalizeExamNarrative(data?.result?.summary)}
                         </p>
 
                         <div className="bg-green-50 dark:bg-green-900/10 border-l-4 border-green-400 dark:border-green-600 p-4 rounded-r-lg mb-4">
@@ -683,7 +686,7 @@ export default function ExamReport() {
                                   ? `${abnormalMetrics[0]?.name || "Alguns parâmetros"} merecem acompanhamento clínico.`
                                   : suggestedDiagnoses.length > 0
                                     ? buildDiagnosisDescription(suggestedDiagnoses[0])
-                                    : diagnosticImpression[0]?.notes || clinicalFindings[0]?.interpretation || "A interpretação final deve sempre ser correlacionada ao contexto clínico do paciente."}
+                                    : normalizeExamNarrative(diagnosticImpression[0]?.notes || clinicalFindings[0]?.interpretation) || "A interpretação final deve sempre ser correlacionada ao contexto clínico do paciente."}
                               </p>
                             </div>
                           </div>
@@ -819,7 +822,7 @@ export default function ExamReport() {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                               {clinicalFindings.slice(0, 4).map((finding, index) => (
                                 <div key={`${buildFindingDescription(finding)}-${index}`} className="rounded-lg border border-border bg-muted/30 p-4">
-                                  <p className="font-medium text-foreground">{finding.title}</p>
+                                  <p className="font-medium text-foreground">{normalizeExamNarrative(finding.title)}</p>
                                   <p className="mt-2 text-sm text-muted-foreground">{buildFindingDescription(finding)}</p>
                                 </div>
                               ))}
@@ -840,19 +843,19 @@ export default function ExamReport() {
                               {structuredMetadata.examModality && (
                                 <div className="rounded-lg border border-border bg-card p-4">
                                   <p className="text-xs uppercase tracking-wide text-muted-foreground">Modalidade</p>
-                                  <p className="mt-1 font-medium text-foreground">{structuredMetadata.examModality}</p>
+                                  <p className="mt-1 font-medium text-foreground">{normalizeExamNarrative(structuredMetadata.examModality)}</p>
                                 </div>
                               )}
                               {structuredMetadata.bodyRegion && (
                                 <div className="rounded-lg border border-border bg-card p-4">
                                   <p className="text-xs uppercase tracking-wide text-muted-foreground">Região ou material</p>
-                                  <p className="mt-1 font-medium text-foreground">{structuredMetadata.bodyRegion}</p>
+                                  <p className="mt-1 font-medium text-foreground">{normalizeExamNarrative(structuredMetadata.bodyRegion)}</p>
                                 </div>
                               )}
                               {structuredMetadata.technique && (
                                 <div className="rounded-lg border border-border bg-card p-4">
                                   <p className="text-xs uppercase tracking-wide text-muted-foreground">Técnica</p>
-                                  <p className="mt-1 font-medium text-foreground">{structuredMetadata.technique}</p>
+                                  <p className="mt-1 font-medium text-foreground">{normalizeExamNarrative(structuredMetadata.technique)}</p>
                                 </div>
                               )}
                               {(structuredMetadata.collectionDate || structuredMetadata.reportDate) && (
@@ -961,7 +964,7 @@ export default function ExamReport() {
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                   {clinicalFindings.map((finding, index) => (
                                     <div key={`${buildFindingDescription(finding)}-${index}`} className="rounded-lg border border-border bg-muted/30 p-4">
-                                      <p className="font-medium text-foreground">{finding.title}</p>
+                                      <p className="font-medium text-foreground">{normalizeExamNarrative(finding.title)}</p>
                                       <p className="mt-2 text-sm text-muted-foreground">{buildFindingDescription(finding)}</p>
                                     </div>
                                   ))}
@@ -988,7 +991,7 @@ export default function ExamReport() {
                                 <div className="space-y-3">
                                   {suggestedDiagnoses.map((diagnosis, index) => (
                                     <div key={`${buildDiagnosisDescription(diagnosis)}-${index}`} className="rounded-lg border border-emerald-200 bg-emerald-50 dark:bg-emerald-900/10 p-4">
-                                      <p className="font-medium text-emerald-900 dark:text-emerald-300">{diagnosis.condition || "Condição sugerida"}</p>
+                                      <p className="font-medium text-emerald-900 dark:text-emerald-300">{normalizeExamNarrative(diagnosis.condition) || "Condição sugerida"}</p>
                                       <p className="mt-2 text-sm text-emerald-800 dark:text-emerald-400">{buildDiagnosisDescription(diagnosis)}</p>
                                     </div>
                                   ))}
@@ -1047,7 +1050,7 @@ export default function ExamReport() {
                                         {index === 3 && 'Cuidados gerais'}
                                         {index > 3 && `Orientação ${index + 1}`}
                                       </h4>
-                                      <p className="mt-1 text-sm text-muted-foreground">{recommendation}</p>
+                                      <p className="mt-1 text-sm text-muted-foreground">{normalizeExamNarrative(recommendation)}</p>
                                     </div>
                                   </div>
                                 </div>
@@ -1076,7 +1079,7 @@ export default function ExamReport() {
                                   <li key={index} className="flex items-start">
                                     <CheckCircle2 className="text-primary mt-0.5 mr-2 flex-shrink-0" size={18} />
                                     <div>
-                                      <h4 className="font-medium text-foreground">{specialist}</h4>
+                                      <h4 className="font-medium text-foreground">{normalizeExamNarrative(specialist)}</h4>
                                     </div>
                                   </li>
                                 ))
@@ -1090,20 +1093,20 @@ export default function ExamReport() {
                               <ul className="space-y-2 text-sm text-foreground">
                                 <li className="flex items-start">
                                   <span className="font-medium mr-2">Alimentação:</span>
-                                  <span>{filterLifestyleText(insights.lifestyle.diet)}</span>
+                                  <span>{normalizeExamNarrative(filterLifestyleText(insights.lifestyle.diet))}</span>
                                 </li>
                                 <li className="flex items-start">
                                   <span className="font-medium mr-2">Exercícios:</span>
-                                  <span>{filterLifestyleText(insights.lifestyle.exercise)}</span>
+                                  <span>{normalizeExamNarrative(filterLifestyleText(insights.lifestyle.exercise))}</span>
                                 </li>
                                 <li className="flex items-start">
                                   <span className="font-medium mr-2">Sono:</span>
-                                  <span>{filterLifestyleText(insights.lifestyle.sleep)}</span>
+                                  <span>{normalizeExamNarrative(filterLifestyleText(insights.lifestyle.sleep))}</span>
                                 </li>
                                 {insights.lifestyle.stress_management && (
                                   <li className="flex items-start">
                                     <span className="font-medium mr-2">Gerenciamento de estresse:</span>
-                                    <span>{filterLifestyleText(insights.lifestyle.stress_management)}</span>
+                                    <span>{normalizeExamNarrative(filterLifestyleText(insights.lifestyle.stress_management))}</span>
                                   </li>
                                 )}
                               </ul>

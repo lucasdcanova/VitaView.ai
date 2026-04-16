@@ -21,6 +21,7 @@ import {
   buildDiagnosisDescription,
   buildFindingDescription,
   buildImpressionDescription,
+  normalizeExamNarrative,
   parseStructuredExamAnalysis,
 } from "@/lib/exam-analysis";
 import { cn } from "@/lib/utils";
@@ -168,7 +169,9 @@ export function AppointmentExamWorkspace({
   const previewResult = selectedExamDetails?.result ?? null;
   const structuredAnalysis = parseStructuredExamAnalysis(previewResult?.detailedAnalysis);
   const structuredSummary =
-    previewResult?.summary || structuredAnalysis?.summary || structuredAnalysis?.detailedAnalysis || "";
+    normalizeExamNarrative(
+      previewResult?.summary || structuredAnalysis?.summary || structuredAnalysis?.detailedAnalysis || ""
+    );
   const clinicalFindings = structuredAnalysis?.clinicalFindings || [];
   const diagnosticImpression = structuredAnalysis?.diagnosticImpression || [];
   const suggestedDiagnoses = structuredAnalysis?.suggestedDiagnoses || [];
@@ -189,13 +192,14 @@ export function AppointmentExamWorkspace({
   const attentionSummary =
     abnormalPreviewMetrics.length > 0
       ? `${formatMetricDisplayName(abnormalPreviewMetrics[0]?.name || "Parâmetro")} fora do esperado para revisão clínica.`
-      : diagnosticImpression[0]?.notes ||
-        clinicalFindings[0]?.interpretation ||
+      : normalizeExamNarrative(diagnosticImpression[0]?.notes || clinicalFindings[0]?.interpretation) ||
         "Correlacione a leitura da IA com o contexto clínico do atendimento.";
   const labName =
-    previewExam?.laboratoryName ||
-    structuredAnalysis?.examMetadata?.institutionName ||
-    structuredAnalysis?.examMetadata?.laboratoryName;
+    normalizeExamNarrative(
+      previewExam?.laboratoryName ||
+      structuredAnalysis?.examMetadata?.institutionName ||
+      structuredAnalysis?.examMetadata?.laboratoryName
+    );
 
   const showEmptyState = sortedExams.length === 0;
   const showProcessingState =
