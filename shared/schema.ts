@@ -1323,6 +1323,76 @@ export const insertAIMessageSchema = createInsertSchema(aiMessages).pick({
 export type AIMessage = typeof aiMessages.$inferSelect;
 export type InsertAIMessage = z.infer<typeof insertAIMessageSchema>;
 
+// Consultation recording retention schema - stores raw audio temporarily so
+// failed transcriptions/finalize steps can be retried without losing the visit.
+export const consultationRecordingSessions = pgTable("consultation_recording_sessions", {
+  id: serial("id").primaryKey(),
+  sessionId: text("session_id").notNull().unique(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  clinicId: integer("clinic_id").references(() => clinics.id),
+  profileId: integer("profile_id").references(() => profiles.id),
+  patientName: text("patient_name"),
+  status: text("status").default("recording").notNull(), // recording, processing, finalized, failed, expired
+  transcription: text("transcription"),
+  anamnesis: text("anamnesis"),
+  extractedData: jsonb("extracted_data"),
+  lastError: text("last_error"),
+  retentionExpiresAt: timestamp("retention_expires_at").notNull(),
+  finalizedAt: timestamp("finalized_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const insertConsultationRecordingSessionSchema = createInsertSchema(consultationRecordingSessions).pick({
+  sessionId: true,
+  userId: true,
+  clinicId: true,
+  profileId: true,
+  patientName: true,
+  status: true,
+  transcription: true,
+  anamnesis: true,
+  extractedData: true,
+  lastError: true,
+  retentionExpiresAt: true,
+  finalizedAt: true,
+});
+
+export type ConsultationRecordingSession = typeof consultationRecordingSessions.$inferSelect;
+export type InsertConsultationRecordingSession = z.infer<typeof insertConsultationRecordingSessionSchema>;
+
+export const consultationRecordingSegments = pgTable("consultation_recording_segments", {
+  id: serial("id").primaryKey(),
+  sessionId: text("session_id").notNull().references(() => consultationRecordingSessions.sessionId, { onDelete: "cascade" }),
+  segmentIndex: integer("segment_index").notNull(),
+  storageKey: text("storage_key").notNull(),
+  mimeType: text("mime_type").notNull(),
+  originalName: text("original_name").notNull(),
+  sizeBytes: integer("size_bytes").notNull(),
+  transcription: text("transcription"),
+  status: text("status").default("stored").notNull(), // stored, transcribed, failed
+  lastError: text("last_error"),
+  retentionExpiresAt: timestamp("retention_expires_at").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const insertConsultationRecordingSegmentSchema = createInsertSchema(consultationRecordingSegments).pick({
+  sessionId: true,
+  segmentIndex: true,
+  storageKey: true,
+  mimeType: true,
+  originalName: true,
+  sizeBytes: true,
+  transcription: true,
+  status: true,
+  lastError: true,
+  retentionExpiresAt: true,
+});
+
+export type ConsultationRecordingSegment = typeof consultationRecordingSegments.$inferSelect;
+export type InsertConsultationRecordingSegment = z.infer<typeof insertConsultationRecordingSegmentSchema>;
+
 // AI Usage Tracking schema - Fair use limits
 export const aiUsage = pgTable("ai_usage", {
   id: serial("id").primaryKey(),

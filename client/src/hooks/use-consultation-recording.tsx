@@ -61,6 +61,7 @@ export interface ConsultationTranscriptionResult {
 }
 
 interface ConsultationRecordingSession {
+  sessionId: string;
   profileId: number | null;
   patientName: string | null;
   returnPath: string;
@@ -152,6 +153,16 @@ const normalizeUploadMimeType = (mimeType: string | undefined, fallbackMimeType:
   if (mimeType.startsWith("audio/m4a")) return "audio/m4a";
 
   return fallbackMimeType;
+};
+
+const createRecordingSessionId = () => {
+  if (typeof globalThis.crypto?.randomUUID === "function") {
+    return globalThis.crypto.randomUUID();
+  }
+
+  return `consultation-${Date.now()}-${Math.random()
+    .toString(36)
+    .slice(2, 10)}`;
 };
 
 const getAudioStream = async (constraints: MediaStreamConstraints): Promise<MediaStream> => {
@@ -396,12 +407,26 @@ export function ConsultationRecordingProvider({
 
     for (let attempt = 1; attempt <= UPLOAD_MAX_RETRIES; attempt++) {
       try {
+        const session = sessionRef.current;
+        if (!session?.sessionId) {
+          throw new Error("Sessao de gravacao indisponivel");
+        }
+
         const formData = new FormData();
         formData.append(
           "audio",
           segment,
           `consultation-${index}.${recordingFormatRef.current.extension}`
         );
+        formData.append("sessionId", session.sessionId);
+        formData.append("segmentIndex", String(index));
+
+        if (session.profileId !== null) {
+          formData.append("profileId", String(session.profileId));
+        }
+        if (session.patientName) {
+          formData.append("patientName", session.patientName);
+        }
 
         const response = await fetch("/api/consultation/transcribe-segment", {
           method: "POST",
@@ -561,8 +586,10 @@ export function ConsultationRecordingProvider({
         credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          sessionId: session?.sessionId ?? null,
           segments: transcripts,
           profileId: session?.profileId ?? null,
+          patientName: session?.patientName ?? null,
         }),
       });
 
@@ -615,6 +642,7 @@ export function ConsultationRecordingProvider({
         uploadFailureRef.current = null;
         recoveryAttemptsRef.current = 0;
         setSession({
+          sessionId: createRecordingSessionId(),
           profileId: options?.profileId ?? null,
           patientName: options?.patientName?.trim() || null,
           returnPath: options?.returnPath || "/atendimento",

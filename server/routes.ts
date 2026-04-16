@@ -42,6 +42,7 @@ import { analyzeDocumentWithOpenAI, analyzeExtractedExam, generateHealthInsights
 import { buildPatientRecordContext } from "./services/patient-record";
 import { S3Service } from "./services/s3.service";
 import { runAnalysisPipeline } from "./services/analyze-pipeline";
+import { consultationAudioRetentionService } from "./services/consultation-audio-retention";
 import { extractPatientsFromImages, extractPatientsFromPDF, extractPatientsFromCSV, normalizePatientData, convertToInsertProfile, type ExtractedPatient } from "./services/bulk-import";
 import logger from "./logger";
 import { createPrivateKey, createSign, randomBytes, scrypt } from "crypto";
@@ -3270,6 +3271,21 @@ export async function registerRoutes(app: Express): Promise<void> {
     checkFairUse('transcriptionMinutes'),
     audioTranscriptionUpload.single('audio'),
     async (req, res) => {
+      const sessionId =
+        typeof req.body?.sessionId === "string" && req.body.sessionId.trim()
+          ? req.body.sessionId.trim()
+          : nanoid();
+      const rawSegmentIndex = Number.parseInt(String(req.body?.segmentIndex ?? "0"), 10);
+      const segmentIndex = Number.isFinite(rawSegmentIndex) && rawSegmentIndex >= 0
+        ? rawSegmentIndex
+        : 0;
+      const rawProfileId = Number.parseInt(String(req.body?.profileId ?? ""), 10);
+      const profileId = Number.isFinite(rawProfileId) ? rawProfileId : null;
+      const patientName =
+        typeof req.body?.patientName === "string" && req.body.patientName.trim()
+          ? req.body.patientName.trim()
+          : null;
+
       try {
         const file = req.file as Express.Multer.File | undefined;
         if (!file) {
@@ -3289,15 +3305,51 @@ export async function registerRoutes(app: Express): Promise<void> {
 
         logger.info("[Transcription] Segmento recebido", {
           userId: req.user?.id,
+          sessionId,
+          segmentIndex,
           size: file.size,
           mimeType: file.mimetype,
         });
+
+        await consultationAudioRetentionService.storeSegment({
+          sessionId,
+          segmentIndex,
+          userId: req.user!.id,
+          clinicId: req.tenantId,
+          profileId,
+          patientName,
+          buffer: file.buffer,
+          mimeType: file.mimetype,
+          originalName: file.originalname,
+          sizeBytes: file.size,
+        });
+
+        const existingSegment = await consultationAudioRetentionService.getSegment(
+          sessionId,
+          req.user!.id,
+          segmentIndex
+        );
+
+        if (existingSegment?.transcription?.trim()) {
+          return res.json({
+            success: true,
+            text: existingSegment.transcription,
+            sessionId,
+            segmentIndex,
+          });
+        }
 
         const text = await transcribeConsultationAudio(
           file.buffer,
           file.mimetype,
           req.user!.id,
           req.tenantId
+        );
+
+        await consultationAudioRetentionService.markSegmentTranscribed(
+          sessionId,
+          segmentIndex,
+          text
         );
 
         // Track usage por segmento (estimativa por bitrate)
@@ -3309,13 +3361,22 @@ export async function registerRoutes(app: Express): Promise<void> {
         const estimatedMinutes = Math.max(1, Math.ceil(file.size / (mbPerMinute * 1024 * 1024)));
         await trackUsage(req.user!.id, 'transcriptionMinutes', estimatedMinutes);
 
-        res.json({ success: true, text });
+        res.json({ success: true, text, sessionId, segmentIndex });
       } catch (error) {
+        await consultationAudioRetentionService.markSegmentFailed(
+          sessionId,
+          segmentIndex,
+          error instanceof Error ? error.message : String(error)
+        );
         logger.error("[Transcription] Falha em segmento isolado", {
           userId: req.user?.id,
+          sessionId,
+          segmentIndex,
           message: error instanceof Error ? error.message : String(error),
         });
         res.status(500).json({
+          sessionId,
+          segmentIndex,
           message: error instanceof Error ? error.message : "Erro ao transcrever segmento",
         });
       }
@@ -3332,23 +3393,21 @@ export async function registerRoutes(app: Express): Promise<void> {
     },
     ensureAuthenticated,
     async (req, res) => {
+      const sessionId =
+        typeof req.body?.sessionId === "string" && req.body.sessionId.trim()
+          ? req.body.sessionId.trim()
+          : null;
+
       try {
         const segments: unknown = req.body?.segments;
-        if (!Array.isArray(segments) || segments.length === 0) {
-          return res.status(400).json({ message: "É necessário enviar ao menos um trecho transcrito." });
-        }
-
-        const transcription = segments
-          .filter((s): s is string => typeof s === "string" && s.trim().length > 0)
-          .map((s) => s.trim())
-          .join(" ");
-
-        if (!transcription) {
-          return res.status(400).json({ message: "Nenhum trecho transcrito válido foi recebido." });
-        }
-
         let patientData = null;
-        const profileId = req.body?.profileId ? parseInt(req.body.profileId) : null;
+        const rawProfileId = Number.parseInt(String(req.body?.profileId ?? ""), 10);
+        const profileId = Number.isFinite(rawProfileId) ? rawProfileId : null;
+        const patientName =
+          typeof req.body?.patientName === "string" && req.body.patientName.trim()
+            ? req.body.patientName.trim()
+            : null;
+
         if (profileId) {
           try {
             const profile = await storage.getProfile(profileId);
@@ -3364,6 +3423,41 @@ export async function registerRoutes(app: Express): Promise<void> {
           }
         }
 
+        let transcription = "";
+        let segmentCount = Array.isArray(segments) ? segments.length : 0;
+
+        if (sessionId) {
+          const recoveredSegments =
+            await consultationAudioRetentionService.recoverMissingSegmentTranscriptions({
+              sessionId,
+              userId: req.user!.id,
+              transcribeSegment: (audioBuffer, mimeType, userId) =>
+                transcribeConsultationAudio(audioBuffer, mimeType, userId, req.tenantId),
+            });
+
+          if (recoveredSegments.length > 0) {
+            segmentCount = recoveredSegments.length;
+            transcription = recoveredSegments
+              .map((segment) => segment.transcription?.trim() || "")
+              .filter(Boolean)
+              .join(" ");
+          }
+        }
+
+        if (!transcription && Array.isArray(segments)) {
+          transcription = segments
+            .filter((s): s is string => typeof s === "string" && s.trim().length > 0)
+            .map((s) => s.trim())
+            .join(" ");
+        }
+
+        if (!transcription) {
+          return res.status(400).json({
+            message: "Nenhum trecho transcrito válido foi recebido.",
+            sessionId,
+          });
+        }
+
         const result = await processTranscriptionToAnamnesis(
           transcription,
           patientData,
@@ -3371,27 +3465,51 @@ export async function registerRoutes(app: Express): Promise<void> {
           req.tenantId
         );
 
+        if (sessionId) {
+          await consultationAudioRetentionService.finalizeSession({
+            sessionId,
+            userId: req.user!.id,
+            clinicId: req.tenantId,
+            profileId,
+            patientName,
+            transcription,
+            anamnesis: result.anamnesis,
+            extractedData: result.extractedData,
+          });
+        }
+
         await trackUsage(req.user!.id, 'aiRequests', 1);
 
         logger.info("[Transcription] Finalize concluído", {
           userId: req.user?.id,
-          segments: segments.length,
+          sessionId,
+          segments: segmentCount,
           transcriptionLength: transcription.length,
           anamnesisLength: result.anamnesis.length,
         });
 
         res.json({
           success: true,
+          sessionId,
           transcription,
           anamnesis: result.anamnesis,
           extractedData: result.extractedData,
         });
       } catch (error) {
+        if (sessionId) {
+          await consultationAudioRetentionService.markSessionFailed(
+            sessionId,
+            req.user!.id,
+            error instanceof Error ? error.message : String(error)
+          );
+        }
         logger.error("[Transcription] Falha no finalize", {
           userId: req.user?.id,
+          sessionId,
           message: error instanceof Error ? error.message : String(error),
         });
         res.status(500).json({
+          sessionId,
           message: error instanceof Error ? error.message : "Erro ao finalizar a consulta.",
         });
       }

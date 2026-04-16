@@ -151,6 +151,44 @@ export class S3Service {
     }
   }
 
+  static async putFile(options: {
+    key: string;
+    buffer: Buffer;
+    mimeType: string;
+    metadata?: Record<string, string>;
+  }): Promise<{ key: string; bucket: string; url: string; size: number; mimeType: string }> {
+    const { key, buffer, mimeType, metadata } = options;
+
+    try {
+      const command = new PutObjectCommand({
+        Bucket: BUCKET_NAME,
+        Key: key,
+        Body: buffer,
+        ContentType: mimeType,
+        ServerSideEncryption: "AES256",
+        Metadata: metadata,
+      });
+
+      if (!s3Client) throw new Error("S3 client not initialized");
+      await s3Client.send(command);
+
+      const url = await this.getSignedUrl(key, 3600);
+      return {
+        key,
+        bucket: BUCKET_NAME,
+        url,
+        size: buffer.length,
+        mimeType,
+      };
+    } catch (error) {
+      logger.error("[S3] Erro ao gravar arquivo arbitrário", {
+        key,
+        message: error instanceof Error ? error.message : error,
+      });
+      throw new Error("Falha ao armazenar arquivo");
+    }
+  }
+
   /**
    * Gera uma URL assinada para acesso temporário ao arquivo
    */
@@ -264,6 +302,7 @@ if (!s3Client) {
   S3Service.uploadSensitiveFile = async (userId: number, fileType: string, file: Express.Multer.File) => {
     const key = `${userId}_${Date.now()}_${file.originalname}`;
     const filePath = path.join(UPLOAD_DIR, key);
+    await mkdirAsync(path.dirname(filePath), { recursive: true });
     await writeFileAsync(filePath, file.buffer);
     return { key, url: `/uploads/${key}` };
   };
@@ -272,6 +311,7 @@ if (!s3Client) {
     const { userId, buffer, originalName, mimeType } = options;
     const key = `${userId}_${Date.now()}_${originalName}`;
     const filePath = path.join(UPLOAD_DIR, key);
+    await mkdirAsync(path.dirname(filePath), { recursive: true });
     await writeFileAsync(filePath, buffer);
     return {
       key,
@@ -280,6 +320,20 @@ if (!s3Client) {
       size: buffer.length,
       mimeType,
       originalName
+    };
+  };
+
+  S3Service.putFile = async (options: any) => {
+    const { key, buffer, mimeType } = options;
+    const filePath = path.join(UPLOAD_DIR, key);
+    await mkdirAsync(path.dirname(filePath), { recursive: true });
+    await writeFileAsync(filePath, buffer);
+    return {
+      key,
+      bucket: "local",
+      url: `/uploads/${key}`,
+      size: buffer.length,
+      mimeType,
     };
   };
 
