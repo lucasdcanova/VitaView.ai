@@ -644,7 +644,7 @@ export default function ExamReport() {
                       </TabsList>
 
                       {/* Summary Tab */}
-                      <TabsContent value="summary" className="mt-6">
+                      <TabsContent value="summary" className="mt-0">
                         <div className="bg-green-50 dark:bg-green-900/10 border-l-4 border-green-400 dark:border-green-600 p-4 rounded-r-lg mb-4">
                           <div className="flex">
                             <CheckCircle2 className="text-green-600 dark:text-green-500 mr-3 flex-shrink-0" size={20} />
