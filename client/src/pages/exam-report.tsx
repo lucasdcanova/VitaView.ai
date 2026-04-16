@@ -483,33 +483,15 @@ export default function ExamReport() {
                         </div>
                       </div>
 
-                      {conciseClinicalBlocks.length > 0 && (
-                        <section className="space-y-3">
-                          <div>
-                            <h3 className="font-medium text-lg text-foreground">Leitura clínica do laudo</h3>
-                            <p className="text-sm text-muted-foreground">Achados objetivos e hipóteses que realmente ajudam na conversa clínica.</p>
-                          </div>
-
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {conciseClinicalBlocks.map((item, index) => (
-                              <div key={`${item.label}-${item.text}-${index}`} className={`rounded-xl border p-4 ${item.tone}`}>
-                                <p className="text-xs uppercase tracking-wide text-muted-foreground">{item.label}</p>
-                                <p className="mt-2 text-sm text-foreground leading-6">{item.text}</p>
-                              </div>
-                            ))}
-                          </div>
-                        </section>
-                      )}
-
                       {healthMetrics.length > 0 && (
                         <section className="space-y-3">
                           <div>
-                            <h3 className="font-medium text-lg text-foreground">Parâmetros mais relevantes</h3>
-                            <p className="text-sm text-muted-foreground">Mantive só a visão prática para consulta, sem virar tabela longa.</p>
+                            <h3 className="font-medium text-lg text-foreground">Análise detalhada dos parâmetros do exame</h3>
+                            <p className="text-sm text-muted-foreground">Todos os parâmetros estruturados do exame, com valor, referência, variação e contexto clínico quando disponível.</p>
                           </div>
 
-                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {healthMetrics.slice(0, 6).map((metric, index) => (
+                          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                            {healthMetrics.map((metric, index) => (
                               <div key={index} className={`p-4 rounded-lg ${metric.status === 'alto' || metric.status === 'high' ? 'bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/50' :
                                 metric.status === 'baixo' || metric.status === 'low' ? 'bg-blue-50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/50' :
                                   metric.status === 'atenção' || metric.status === 'atencao' ? 'bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/50' : 'bg-muted/30 border border-border'
@@ -607,23 +589,39 @@ export default function ExamReport() {
                                       </span>
                                     )}
                                   </div>
-
-                                  {metric.clinical_significance && (
-                                    <TooltipProvider>
-                                      <Tooltip>
-                                        <TooltipTrigger asChild>
-                                          <span className="text-primary cursor-help flex items-center">
-                                            <Info className="h-3 w-3 mr-1" />
-                                            <span className="text-xs">Significado clínico</span>
-                                          </span>
-                                        </TooltipTrigger>
-                                        <TooltipContent className="max-w-xs p-3">
-                                          <p>{normalizeExamNarrative(metric.clinical_significance)}</p>
-                                        </TooltipContent>
-                                      </Tooltip>
-                                    </TooltipProvider>
-                                  )}
                                 </div>
+
+                                <div className="mt-3 rounded-lg bg-background/70 px-3 py-2 text-xs text-muted-foreground">
+                                  <div className="flex items-start gap-2">
+                                    <Info className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-primary" />
+                                    <div>
+                                      <p className="font-medium text-foreground">Leitura clínica</p>
+                                      <p className="mt-1 leading-5">
+                                        {metric.clinical_significance
+                                          ? normalizeExamNarrative(metric.clinical_significance)
+                                          : "Sem observação clínica adicional estruturada para este parâmetro."}
+                                      </p>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </section>
+                      )}
+
+                      {conciseClinicalBlocks.length > 0 && (
+                        <section className="space-y-3">
+                          <div>
+                            <h3 className="font-medium text-lg text-foreground">Leitura clínica do laudo</h3>
+                            <p className="text-sm text-muted-foreground">Achados objetivos e hipóteses que realmente ajudam na conversa clínica.</p>
+                          </div>
+
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {conciseClinicalBlocks.map((item, index) => (
+                              <div key={`${item.label}-${item.text}-${index}`} className={`rounded-xl border p-4 ${item.tone}`}>
+                                <p className="text-xs uppercase tracking-wide text-muted-foreground">{item.label}</p>
+                                <p className="mt-2 text-sm text-foreground leading-6">{item.text}</p>
                               </div>
                             ))}
                           </div>
