@@ -153,20 +153,6 @@ export default function ExamReport() {
     clearExamReturnContext();
   };
 
-  // Verificar se existe um parâmetro 'tab' na URL para definir a aba ativa inicialmente
-  const getInitialTab = () => {
-    if (typeof window !== "undefined") {
-      const urlParams = new URLSearchParams(window.location.search);
-      const tabParam = urlParams.get('tab');
-      if (tabParam && ['summary', 'detailed', 'recommendations', 'evidence'].includes(tabParam)) {
-        return tabParam;
-      }
-    }
-    return "summary"; // Tab padrão se não houver parâmetro válido
-  };
-
-  const [activeTab, setActiveTab] = useState(getInitialTab());
-
   const { data, isLoading } = useQuery<{ exam: Exam, result?: ExamResult | null }>({
     queryKey: [`/api/exams/${examId}`],
     queryFn: () => getExamDetails(examId),
@@ -492,6 +478,69 @@ export default function ExamReport() {
     structuredMetadata.laboratoryName;
   const physicianName =
     data?.exam?.requestingPhysician || structuredMetadata.requestingPhysician;
+  const headlineTitle =
+    suggestedDiagnoses.length > 0
+      ? "Hipóteses clínicas derivadas do exame"
+      : diagnosticImpression.length > 0
+        ? "Conclusão principal do laudo"
+        : healthMetrics.length > 0 && abnormalMetrics.length === 0
+          ? "Resultado predominantemente estável"
+          : "Resumo clínico do exame";
+  const headlineText =
+    suggestedDiagnoses.length > 0
+      ? buildDiagnosisDescription(suggestedDiagnoses[0])
+      : diagnosticImpression.length > 0
+        ? buildImpressionDescription(diagnosticImpression[0])
+        : healthMetrics.length > 0 && abnormalMetrics.length === 0
+          ? "Os parâmetros estruturados ficaram majoritariamente em faixa estável."
+          : clinicalFindings.length > 0
+            ? buildFindingDescription(clinicalFindings[0])
+            : narrativeAnalysis || "O exame foi processado e estruturado no prontuário do paciente.";
+  const attentionText =
+    abnormalMetrics.length > 0
+      ? `${formatMetricDisplayName(abnormalMetrics[0]?.name || "Alguns parâmetros")} merecem acompanhamento clínico.`
+      : suggestedDiagnoses.length > 0
+        ? buildDiagnosisDescription(suggestedDiagnoses[0])
+        : normalizeExamNarrative(diagnosticImpression[0]?.notes || clinicalFindings[0]?.interpretation) || "A interpretação final deve sempre ser correlacionada ao contexto clínico do paciente.";
+  const conciseRecommendations = filterRecommendations(structuredRecommendations).slice(0, 4);
+  const specialistSuggestions = (insights?.specialists || [])
+    .map((specialist) => normalizeExamNarrative(specialist))
+    .filter(Boolean)
+    .slice(0, 4);
+  const lifestyleGuidance = insights?.lifestyle
+    ? [
+        { label: "Alimentação", text: normalizeExamNarrative(filterLifestyleText(insights.lifestyle.diet)) },
+        { label: "Exercícios", text: normalizeExamNarrative(filterLifestyleText(insights.lifestyle.exercise)) },
+        { label: "Sono", text: normalizeExamNarrative(filterLifestyleText(insights.lifestyle.sleep)) },
+        insights.lifestyle.stress_management
+          ? {
+              label: "Gerenciamento de estresse",
+              text: normalizeExamNarrative(filterLifestyleText(insights.lifestyle.stress_management)),
+            }
+          : null,
+      ].filter((item): item is { label: string; text: string } => Boolean(item?.text))
+    : [];
+  const conciseClinicalBlocks = [
+    ...diagnosticImpression.slice(0, 2).map((item) => ({
+      label: "Impressão",
+      tone: "border-emerald-200/80 bg-emerald-50/70 dark:border-emerald-900/60 dark:bg-emerald-950/20",
+      text: buildImpressionDescription(item),
+    })),
+    ...clinicalFindings.slice(0, 3).map((finding) => ({
+      label: "Achado",
+      tone: "border-border/70 bg-muted/25",
+      text: buildFindingDescription(finding),
+    })),
+    ...suggestedDiagnoses.slice(0, 2).map((diagnosis) => ({
+      label: "Diagnóstico sugerido",
+      tone: "border-blue-200/80 bg-blue-50/70 dark:border-blue-900/60 dark:bg-blue-950/20",
+      text: buildDiagnosisDescription(diagnosis),
+    })),
+  ].filter((item) => item.text);
+  const showComplementaryNarrative =
+    Boolean(narrativeAnalysis) &&
+    conciseClinicalBlocks.length === 0 &&
+    healthMetrics.length === 0;
 
   // Compact metadata pieces for the PatientHeader description.
   const metadataParts: string[] = [];
@@ -609,656 +658,252 @@ export default function ExamReport() {
                   </div>
                 ) : (
                   <>
-                    <Tabs defaultValue="summary" value={activeTab} onValueChange={setActiveTab} className="mb-6">
-                      <TabsList className="border-b border-border w-full justify-start rounded-none bg-transparent pb-px mb-6">
-                        <TabsTrigger
-                          value="summary"
-                          className="data-[state=active]:border-primary-500 data-[state=active]:text-primary-600 border-b-2 border-transparent rounded-none bg-transparent"
-                        >
-                          Resumo
-                        </TabsTrigger>
-                        <FeatureGate feature="ai-report-detailed">
-                          <TabsTrigger
-                            value="detailed"
-                            className="data-[state=active]:border-primary-500 data-[state=active]:text-primary-600 border-b-2 border-transparent rounded-none bg-transparent ml-8"
-                          >
-                            Análise Detalhada
-                          </TabsTrigger>
-                        </FeatureGate>
-                        <FeatureGate feature="ai-report-rec">
-                          <TabsTrigger
-                            value="recommendations"
-                            className="data-[state=active]:border-primary-500 data-[state=active]:text-primary-600 border-b-2 border-transparent rounded-none bg-transparent ml-8"
-                          >
-                            Recomendações
-                          </TabsTrigger>
-                        </FeatureGate>
-                        <FeatureGate feature="ai-report-evidence">
-                          <TabsTrigger
-                            value="evidence"
-                            className="data-[state=active]:border-primary-500 data-[state=active]:text-primary-600 border-b-2 border-transparent rounded-none bg-transparent ml-8"
-                          >
-                            Evidências Científicas
-                          </TabsTrigger>
-                        </FeatureGate>
-                      </TabsList>
-
-                      {/* Summary Tab */}
-                      <TabsContent value="summary" className="mt-0">
-                        <div className="bg-green-50 dark:bg-green-900/10 border-l-4 border-green-400 dark:border-green-600 p-4 rounded-r-lg mb-4">
+                    <div className="space-y-6">
+                      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
+                        <div className="bg-green-50 dark:bg-green-900/10 border-l-4 border-green-400 dark:border-green-600 p-4 rounded-r-lg">
                           <div className="flex">
                             <CheckCircle2 className="text-green-600 dark:text-green-500 mr-3 flex-shrink-0" size={20} />
                             <div>
-                              <h4 className="font-medium text-green-800 dark:text-green-300">
-                                {suggestedDiagnoses.length > 0
-                                  ? "Hipóteses clínicas derivadas do exame"
-                                  : diagnosticImpression.length > 0
-                                    ? "Conclusão principal do laudo"
-                                    : healthMetrics.length > 0 && abnormalMetrics.length === 0
-                                      ? "Resultado predominantemente estável"
-                                      : "Resumo clínico do exame"}
-                              </h4>
-                              <p className="text-sm text-green-700 dark:text-green-400 mt-1">
-                                {suggestedDiagnoses.length > 0
-                                  ? buildDiagnosisDescription(suggestedDiagnoses[0])
-                                  : diagnosticImpression.length > 0
-                                    ? buildImpressionDescription(diagnosticImpression[0])
-                                    : healthMetrics.length > 0 && abnormalMetrics.length === 0
-                                      ? "Os parâmetros estruturados ficaram majoritariamente em faixa estável."
-                                      : clinicalFindings.length > 0
-                                        ? buildFindingDescription(clinicalFindings[0])
-                                        : narrativeAnalysis || "O exame foi processado e estruturado no prontuário do paciente."}
-                              </p>
+                              <h4 className="font-medium text-green-800 dark:text-green-300">{headlineTitle}</h4>
+                              <p className="text-sm text-green-700 dark:text-green-400 mt-1">{headlineText}</p>
                             </div>
                           </div>
                         </div>
 
                         <div className="bg-yellow-50 dark:bg-yellow-900/10 border-l-4 border-yellow-400 dark:border-yellow-600 p-4 rounded-r-lg">
                           <div className="flex">
-                            <CheckCircle2 className="text-yellow-600 dark:text-yellow-500 mr-3 flex-shrink-0" size={20} />
+                            <AlertTriangle className="text-yellow-600 dark:text-yellow-500 mr-3 flex-shrink-0" size={20} />
                             <div>
                               <h4 className="font-medium text-yellow-800 dark:text-yellow-300">Pontos de atenção</h4>
-                              <p className="text-sm text-yellow-700 dark:text-yellow-400 mt-1">
-                                {abnormalMetrics.length > 0
-                                  ? `${formatMetricDisplayName(abnormalMetrics[0]?.name || "Alguns parâmetros")} merecem acompanhamento clínico.`
-                                  : suggestedDiagnoses.length > 0
-                                    ? buildDiagnosisDescription(suggestedDiagnoses[0])
-                                    : normalizeExamNarrative(diagnosticImpression[0]?.notes || clinicalFindings[0]?.interpretation) || "A interpretação final deve sempre ser correlacionada ao contexto clínico do paciente."}
-                              </p>
+                              <p className="text-sm text-yellow-700 dark:text-yellow-400 mt-1">{attentionText}</p>
                             </div>
                           </div>
                         </div>
+                      </div>
 
-                        {healthMetrics.length > 0 ? (
-                          <>
-                            <h3 className="font-medium text-lg text-foreground mt-6 mb-3">Principais parâmetros</h3>
+                      {conciseClinicalBlocks.length > 0 && (
+                        <section className="space-y-3">
+                          <div>
+                            <h3 className="font-medium text-lg text-foreground">Leitura clínica do laudo</h3>
+                            <p className="text-sm text-muted-foreground">Achados objetivos e hipóteses que realmente ajudam na conversa clínica.</p>
+                          </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                              {healthMetrics.slice(0, 6).map((metric, index) => (
-                                <div key={index} className={`p-4 rounded-lg ${metric.status === 'alto' || metric.status === 'high' ? 'bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/50' :
-                                  metric.status === 'baixo' || metric.status === 'low' ? 'bg-blue-50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/50' :
-                                    metric.status === 'atenção' || metric.status === 'atencao' ? 'bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/50' : 'bg-muted/30 border border-border'
-                                  }`}>
-                                  <div className="flex justify-between mb-1">
-                                    <span className="text-sm font-medium text-foreground flex items-center">
-                                      {metric.name.charAt(0).toUpperCase() + metric.name.slice(1)}
-                                      {metric.status !== 'normal' && (
-                                        <Badge variant="outline" className={`ml-2 ${metric.status === 'alto' || metric.status === 'high' ? 'bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300 border-red-200 dark:border-red-900' :
-                                          metric.status === 'baixo' || metric.status === 'low' ? 'bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300 border-blue-200 dark:border-blue-900' :
-                                            'bg-amber-100 dark:bg-amber-900/20 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-900'
-                                          }`}>
-                                          {metric.status.charAt(0).toUpperCase() + metric.status.slice(1)}
-                                        </Badge>
-                                      )}
-                                    </span>
-                                    <div className="flex items-center">
-                                      <span className="text-sm text-foreground font-medium">{metric.value} {metric.unit}</span>
-                                      {metric.change && (
-                                        <span className={`text-xs ml-2 px-1.5 py-0.5 rounded-full ${metric.change.startsWith('+') ? 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400' :
-                                          metric.change.startsWith('-') ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400' :
-                                            'bg-muted text-muted-foreground'
-                                          }`}>
-                                          {metric.change}
-                                        </span>
-                                      )}
-                                    </div>
-                                  </div>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {conciseClinicalBlocks.map((item, index) => (
+                              <div key={`${item.label}-${item.text}-${index}`} className={`rounded-xl border p-4 ${item.tone}`}>
+                                <p className="text-xs uppercase tracking-wide text-muted-foreground">{item.label}</p>
+                                <p className="mt-2 text-sm text-foreground leading-6">{item.text}</p>
+                              </div>
+                            ))}
+                          </div>
+                        </section>
+                      )}
 
-                                  <div className="w-full bg-muted rounded-full h-2.5 mt-2 mb-1 relative">
-                                    {(metric.referenceMin && metric.referenceMax) ? (
-                                      <div className="absolute h-full bg-green-500/30 dark:bg-green-500/20 rounded-full"
-                                        style={{
-                                          left: '30%',
-                                          width: '40%'
-                                        }}>
-                                      </div>
-                                    ) : (
-                                      <div className="absolute h-full bg-muted rounded-full opacity-40"
-                                        style={{
-                                          left: '25%',
-                                          width: '50%'
-                                        }}>
-                                      </div>
-                                    )}
+                      {healthMetrics.length > 0 && (
+                        <section className="space-y-3">
+                          <div>
+                            <h3 className="font-medium text-lg text-foreground">Parâmetros mais relevantes</h3>
+                            <p className="text-sm text-muted-foreground">Mantive só a visão prática para consulta, sem virar tabela longa.</p>
+                          </div>
 
-                                    {(metric.referenceMin && metric.referenceMax) && (
-                                      <>
-                                        <div className="absolute h-full w-0.5 bg-green-600 dark:bg-green-400 opacity-50"
-                                          style={{ left: '30%' }}
-                                          title={`Valor mínimo de referência: ${metric.referenceMin}`}>
-                                        </div>
-                                        <div className="absolute h-full w-0.5 bg-green-600 dark:bg-green-400 opacity-50"
-                                          style={{ left: '70%' }}
-                                          title={`Valor máximo de referência: ${metric.referenceMax}`}>
-                                        </div>
-                                      </>
-                                    )}
-
-                                    {(() => {
-                                      const status = getMetricStatusForUI(
-                                        metric.status,
-                                        metric.value,
-                                        metric.referenceMin,
-                                        metric.referenceMax
-                                      );
-
-                                      return (
-                                        <div
-                                          className={`w-3 h-3 rounded-full absolute top-1/2 transform -translate-y-1/2 shadow-md ${status.indicatorClass}`}
-                                          style={{
-                                            left: status.position,
-                                            marginLeft: '-4px',
-                                            transition: 'left 0.3s ease-in-out'
-                                          }}
-                                          title={`Valor: ${metric.value} ${metric.unit}`}>
-                                        </div>
-                                      );
-                                    })()}
-                                  </div>
-
-                                  <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                                    <div className="flex items-center">
-                                      <span>
-                                        Ref: {metric.referenceMin || '?'}-{metric.referenceMax || '?'} {metric.unit}
-                                      </span>
-
-                                      {metric.change && (
-                                        <span className={`ml-2 px-1.5 rounded-md flex items-center ${metric.change.startsWith('+') ? 'text-red-700 dark:text-red-400' :
-                                          metric.change.startsWith('-') ? 'text-green-700 dark:text-green-400' :
-                                            'text-muted-foreground'
-                                          }`}>
-                                          {getChangeIcon(metric.change)}
-                                          <span className="ml-0.5">{metric.change}</span>
-                                        </span>
-                                      )}
-                                    </div>
-
-                                    {metric.clinical_significance && (
-                                      <TooltipProvider>
-                                        <Tooltip>
-                                          <TooltipTrigger asChild>
-                                            <span className="text-primary cursor-help flex items-center">
-                                              <Info className="h-3 w-3 mr-1" />
-                                              <span className="text-xs">Significado clínico</span>
-                                            </span>
-                                          </TooltipTrigger>
-                                          <TooltipContent className="max-w-xs p-3">
-                                            <p>{metric.clinical_significance}</p>
-                                          </TooltipContent>
-                                        </Tooltip>
-                                      </TooltipProvider>
-                                    )}
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          </>
-                        ) : (
-                          <>
-                            <h3 className="font-medium text-lg text-foreground mt-6 mb-3">Principais achados do laudo</h3>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                              {clinicalFindings.slice(0, 4).map((finding, index) => (
-                                <div key={`${buildFindingDescription(finding)}-${index}`} className="rounded-lg border border-border bg-muted/30 p-4">
-                                  <p className="font-medium text-foreground">{normalizeExamNarrative(finding.title)}</p>
-                                  <p className="mt-2 text-sm text-muted-foreground">{buildFindingDescription(finding)}</p>
-                                </div>
-                              ))}
-                              {clinicalFindings.length === 0 && diagnosticImpression.slice(0, 2).map((item, index) => (
-                                <div key={`${buildImpressionDescription(item)}-${index}`} className="rounded-lg border border-border bg-muted/30 p-4">
-                                  <p className="font-medium text-foreground">Conclusão</p>
-                                  <p className="mt-2 text-sm text-muted-foreground">{buildImpressionDescription(item)}</p>
-                                </div>
-                              ))}
-                            </div>
-                          </>
-                        )}
-
-                        {(structuredMetadata.examModality || structuredMetadata.bodyRegion || structuredMetadata.technique || structuredMetadata.collectionDate || structuredMetadata.reportDate) && (
-                          <>
-                            <h3 className="font-medium text-lg text-foreground mt-6 mb-3">Metadados clínicos</h3>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                              {structuredMetadata.examModality && (
-                                <div className="rounded-lg border border-border bg-card p-4">
-                                  <p className="text-xs uppercase tracking-wide text-muted-foreground">Modalidade</p>
-                                  <p className="mt-1 font-medium text-foreground">{normalizeExamNarrative(structuredMetadata.examModality)}</p>
-                                </div>
-                              )}
-                              {structuredMetadata.bodyRegion && (
-                                <div className="rounded-lg border border-border bg-card p-4">
-                                  <p className="text-xs uppercase tracking-wide text-muted-foreground">Região ou material</p>
-                                  <p className="mt-1 font-medium text-foreground">{normalizeExamNarrative(structuredMetadata.bodyRegion)}</p>
-                                </div>
-                              )}
-                              {structuredMetadata.technique && (
-                                <div className="rounded-lg border border-border bg-card p-4">
-                                  <p className="text-xs uppercase tracking-wide text-muted-foreground">Técnica</p>
-                                  <p className="mt-1 font-medium text-foreground">{normalizeExamNarrative(structuredMetadata.technique)}</p>
-                                </div>
-                              )}
-                              {(structuredMetadata.collectionDate || structuredMetadata.reportDate) && (
-                                <div className="rounded-lg border border-border bg-card p-4">
-                                  <p className="text-xs uppercase tracking-wide text-muted-foreground">Datas relevantes</p>
-                                  <p className="mt-1 font-medium text-foreground">
-                                    {[
-                                      structuredMetadata.collectionDate ? `Coleta: ${formatStructuredDate(structuredMetadata.collectionDate)}` : "",
-                                      structuredMetadata.reportDate ? `Laudo: ${formatStructuredDate(structuredMetadata.reportDate)}` : "",
-                                    ].filter(Boolean).join(" | ")}
-                                  </p>
-                                </div>
-                              )}
-                            </div>
-                          </>
-                        )}
-                      </TabsContent>
-
-                      {/* Detailed Analysis Tab */}
-                      <TabsContent value="detailed">
-                        {healthMetrics.length > 0 && (
-                          <div className="overflow-x-auto">
-                            <table className="min-w-full divide-y divide-border">
-                              <thead>
-                                <tr>
-                                  <th className="px-6 py-3 bg-muted/50 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Parâmetro</th>
-                                  <th className="px-6 py-3 bg-muted/50 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Resultado</th>
-                                  <th className="px-6 py-3 bg-muted/50 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Referência</th>
-                                  <th className="px-6 py-3 bg-muted/50 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Status</th>
-                                  <th className="px-6 py-3 bg-muted/50 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Significado Clínico</th>
-                                </tr>
-                              </thead>
-                              <tbody className="bg-card divide-y divide-border">
-                                {healthMetrics.map((metric, index) => (
-                                  <tr key={index} className={index % 2 === 0 ? '' : 'bg-muted/30'}>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-foreground">
-                                      {metric.name.charAt(0).toUpperCase() + metric.name.slice(1)}
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
-                                      <span className="font-medium">{metric.value}</span> {metric.unit}
-                                      {metric.change && (
-                                        <span className={`text-xs ml-2 px-1.5 py-0.5 rounded-full inline-flex items-center ${metric.change.startsWith('+') ? 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400' :
-                                          metric.change.startsWith('-') ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400' :
-                                            'bg-muted text-muted-foreground'
-                                          }`}>
-                                          {getChangeIcon(metric.change)}
-                                          <span className="ml-0.5">{metric.change}</span>
-                                        </span>
-                                      )}
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
-                                      {metric.referenceMin && metric.referenceMax ?
-                                        <span className="bg-green-50 dark:bg-green-900/20 px-2 py-0.5 rounded text-green-700 dark:text-green-400">
-                                          {metric.referenceMin}-{metric.referenceMax} {metric.unit}
-                                        </span> :
-                                        (metric.name === 'hemoglobina' && '12.0-16.0 g/dL') ||
-                                        (metric.name === 'glicemia' && '70-99 mg/dL') ||
-                                        (metric.name === 'colesterol' && '150-199 mg/dL') ||
-                                        (metric.name === 'vitamina_d' && '30-100 ng/mL') ||
-                                        'Não disponível'
-                                      }
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm">
-                                      <Badge variant={
-                                        metric.status === 'normal' ? 'default' :
-                                          metric.status === 'atenção' || metric.status === 'atencao' ? 'outline' :
-                                            metric.status === 'baixo' || metric.status === 'low' ? 'secondary' : 'destructive'
-                                      } className={
-                                        metric.status === 'normal' ? 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300 border-green-200 dark:border-green-900' :
-                                          metric.status === 'atenção' || metric.status === 'atencao' ? 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-300 border-yellow-200 dark:border-yellow-900' :
-                                            metric.status === 'baixo' || metric.status === 'low' ? 'bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300 border-blue-200 dark:border-blue-900' : ''
-                                      }>
-                                        {metric.status.charAt(0).toUpperCase() + metric.status.slice(1)}
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {healthMetrics.slice(0, 6).map((metric, index) => (
+                              <div key={index} className={`p-4 rounded-lg ${metric.status === 'alto' || metric.status === 'high' ? 'bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/50' :
+                                metric.status === 'baixo' || metric.status === 'low' ? 'bg-blue-50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/50' :
+                                  metric.status === 'atenção' || metric.status === 'atencao' ? 'bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/50' : 'bg-muted/30 border border-border'
+                                }`}>
+                                <div className="flex justify-between mb-1">
+                                  <span className="text-sm font-medium text-foreground flex items-center">
+                                    {formatMetricDisplayName(metric.name)}
+                                    {metric.status !== 'normal' && (
+                                      <Badge variant="outline" className={`ml-2 ${metric.status === 'alto' || metric.status === 'high' ? 'bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300 border-red-200 dark:border-red-900' :
+                                        metric.status === 'baixo' || metric.status === 'low' ? 'bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300 border-blue-200 dark:border-blue-900' :
+                                          'bg-amber-100 dark:bg-amber-900/20 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-900'
+                                        }`}>
+                                        {normalizeExamNarrative(metric.status)}
                                       </Badge>
-                                    </td>
-                                    <td className="px-6 py-4 text-sm text-muted-foreground max-w-xs">
-                                      {metric.clinical_significance ? (
-                                        <div className="truncate">
-                                          <TooltipProvider>
-                                            <Tooltip>
-                                              <TooltipTrigger asChild>
-                                                <p className="cursor-help truncate">
-                                                  {metric.clinical_significance}
-                                                </p>
-                                              </TooltipTrigger>
-                                              <TooltipContent className="max-w-md p-3">
-                                                <p>{metric.clinical_significance}</p>
-                                              </TooltipContent>
-                                            </Tooltip>
-                                          </TooltipProvider>
-                                        </div>
-                                      ) : 'Sem informações adicionais'}
-                                    </td>
-                                  </tr>
-                                ))}
-                              </tbody>
-                            </table>
-                          </div>
-                        )}
-
-                        {(clinicalFindings.length > 0 || diagnosticImpression.length > 0 || suggestedDiagnoses.length > 0 || narrativeAnalysis) && (
-                          <div className="mt-6 space-y-6">
-                            {clinicalFindings.length > 0 && (
-                              <div>
-                                <h3 className="font-medium text-lg text-foreground mb-3">Achados estruturados</h3>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                  {clinicalFindings.map((finding, index) => (
-                                    <div key={`${buildFindingDescription(finding)}-${index}`} className="rounded-lg border border-border bg-muted/30 p-4">
-                                      <p className="font-medium text-foreground">{normalizeExamNarrative(finding.title)}</p>
-                                      <p className="mt-2 text-sm text-muted-foreground">{buildFindingDescription(finding)}</p>
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-
-                            {diagnosticImpression.length > 0 && (
-                              <div>
-                                <h3 className="font-medium text-lg text-foreground mb-3">Impressão diagnóstica</h3>
-                                <div className="space-y-3">
-                                  {diagnosticImpression.map((item, index) => (
-                                    <div key={`${buildImpressionDescription(item)}-${index}`} className="rounded-lg border border-border bg-card p-4">
-                                      <p className="text-muted-foreground">{buildImpressionDescription(item)}</p>
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-
-                            {suggestedDiagnoses.length > 0 && (
-                              <div>
-                                <h3 className="font-medium text-lg text-foreground mb-3">Diagnósticos sugeridos</h3>
-                                <div className="space-y-3">
-                                  {suggestedDiagnoses.map((diagnosis, index) => (
-                                    <div key={`${buildDiagnosisDescription(diagnosis)}-${index}`} className="rounded-lg border border-emerald-200 bg-emerald-50 dark:bg-emerald-900/10 p-4">
-                                      <p className="font-medium text-emerald-900 dark:text-emerald-300">{normalizeExamNarrative(diagnosis.condition) || "Condição sugerida"}</p>
-                                      <p className="mt-2 text-sm text-emerald-800 dark:text-emerald-400">{buildDiagnosisDescription(diagnosis)}</p>
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-
-                            {narrativeAnalysis && (
-                              <div>
-                                <h3 className="font-medium text-lg text-foreground mb-3">Interpretação detalhada</h3>
-                                <div className="rounded-lg border border-border bg-card p-4">
-                                  <p className="text-muted-foreground whitespace-pre-line">{narrativeAnalysis}</p>
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </TabsContent>
-
-                      {/* Recommendations Tab */}
-                      <TabsContent value="recommendations">
-                        <div className="mb-6">
-                          <h3 className="font-medium text-lg text-foreground mb-3">Orientações de saúde</h3>
-                          <p className="text-sm text-muted-foreground mb-4">
-                            ⚠️ Seguimos rigorosamente as diretrizes do Ministério da Saúde. Todas as orientações são gerais e não substituem consulta médica.
-                          </p>
-
-                          <div className="space-y-4">
-                            {isLoadingInsights ? (
-                              [...Array(3)].map((_, i) => (
-                                <div key={i} className="bg-primary/10 p-4 rounded-lg">
-                                  <div className="flex">
-                                    <Skeleton className="h-6 w-6 mr-4" />
-                                    <div className="w-full">
-                                      <Skeleton className="h-5 w-48 mb-2" />
-                                      <Skeleton className="h-4 w-full" />
-                                    </div>
+                                    )}
+                                  </span>
+                                  <div className="flex items-center">
+                                    <span className="text-sm text-foreground font-medium">{metric.value} {metric.unit}</span>
+                                    {metric.change && (
+                                      <span className={`text-xs ml-2 px-1.5 py-0.5 rounded-full ${metric.change.startsWith('+') ? 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400' :
+                                        metric.change.startsWith('-') ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400' :
+                                          'bg-muted text-muted-foreground'
+                                        }`}>
+                                        {metric.change}
+                                      </span>
+                                    )}
                                   </div>
                                 </div>
-                              ))
-                            ) : (
-                              filterRecommendations(structuredRecommendations).map((recommendation, index) => (
-                                <div key={index} className="bg-primary/10 p-4 rounded-lg">
-                                  <div className="flex">
-                                    <div className="flex-shrink-0">
-                                      {index === 0 && <UserRound className="text-primary" size={20} />}
-                                      {index === 1 && <Apple className="text-emerald-600 dark:text-emerald-400" size={20} />}
-                                      {index === 2 && <Dumbbell className="text-blue-600 dark:text-blue-400" size={20} />}
-                                      {index > 2 && <CheckCircle2 className="text-primary" size={20} />}
+
+                                <div className="w-full bg-muted rounded-full h-2.5 mt-2 mb-1 relative">
+                                  {(metric.referenceMin && metric.referenceMax) ? (
+                                    <div className="absolute h-full bg-green-500/30 dark:bg-green-500/20 rounded-full"
+                                      style={{
+                                        left: '30%',
+                                        width: '40%'
+                                      }}>
                                     </div>
-                                    <div className="ml-4">
-                                      <h4 className="text-base font-medium text-foreground">
-                                        {index === 0 && 'Orientação médica'}
-                                        {index === 1 && 'Alimentação saudável'}
-                                        {index === 2 && 'Atividade física'}
-                                        {index === 3 && 'Cuidados gerais'}
-                                        {index > 3 && `Orientação ${index + 1}`}
-                                      </h4>
-                                      <p className="mt-1 text-sm text-muted-foreground">{normalizeExamNarrative(recommendation)}</p>
+                                  ) : (
+                                    <div className="absolute h-full bg-muted rounded-full opacity-40"
+                                      style={{
+                                        left: '25%',
+                                        width: '50%'
+                                      }}>
                                     </div>
-                                  </div>
+                                  )}
+
+                                  {(metric.referenceMin && metric.referenceMax) && (
+                                    <>
+                                      <div className="absolute h-full w-0.5 bg-green-600 dark:bg-green-400 opacity-50"
+                                        style={{ left: '30%' }}
+                                        title={`Valor mínimo de referência: ${metric.referenceMin}`}>
+                                      </div>
+                                      <div className="absolute h-full w-0.5 bg-green-600 dark:bg-green-400 opacity-50"
+                                        style={{ left: '70%' }}
+                                        title={`Valor máximo de referência: ${metric.referenceMax}`}>
+                                      </div>
+                                    </>
+                                  )}
+
+                                  {(() => {
+                                    const status = getMetricStatusForUI(
+                                      metric.status,
+                                      metric.value,
+                                      metric.referenceMin,
+                                      metric.referenceMax
+                                    );
+
+                                    return (
+                                      <div
+                                        className={`w-3 h-3 rounded-full absolute top-1/2 transform -translate-y-1/2 shadow-md ${status.indicatorClass}`}
+                                        style={{
+                                          left: status.position,
+                                          marginLeft: '-4px',
+                                          transition: 'left 0.3s ease-in-out'
+                                        }}
+                                        title={`Valor: ${metric.value} ${metric.unit}`}>
+                                      </div>
+                                    );
+                                  })()}
                                 </div>
-                              ))
-                            )}
+
+                                <div className="flex justify-between text-xs text-muted-foreground mt-1">
+                                  <div className="flex items-center">
+                                    <span>
+                                      Ref: {metric.referenceMin || '?'}-{metric.referenceMax || '?'} {metric.unit}
+                                    </span>
+
+                                    {metric.change && (
+                                      <span className={`ml-2 px-1.5 rounded-md flex items-center ${metric.change.startsWith('+') ? 'text-red-700 dark:text-red-400' :
+                                        metric.change.startsWith('-') ? 'text-green-700 dark:text-green-400' :
+                                          'text-muted-foreground'
+                                        }`}>
+                                        {getChangeIcon(metric.change)}
+                                        <span className="ml-0.5">{metric.change}</span>
+                                      </span>
+                                    )}
+                                  </div>
+
+                                  {metric.clinical_significance && (
+                                    <TooltipProvider>
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <span className="text-primary cursor-help flex items-center">
+                                            <Info className="h-3 w-3 mr-1" />
+                                            <span className="text-xs">Significado clínico</span>
+                                          </span>
+                                        </TooltipTrigger>
+                                        <TooltipContent className="max-w-xs p-3">
+                                          <p>{normalizeExamNarrative(metric.clinical_significance)}</p>
+                                        </TooltipContent>
+                                      </Tooltip>
+                                    </TooltipProvider>
+                                  )}
+                                </div>
+                              </div>
+                            ))}
                           </div>
-                        </div>
+                        </section>
+                      )}
 
-                        <div>
-                          <h3 className="font-medium text-lg text-foreground mb-3">Especialistas sugeridos</h3>
+                      {(conciseRecommendations.length > 0 || specialistSuggestions.length > 0 || lifestyleGuidance.length > 0) && (
+                        <section className="space-y-3">
+                          <div>
+                            <h3 className="font-medium text-lg text-foreground">Próximos passos sugeridos</h3>
+                            <p className="text-sm text-muted-foreground">Orientações condensadas para conduta, sem duplicar o que já foi dito acima.</p>
+                          </div>
 
-                          <div className="bg-muted/30 p-4 rounded-lg">
-                            <ul className="space-y-2">
+                          <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
+                            <div className="rounded-xl border border-border bg-card p-4">
                               {isLoadingInsights ? (
-                                [...Array(3)].map((_, i) => (
-                                  <li key={i} className="flex items-start">
-                                    <Skeleton className="h-5 w-5 mt-0.5 mr-2" />
-                                    <div className="w-full">
-                                      <Skeleton className="h-5 w-40 mb-1" />
-                                      <Skeleton className="h-4 w-full" />
-                                    </div>
-                                  </li>
-                                ))
+                                <div className="space-y-3">
+                                  {[...Array(3)].map((_, index) => (
+                                    <Skeleton key={index} className="h-14 w-full" />
+                                  ))}
+                                </div>
+                              ) : conciseRecommendations.length > 0 ? (
+                                <ul className="space-y-3">
+                                  {conciseRecommendations.map((recommendation, index) => (
+                                    <li key={`${recommendation}-${index}`} className="flex items-start gap-3 rounded-lg bg-muted/30 p-3">
+                                      <CheckCircle2 className="mt-0.5 h-4 w-4 text-primary" />
+                                      <span className="text-sm text-foreground">{normalizeExamNarrative(recommendation)}</span>
+                                    </li>
+                                  ))}
+                                </ul>
                               ) : (
-                                insights?.specialists.map((specialist, index) => (
-                                  <li key={index} className="flex items-start">
-                                    <CheckCircle2 className="text-primary mt-0.5 mr-2 flex-shrink-0" size={18} />
-                                    <div>
-                                      <h4 className="font-medium text-foreground">{normalizeExamNarrative(specialist)}</h4>
-                                    </div>
-                                  </li>
-                                ))
+                                <p className="text-sm text-muted-foreground">
+                                  Nenhuma orientação adicional foi destacada para este exame.
+                                </p>
                               )}
-                            </ul>
+                            </div>
+
+                            <div className="space-y-4">
+                              {specialistSuggestions.length > 0 && (
+                                <div className="rounded-xl border border-border bg-card p-4">
+                                  <p className="text-sm font-medium text-foreground">Especialistas sugeridos</p>
+                                  <div className="mt-3 flex flex-wrap gap-2">
+                                    {specialistSuggestions.map((specialist, index) => (
+                                      <Badge key={`${specialist}-${index}`} variant="outline">
+                                        {specialist}
+                                      </Badge>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+
+                              {lifestyleGuidance.length > 0 && (
+                                <div className="rounded-xl border border-border bg-card p-4">
+                                  <p className="text-sm font-medium text-foreground">Cuidados gerais</p>
+                                  <ul className="mt-3 space-y-3">
+                                    {lifestyleGuidance.slice(0, 3).map((item) => (
+                                      <li key={item.label} className="text-sm text-foreground">
+                                        <span className="font-medium">{item.label}:</span>{" "}
+                                        <span className="text-muted-foreground">{item.text}</span>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </section>
+                      )}
+
+                      {showComplementaryNarrative && (
+                        <section className="space-y-3">
+                          <div>
+                            <h3 className="font-medium text-lg text-foreground">Leitura complementar</h3>
+                            <p className="text-sm text-muted-foreground">Mantida só quando o exame não trouxe estrutura suficiente em cards.</p>
                           </div>
 
-                          {insights?.lifestyle && (
-                            <div className="mt-4 p-4 bg-primary/10 rounded-lg">
-                              <h4 className="font-medium text-foreground mb-2">Recomendações de estilo de vida</h4>
-                              <ul className="space-y-2 text-sm text-foreground">
-                                <li className="flex items-start">
-                                  <span className="font-medium mr-2">Alimentação:</span>
-                                  <span>{normalizeExamNarrative(filterLifestyleText(insights.lifestyle.diet))}</span>
-                                </li>
-                                <li className="flex items-start">
-                                  <span className="font-medium mr-2">Exercícios:</span>
-                                  <span>{normalizeExamNarrative(filterLifestyleText(insights.lifestyle.exercise))}</span>
-                                </li>
-                                <li className="flex items-start">
-                                  <span className="font-medium mr-2">Sono:</span>
-                                  <span>{normalizeExamNarrative(filterLifestyleText(insights.lifestyle.sleep))}</span>
-                                </li>
-                                {insights.lifestyle.stress_management && (
-                                  <li className="flex items-start">
-                                    <span className="font-medium mr-2">Gerenciamento de estresse:</span>
-                                    <span>{normalizeExamNarrative(filterLifestyleText(insights.lifestyle.stress_management))}</span>
-                                  </li>
-                                )}
-                              </ul>
-                            </div>
-                          )}
-                        </div>
-                      </TabsContent>
-
-                      {/* Evidências Científicas Tab */}
-                      <TabsContent value="evidence">
-                        <div className="mb-6">
-                          <h3 className="font-medium text-lg text-foreground mb-4">Parâmetros de Saúde Baseados em Evidências</h3>
-
-                          {insights?.healthParameters ? (
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                              {/* Health Score */}
-                              <div className="bg-card border border-border rounded-xl shadow-sm p-6">
-                                <h4 className="text-md font-semibold text-foreground mb-3">Pontuação Global de Saúde</h4>
-                                <div className="flex justify-center items-center mb-3">
-                                  <div className="relative w-36 h-36 flex items-center justify-center">
-                                    <svg className="w-full h-full" viewBox="0 0 36 36">
-                                      <circle
-                                        cx="18" cy="18" r="16"
-                                        fill="none"
-                                        className="stroke-muted"
-                                        strokeWidth="3"
-                                      />
-                                      <circle
-                                        cx="18" cy="18" r="16"
-                                        fill="none"
-                                        stroke={
-                                          insights.healthParameters.healthScore >= 80 ? "#22c55e" :
-                                            insights.healthParameters.healthScore >= 60 ? "#f59e0b" :
-                                              "#ef4444"
-                                        }
-                                        strokeWidth="3"
-                                        strokeDasharray="100"
-                                        strokeDashoffset={100 - insights.healthParameters.healthScore}
-                                        strokeLinecap="round"
-                                        transform="rotate(-90, 18, 18)"
-                                      />
-                                    </svg>
-                                    <div className="absolute text-2xl font-bold">{insights.healthParameters.healthScore}</div>
-                                  </div>
-                                </div>
-                                <p className="text-center text-sm text-muted-foreground">Pontuação baseada na análise de todos os parâmetros disponíveis</p>
-                              </div>
-
-                              {/* Parameters Areas */}
-                              <div className="bg-card border border-border rounded-xl shadow-sm p-6">
-                                <h4 className="text-md font-semibold text-foreground mb-3">Áreas de Saúde</h4>
-
-                                {insights.healthParameters.criticalAreas.length > 0 && (
-                                  <div className="mb-4">
-                                    <h5 className="text-sm font-medium text-red-600 mb-1">Áreas críticas</h5>
-                                    <ul className="space-y-1">
-                                      {insights.healthParameters.criticalAreas.map((area, idx) => (
-                                        <li key={idx} className="text-sm flex text-muted-foreground">
-                                          <span className="mr-2">•</span>
-                                          <span>{area}</span>
-                                        </li>
-                                      ))}
-                                    </ul>
-                                  </div>
-                                )}
-
-                                {insights.healthParameters.stableAreas.length > 0 && (
-                                  <div className="mb-4">
-                                    <h5 className="text-sm font-medium text-green-600 mb-1">Áreas estáveis</h5>
-                                    <ul className="space-y-1">
-                                      {insights.healthParameters.stableAreas.map((area, idx) => (
-                                        <li key={idx} className="text-sm flex text-muted-foreground">
-                                          <span className="mr-2">•</span>
-                                          <span>{area}</span>
-                                        </li>
-                                      ))}
-                                    </ul>
-                                  </div>
-                                )}
-
-                                {insights.healthParameters.improvementTrends.length > 0 && (
-                                  <div>
-                                    <h5 className="text-sm font-medium text-blue-600 mb-1">Tendências de melhoria</h5>
-                                    <ul className="space-y-1">
-                                      {insights.healthParameters.improvementTrends.map((trend, idx) => (
-                                        <li key={idx} className="text-sm flex text-muted-foreground">
-                                          <span className="mr-2">•</span>
-                                          <span>{trend}</span>
-                                        </li>
-                                      ))}
-                                    </ul>
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          ) : (
-                            <div className="bg-muted/30 p-6 rounded-lg mb-8">
-                              <p className="text-center text-muted-foreground">Parâmetros de saúde não disponíveis para este exame</p>
-                            </div>
-                          )}
-
-                          {insights?.evidenceBasedAssessment ? (
-                            <div className="space-y-6">
-                              <div>
-                                <h3 className="font-medium text-lg text-foreground mb-3">Diretrizes Clínicas Relevantes</h3>
-                                <div className="bg-blue-50 dark:bg-blue-900/10 p-4 rounded-lg border border-blue-100 dark:border-blue-900">
-                                  <ul className="space-y-2">
-                                    {insights.evidenceBasedAssessment.clinicalGuidelines.map((guideline, idx) => (
-                                      <li key={idx} className="text-sm flex items-start">
-                                        <span className="text-blue-600 dark:text-blue-400 font-medium mr-2">›</span>
-                                        <span className="text-foreground">{guideline}</span>
-                                      </li>
-                                    ))}
-                                  </ul>
-                                </div>
-                              </div>
-
-                              <div>
-                                <h3 className="font-medium text-lg text-foreground mb-3">Referências Científicas</h3>
-                                <div className="bg-muted/30 p-4 rounded-lg border border-border">
-                                  <ul className="space-y-2">
-                                    {insights.evidenceBasedAssessment.studyReferences.map((reference, idx) => (
-                                      <li key={idx} className="text-sm flex items-start">
-                                        <span className="text-foreground font-medium mr-2">[{idx + 1}]</span>
-                                        <span className="text-muted-foreground">{reference}</span>
-                                      </li>
-                                    ))}
-                                  </ul>
-                                </div>
-                              </div>
-
-                              <div className="bg-muted/30 p-4 rounded-lg border border-border">
-                                <h4 className="font-medium text-foreground mb-2">Nível de confiança na avaliação</h4>
-                                <div className="flex items-center">
-                                  <div className="w-full bg-muted rounded-full h-2.5 mr-4">
-                                    <div className={`h-2.5 rounded-full ${insights.evidenceBasedAssessment.confidenceLevel === 'alto' ? 'w-full bg-green-600 dark:bg-green-500' :
-                                      insights.evidenceBasedAssessment.confidenceLevel === 'médio' ? 'w-2/3 bg-yellow-500' :
-                                        'w-1/3 bg-red-500'
-                                      }`}></div>
-                                  </div>
-                                  <span className="text-sm font-medium text-foreground w-16">{
-                                    insights.evidenceBasedAssessment.confidenceLevel.charAt(0).toUpperCase() +
-                                    insights.evidenceBasedAssessment.confidenceLevel.slice(1)
-                                  }</span>
-                                </div>
-                              </div>
-                            </div>
-                          ) : (
-                            <div className="bg-muted/30 p-6 rounded-lg">
-                              <p className="text-center text-muted-foreground">Evidências científicas não disponíveis para este exame</p>
-                            </div>
-                          )}
-                        </div>
-                      </TabsContent>
-                    </Tabs>
+                          <div className="rounded-xl border border-border bg-card p-4">
+                            <p className="text-sm text-muted-foreground whitespace-pre-line">{narrativeAnalysis}</p>
+                          </div>
+                        </section>
+                      )}
+                    </div>
                   </>
                 )}
             </div>
