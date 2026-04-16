@@ -16,7 +16,6 @@ import {
   ArrowDown,
   ArrowUp,
   Minus,
-  Info,
   AlertTriangle,
   Microscope,
   Trash2,
@@ -520,7 +519,7 @@ export default function ExamReport() {
                         <section className="space-y-3">
                           <div>
                             <h3 className="font-medium text-lg text-foreground">Análise detalhada dos parâmetros do exame</h3>
-                            <p className="text-sm text-muted-foreground">Todos os parâmetros estruturados do exame, com valor, referência, variação e contexto clínico quando disponível.</p>
+                            <p className="text-sm text-muted-foreground">Todos os parâmetros estruturados do exame, com valor, referência e variação quando disponível.</p>
                           </div>
 
                           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -621,20 +620,6 @@ export default function ExamReport() {
                                         <span className="ml-0.5">{metric.change}</span>
                                       </span>
                                     )}
-                                  </div>
-                                </div>
-
-                                <div className="mt-3 rounded-lg bg-background/70 px-3 py-2 text-xs text-muted-foreground">
-                                  <div className="flex items-start gap-2">
-                                    <Info className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-primary" />
-                                    <div>
-                                      <p className="font-medium text-foreground">Leitura clínica</p>
-                                      <p className="mt-1 leading-5">
-                                        {metric.clinical_significance
-                                          ? normalizeExamNarrative(metric.clinical_significance)
-                                          : "Sem observação clínica adicional estruturada para este parâmetro."}
-                                      </p>
-                                    </div>
                                   </div>
                                 </div>
                               </div>
