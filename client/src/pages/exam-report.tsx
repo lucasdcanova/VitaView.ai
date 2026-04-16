@@ -321,6 +321,31 @@ export default function ExamReport() {
       : suggestedDiagnoses.length > 0
         ? buildDiagnosisDescription(suggestedDiagnoses[0])
         : normalizeExamNarrative(diagnosticImpression[0]?.notes || clinicalFindings[0]?.interpretation) || "A interpretação final deve sempre ser correlacionada ao contexto clínico do paciente.";
+  const normalizeComparableText = (text: string) =>
+    text
+      .toLocaleLowerCase("pt-BR")
+      .replace(/[.:;,_\-()[\]{}]+/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+
+  const stripRepeatedPrefix = (detail: string, repeatedPrefix: string) => {
+    if (!detail || !repeatedPrefix) return detail;
+
+    const comparableDetail = normalizeComparableText(detail);
+    const comparablePrefix = normalizeComparableText(repeatedPrefix);
+
+    if (!comparableDetail || !comparablePrefix) return detail;
+    if (!comparableDetail.startsWith(comparablePrefix)) return detail;
+
+    const escapedPrefix = repeatedPrefix.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const withoutExactPrefix = detail.replace(new RegExp(`^${escapedPrefix}[\\s.:;,_-]*`, "i"), "").trim();
+    if (withoutExactPrefix) return withoutExactPrefix;
+
+    const detailWords = detail.trim().split(/\s+/);
+    const prefixWordCount = repeatedPrefix.trim().split(/\s+/).length;
+    return detailWords.slice(prefixWordCount).join(" ").trim();
+  };
+
   const summarizeFindingForReport = (finding: any) => {
     const title = normalizeExamNarrative(finding?.title);
     if (!title) return "";
@@ -333,10 +358,15 @@ export default function ExamReport() {
     const interpretation = normalizeExamNarrative(finding?.interpretation);
 
     const headline = bodySite ? `${title} em ${bodySite}` : title;
-    const detail =
+    const rawDetail =
       value
         ? `${value}${unit ? ` ${unit}` : ""}`
         : qualitativeResult || interpretation;
+    const deduplicatedDetail = stripRepeatedPrefix(
+      stripRepeatedPrefix(rawDetail, headline),
+      title
+    );
+    const detail = normalizeExamNarrative(deduplicatedDetail);
 
     const suffix = status && status.toLowerCase() !== "normal" ? ` (${status})` : "";
 
