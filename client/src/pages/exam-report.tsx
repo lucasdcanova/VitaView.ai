@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useRoute, useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Exam, ExamResult } from "@shared/schema";
+import { formatMetricDisplayName } from "@shared/exam-normalizer";
 import { getExamDetails, getExamInsights, deleteExam } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { useProfiles } from "@/hooks/use-profiles";
@@ -683,7 +684,7 @@ export default function ExamReport() {
                               <h4 className="font-medium text-yellow-800 dark:text-yellow-300">Pontos de atenção</h4>
                               <p className="text-sm text-yellow-700 dark:text-yellow-400 mt-1">
                                 {abnormalMetrics.length > 0
-                                  ? `${abnormalMetrics[0]?.name || "Alguns parâmetros"} merecem acompanhamento clínico.`
+                                  ? `${formatMetricDisplayName(abnormalMetrics[0]?.name || "Alguns parâmetros")} merecem acompanhamento clínico.`
                                   : suggestedDiagnoses.length > 0
                                     ? buildDiagnosisDescription(suggestedDiagnoses[0])
                                     : normalizeExamNarrative(diagnosticImpression[0]?.notes || clinicalFindings[0]?.interpretation) || "A interpretação final deve sempre ser correlacionada ao contexto clínico do paciente."}
