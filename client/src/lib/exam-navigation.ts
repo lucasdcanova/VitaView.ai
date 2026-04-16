@@ -13,6 +13,39 @@ export interface ExamReturnContext {
 
 const isBrowser = () => typeof window !== "undefined" && typeof window.sessionStorage !== "undefined";
 
+export function resolveExamReturnContext(path: string): ExamReturnContext {
+  if (path.startsWith("/atendimento")) {
+    return { path: "/atendimento", label: "Voltar ao atendimento" };
+  }
+
+  if (path.startsWith("/exam-history")) {
+    return { path: "/exam-history", label: "Voltar ao histórico" };
+  }
+
+  if (path.startsWith("/results")) {
+    return { path, label: "Voltar aos resultados" };
+  }
+
+  if (path.startsWith("/timeline")) {
+    return { path, label: "Voltar à evolução" };
+  }
+
+  return { path, label: "Voltar" };
+}
+
+export function captureCurrentExamReturnContext(fallbackPath = "/atendimento"): ExamReturnContext {
+  if (!isBrowser()) {
+    return resolveExamReturnContext(fallbackPath);
+  }
+
+  try {
+    const currentPath = window.location.pathname || fallbackPath;
+    return resolveExamReturnContext(currentPath);
+  } catch {
+    return resolveExamReturnContext(fallbackPath);
+  }
+}
+
 export function setExamReturnContext(context: ExamReturnContext): void {
   if (!isBrowser()) return;
   try {

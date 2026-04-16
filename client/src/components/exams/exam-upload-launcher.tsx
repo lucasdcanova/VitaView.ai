@@ -6,6 +6,7 @@ import { ptBR } from "date-fns/locale";
 import type { Exam } from "@shared/schema";
 import { useProfiles } from "@/hooks/use-profiles";
 import { useUploadManager } from "@/hooks/use-upload-manager";
+import { captureCurrentExamReturnContext, setExamReturnContext } from "@/lib/exam-navigation";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -83,7 +84,8 @@ export function ExamUploadLauncher({
 
   const examList = exams ?? fetchedExams;
   const activeUploads = uploads.filter((upload) =>
-    ["uploading", "queued", "processing"].includes(upload.status)
+    ["uploading", "queued", "processing"].includes(upload.status) &&
+    (!activeProfile?.id || upload.profileId === activeProfile.id)
   );
   const latestExams = useMemo(() => {
     return [...examList]
@@ -94,6 +96,12 @@ export function ExamUploadLauncher({
       })
       .slice(0, 6);
   }, [examList]);
+
+  const openExamReport = (examId: number) => {
+    setExamReturnContext(captureCurrentExamReturnContext("/atendimento"));
+    setOpen(false);
+    setLocation(`/report/${examId}`);
+  };
 
   return (
     <>
@@ -227,10 +235,7 @@ export function ExamUploadLauncher({
                           <button
                             key={exam.id}
                             type="button"
-                            onClick={() => {
-                              setOpen(false);
-                              setLocation(`/report/${exam.id}`);
-                            }}
+                            onClick={() => openExamReport(exam.id)}
                             className="flex w-full items-center gap-3 rounded-xl border border-border/70 bg-muted/35 p-3 text-left transition hover:border-border hover:bg-muted/55"
                           >
                             <div className="rounded-xl bg-background p-2 shadow-sm ring-1 ring-border/60">

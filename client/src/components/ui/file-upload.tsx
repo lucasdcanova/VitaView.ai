@@ -1,10 +1,12 @@
 import { useCallback } from "react";
+import { useLocation } from "wouter";
 import { useDropzone } from "react-dropzone";
 import { Upload, BrainCircuit, CheckCircle2, AlertCircle } from "lucide-react";
 import { useUploadManager } from "@/hooks/use-upload-manager";
 import { useProfiles } from "@/hooks/use-profiles";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { captureCurrentExamReturnContext, setExamReturnContext } from "@/lib/exam-navigation";
 
 interface FileUploadProps {
   onUploadComplete?: (result: any) => void;
@@ -14,6 +16,11 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
   const { uploadFiles, uploads } = useUploadManager();
   const { activeProfile } = useProfiles();
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
+
+  const scopedUploads = uploads.filter((upload) =>
+    activeProfile ? upload.profileId === activeProfile.id : false
+  );
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     if (acceptedFiles.length === 0) return;
@@ -68,15 +75,15 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
       </div>
 
       {/* Active Uploads List */}
-      {uploads.length > 0 && (
+      {scopedUploads.length > 0 && (
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <h4 className="font-medium text-foreground">Status dos Envios</h4>
-            <span className="text-xs text-muted-foreground">{uploads.length} arquivos</span>
+            <span className="text-xs text-muted-foreground">{scopedUploads.length} arquivos</span>
           </div>
 
           <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
-            {uploads.map((upload) => (
+            {scopedUploads.map((upload) => (
               <div key={upload.id} className="flex items-center justify-between rounded-xl border border-border bg-card p-3 shadow-sm">
                 <div className="flex items-center space-x-3 overflow-hidden">
                   <div className="flex-shrink-0">
@@ -102,7 +109,8 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
                     className="text-primary hover:bg-primary/10"
                     onClick={(e) => {
                       e.stopPropagation();
-                      window.location.href = `/report/${upload.examId}`;
+                      setExamReturnContext(captureCurrentExamReturnContext("/atendimento"));
+                      setLocation(`/report/${upload.examId}`);
                     }}
                   >
                     Ver Resultado

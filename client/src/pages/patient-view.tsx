@@ -68,6 +68,7 @@ import { DiagnosisDialog, diagnosisSchema, type DiagnosisFormData } from "@/comp
 import { SurgeryDialog, surgerySchema, type SurgeryFormData } from "@/components/dialogs/surgery-dialog";
 import { RegisterDeathDialog } from "@/components/dialogs/register-death-dialog";
 import { ExamUploadLauncher } from "@/components/exams/exam-upload-launcher";
+import { AppointmentExamWorkspace } from "@/components/exams/appointment-exam-workspace";
 
 // Lazy load heavy tab components for better initial page load
 const HealthTrendsNew = lazy(() => import("./health-trends-new"));
@@ -109,7 +110,11 @@ export default function PatientView() {
     const [, setLocation] = useLocation();
     const { activeProfile, inServiceAppointmentId, setActiveProfile } = useProfiles();
     const { uploads } = useUploadManager();
-    const isProcessing = uploads.some(u => ['uploading', 'processing', 'queued'].includes(u.status));
+    const isProcessing = uploads.some(
+        (upload) =>
+            ['uploading', 'processing', 'queued'].includes(upload.status) &&
+            (!activeProfile?.id || upload.profileId === activeProfile.id)
+    );
     const { toast } = useToast();
     const queryClient = useQueryClient();
     const { user } = useAuth();
@@ -227,9 +232,6 @@ export default function PatientView() {
         inServiceAppointmentId && t.appointmentId === inServiceAppointmentId
     ) || null;
 
-    // Get recent items
-    const recentExams = exams.slice(0, 3);
-
     const activeDiagnoses = diagnoses.filter((d: any) => d.status === 'ativo' || d.status === 'em_tratamento');
 
     // Get metrics with alerts
@@ -261,6 +263,22 @@ export default function PatientView() {
         }
 
         return 'border-red-200 bg-red-100 text-red-800 dark:border-red-900/70 dark:bg-red-950/60 dark:text-red-200';
+    };
+
+    const openExamReportFromAppointment = (examId: number) => {
+        setExamReturnContext({
+            path: "/atendimento",
+            label: "Voltar ao atendimento",
+        });
+        setLocation(`/report/${examId}`);
+    };
+
+    const openExamHistoryFromAppointment = () => {
+        setExamReturnContext({
+            path: "/atendimento",
+            label: "Voltar ao atendimento",
+        });
+        setLocation("/exam-history");
     };
 
     return (
@@ -613,86 +631,23 @@ export default function PatientView() {
                                         {/* Grid: Solicitação de Exames | Upload + Lista */}
                                         {(() => {
                                             const uploadAndExamsCards = (
-                                                <>
+                                                <div className="space-y-6">
                                                     <ExamUploadLauncher
                                                         exams={exams}
                                                         title="Enviar resultados"
-                                                        description="Envie exames e laudos deste paciente."
+                                                        description="Envie exames e laudos deste paciente. O status e a leitura rápida aparecem abaixo sem sair do atendimento."
                                                         buttonLabel="Abrir central"
                                                     />
 
-                                                    {/* Exams List */}
-                                                    <Card className="h-fit">
-                                                        <CardHeader className="pb-3">
-                                                            <div className="flex items-center justify-between gap-2">
-                                                                <CardTitle className="text-base flex items-center gap-2">
-                                                                    <FileText className="h-5 w-5 text-primary-600" />
-                                                                    Resultados de Exames
-                                                                </CardTitle>
-                                                                <div className="flex items-center gap-2">
-                                                                    <Badge variant="outline">{exams.length} exames</Badge>
-                                                                    {exams.length > 0 && (
-                                                                        <Button
-                                                                            variant="ghost"
-                                                                            size="sm"
-                                                                            className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
-                                                                            onClick={() => {
-                                                                                setExamReturnContext({
-                                                                                    path: "/atendimento",
-                                                                                    label: "Voltar ao atendimento",
-                                                                                });
-                                                                                setLocation("/exam-history");
-                                                                            }}
-                                                                        >
-                                                                            Ver tudo
-                                                                        </Button>
-                                                                    )}
-                                                                </div>
-                                                            </div>
-                                                        </CardHeader>
-                                                        <CardContent>
-                                                            {exams.length === 0 ? (
-                                                                <div className="text-center py-8">
-                                                                    <FileText className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-                                                                    <h3 className="text-base font-semibold text-gray-800 mb-1">Nenhum resultado enviado</h3>
-                                                                    <p className="text-sm text-gray-600">Envie os resultados dos exames usando o painel acima.</p>
-                                                                </div>
-                                                            ) : (
-                                                                <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1">
-                                                                    {exams.map((exam: any) => (
-                                                                        <div
-                                                                            key={exam.id}
-                                                                            className="flex items-center p-3 bg-card rounded-lg border border-border hover:border-primary hover:bg-accent transition-all cursor-pointer"
-                                                                            onClick={() => {
-                                                                                setExamReturnContext({
-                                                                                    path: "/atendimento",
-                                                                                    label: "Voltar ao atendimento",
-                                                                                });
-                                                                                setLocation(`/report/${exam.id}`);
-                                                                            }}
-                                                                        >
-                                                                            <div className="bg-primary/20 p-2 rounded-lg mr-3">
-                                                                                <FileText className="h-5 w-5 text-primary" />
-                                                                            </div>
-                                                                            <div className="flex-1 min-w-0">
-                                                                                <p className="font-medium text-foreground truncate text-sm">{exam.name || 'Exame sem título'}</p>
-                                                                                <p className="text-xs text-muted-foreground">
-                                                                                    {exam.uploadDate ? format(new Date(exam.uploadDate), "dd 'de' MMMM 'de' yyyy", { locale: ptBR }) : "Data não disponível"}
-                                                                                </p>
-                                                                            </div>
-                                                                            <Badge
-                                                                                variant={exam.status === 'analyzed' ? 'default' : 'secondary'}
-                                                                                className="ml-3 text-xs"
-                                                                            >
-                                                                                {exam.status === 'analyzed' ? 'Analisado' : 'Pendente'}
-                                                                            </Badge>
-                                                                        </div>
-                                                                    ))}
-                                                                </div>
-                                                            )}
-                                                        </CardContent>
-                                                    </Card>
-                                                </>
+                                                    <AppointmentExamWorkspace
+                                                        profileId={activeProfile?.id}
+                                                        exams={exams}
+                                                        healthMetrics={healthMetrics}
+                                                        onOpenExam={openExamReportFromAppointment}
+                                                        onOpenHistory={openExamHistoryFromAppointment}
+                                                        onOpenEvolution={() => setActiveTab("evolution")}
+                                                    />
+                                                </div>
                                             );
 
                                             return isMobile ? (
@@ -703,15 +658,15 @@ export default function PatientView() {
                                                     </Suspense>
                                                 </div>
                                             ) : (
-                                                /* Desktop: two columns side by side */
-                                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                                /* Desktop: exams workspace + request management */
+                                                <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,0.95fr)] gap-6">
+                                                    <div className="space-y-6">
+                                                        {uploadAndExamsCards}
+                                                    </div>
                                                     <div>
                                                         <Suspense fallback={<TabLoadingSkeleton />}>
                                                             <VitaSolicitacaoExames patient={activeProfile} />
                                                         </Suspense>
-                                                    </div>
-                                                    <div className="space-y-6">
-                                                        {uploadAndExamsCards}
                                                     </div>
                                                 </div>
                                             );

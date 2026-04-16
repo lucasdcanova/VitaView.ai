@@ -5,6 +5,7 @@ import { useQueryClient } from '@tanstack/react-query';
 export interface UploadItem {
     id: string;
     file: File;
+    profileId: number;
     status: 'uploading' | 'queued' | 'processing' | 'analyzed' | 'failed';
     progress: number;
     examId?: number;
@@ -119,6 +120,7 @@ export function UploadManagerProvider({ children }: { children: React.ReactNode 
         const newUploads: UploadItem[] = files.map(file => ({
             id: Math.random().toString(36).substring(7),
             file,
+            profileId,
             status: 'uploading',
             progress: 0,
             name: file.name
@@ -164,6 +166,9 @@ export function UploadManagerProvider({ children }: { children: React.ReactNode 
 
             const data = await response.json();
 
+            queryClient.invalidateQueries({ queryKey: ["/api/exams"] });
+            queryClient.invalidateQueries({ queryKey: ["/api/patient-dashboard"] });
+
             setUploads(prev => prev.map(u => {
                 // Match by name (not ideal but works for now)
                 const result = data.results.find((r: any) => r.name === u.name);
@@ -190,7 +195,7 @@ export function UploadManagerProvider({ children }: { children: React.ReactNode 
             setUploads(prev => prev.map(u => newUploads.find(nu => nu.id === u.id) ? { ...u, status: 'failed', error: msg } : u));
             toast({ title: "Erro no upload", description: msg, variant: "destructive" });
         }
-    }, [toast]);
+    }, [queryClient, toast]);
 
     const clearCompleted = useCallback(() => {
         setUploads(prev => prev.filter(u => u.status !== 'analyzed' && u.status !== 'failed'));
