@@ -3,7 +3,7 @@ import { useRoute, useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Exam, ExamResult } from "@shared/schema";
 import { formatMetricDisplayName } from "@shared/exam-normalizer";
-import { getExamDetails, getExamInsights, deleteExam } from "@/lib/api";
+import { getExamDetails, deleteExam } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { useProfiles } from "@/hooks/use-profiles";
 import {
@@ -12,32 +12,15 @@ import {
   Image,
   Share2,
   Download,
-  Calendar,
-  Building,
-  UserRound,
   CheckCircle2,
   ArrowDown,
   ArrowUp,
   Minus,
   Info,
   AlertTriangle,
-  AlertCircle,
-  BookOpen,
-  ChevronRight,
-  Heart,
-  Activity,
-  Apple,
-  Dumbbell,
-  Moon,
-  User,
   Microscope,
-  FileText as FileMedical,
-  Clipboard,
-  LineChart,
-  Clock,
   Trash2,
   MoreVertical,
-  Sparkles
 } from "lucide-react";
 import Sidebar from "@/components/layout/sidebar";
 import MobileHeader from "@/components/layout/mobile-header";
@@ -64,13 +47,6 @@ function getChangeIconForMetric(change: string | null): JSX.Element {
   }
 }
 import { Button } from "@/components/ui/button";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger
-} from "@/components/ui/tabs";
-import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -79,13 +55,6 @@ import {
   TooltipProvider,
   TooltipTrigger
 } from "@/components/ui/tooltip";
-import { FeatureGate } from "@/components/ui/feature-gate";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
 import {
   Dialog,
   DialogContent,
@@ -94,7 +63,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { cn } from "@/lib/utils";
 import {
   buildDiagnosisDescription,
   buildFindingDescription,
@@ -102,35 +70,7 @@ import {
   formatStructuredDate,
   normalizeExamNarrative,
   parseStructuredExamAnalysis,
-  splitRecommendations,
 } from "@/lib/exam-analysis";
-import { formatDistanceToNow } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-
-type HealthInsights = {
-  recommendations: string[];
-  specialists: string[];
-  lifestyle: {
-    diet: string;
-    exercise: string;
-    sleep: string;
-    stress_management?: string;
-  };
-  riskFactors: string[];
-  contextualAnalysis: string;
-  healthParameters?: {
-    healthScore: number;
-    criticalAreas: string[];
-    stableAreas: string[];
-    improvementTrends: string[];
-    worseningTrends: string[];
-  };
-  evidenceBasedAssessment?: {
-    clinicalGuidelines: string[];
-    studyReferences: string[];
-    confidenceLevel: string;
-  };
-};
 
 export default function ExamReport() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -157,12 +97,6 @@ export default function ExamReport() {
     queryKey: [`/api/exams/${examId}`],
     queryFn: () => getExamDetails(examId),
     enabled: !!examId,
-  });
-
-  const { data: insights, isLoading: isLoadingInsights } = useQuery<HealthInsights>({
-    queryKey: [`/api/exams/${examId}/insights`],
-    queryFn: () => getExamInsights(examId),
-    enabled: !!examId && !!data?.result,
   });
 
   // Mutação para excluir o exame
@@ -195,115 +129,6 @@ export default function ExamReport() {
   const confirmDelete = () => {
     deleteMutation.mutate();
     setDeleteDialogOpen(false);
-  };
-
-  // Format relative date
-  const formatRelativeDate = (dateString?: string) => {
-    if (!dateString) return "";
-    const date = new Date(dateString);
-    return formatDistanceToNow(date, { addSuffix: true, locale: ptBR });
-  };
-
-  // Get icon for a given lifestyle category
-  const getLifestyleIcon = (category: string) => {
-    switch (category) {
-      case 'diet':
-        return <Apple className="h-5 w-5 text-emerald-600" />;
-      case 'exercise':
-        return <Dumbbell className="h-5 w-5 text-blue-600" />;
-      case 'sleep':
-        return <Moon className="h-5 w-5 text-indigo-600" />;
-      case 'stress_management':
-        return <Heart className="h-5 w-5 text-rose-600" />;
-      default:
-        return <Activity className="h-5 w-5 text-primary-600" />;
-    }
-  };
-
-  // Get background color for lifestyle card
-  const getLifestyleCardStyle = (category: string) => {
-    switch (category) {
-      case 'diet':
-        return 'bg-emerald-50 dark:bg-emerald-900/10 border-emerald-200 dark:border-emerald-900';
-      case 'exercise':
-        return 'bg-blue-50 dark:bg-blue-900/10 border-blue-200 dark:border-blue-900';
-      case 'sleep':
-        return 'bg-indigo-50 dark:bg-indigo-900/10 border-indigo-200 dark:border-indigo-900';
-      case 'stress_management':
-        return 'bg-rose-50 dark:bg-rose-900/10 border-rose-200 dark:border-rose-900';
-      default:
-        return 'bg-muted/50 border-border';
-    }
-  };
-
-  // Get color for confidence level
-  const getConfidenceLevelColor = (level?: string) => {
-    switch (level) {
-      case 'alto':
-        return 'text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-900';
-      case 'médio':
-        return 'text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-900';
-      case 'baixo':
-        return 'text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-900';
-      default:
-        return 'text-muted-foreground bg-muted border-border';
-    }
-  };
-
-  // Filtrar recomendações para garantir conformidade com diretrizes do Ministério da Saúde
-  const filterRecommendations = (recommendations: string[]) => {
-    const prohibitedTerms = [
-      'vitamina', 'suplemento', 'zinco', 'magnésio', 'ferro', 'cálcio', 'ômega',
-      'b12', 'vitamin', 'supplement', 'prescri', 'dosagem', 'mg', 'ui'
-    ];
-
-    return recommendations.filter(rec => {
-      const lowerRec = rec.toLowerCase();
-      return !prohibitedTerms.some(term => lowerRec.includes(term));
-    }).map(rec => {
-      // Se ainda houver recomendações problemáticas, substituir por orientação padrão
-      if (rec.toLowerCase().includes('acompanhamento') && !rec.includes('Ministério da Saúde')) {
-        return 'Consulte um médico para orientações específicas sobre os resultados';
-      }
-      return rec;
-    });
-  };
-
-  // Filtrar texto de lifestyle para remover nutrientes específicos
-  const filterLifestyleText = (text: string) => {
-    const prohibitedTerms = [
-      'vitamina', 'suplemento', 'zinco', 'magnésio', 'ferro', 'cálcio', 'ômega',
-      'b12', 'vitamin', 'supplement', 'prescri', 'dosagem', 'mg', 'ui'
-    ];
-
-    let filteredText = text;
-    prohibitedTerms.forEach(term => {
-      const regex = new RegExp(term, 'gi');
-      if (regex.test(filteredText)) {
-        // Se contém termo proibido, usar texto padrão do Ministério da Saúde
-        if (text.toLowerCase().includes('alimentação') || text.toLowerCase().includes('diet')) {
-          filteredText = 'Mantenha alimentação equilibrada conforme Guia Alimentar do Ministério da Saúde';
-        } else if (text.toLowerCase().includes('exercí') || text.toLowerCase().includes('atividade')) {
-          filteredText = 'Pratique atividade física regular conforme orientações do Ministério da Saúde (150 min/semana)';
-        } else {
-          filteredText = 'Consulte um médico para orientações específicas';
-        }
-      }
-    });
-
-    return filteredText;
-  };
-
-  const getFileIcon = (fileType?: string, iconSize: number = 16) => {
-    switch (fileType) {
-      case 'pdf':
-        return <FileText className="text-muted-foreground" size={16} />;
-      case 'jpeg':
-      case 'png':
-        return <Image className="text-muted-foreground" size={16} />;
-      default:
-        return <FileText className="text-muted-foreground" size={16} />;
-    }
   };
 
   const formatDate = (dateString?: string) => {
@@ -412,11 +237,6 @@ export default function ExamReport() {
     const status = metric?.status?.toLowerCase?.() || "";
     return status && status !== "normal";
   });
-  const structuredRecommendations = splitRecommendations(
-    insights?.recommendations && insights.recommendations.length > 0
-      ? insights.recommendations
-      : data?.result?.recommendations || structuredAnalysis?.recommendations || []
-  );
   const narrativeAnalysis =
     normalizeExamNarrative(
       structuredAnalysis?.detailedAnalysis ||
@@ -502,24 +322,6 @@ export default function ExamReport() {
       : suggestedDiagnoses.length > 0
         ? buildDiagnosisDescription(suggestedDiagnoses[0])
         : normalizeExamNarrative(diagnosticImpression[0]?.notes || clinicalFindings[0]?.interpretation) || "A interpretação final deve sempre ser correlacionada ao contexto clínico do paciente.";
-  const conciseRecommendations = filterRecommendations(structuredRecommendations).slice(0, 4);
-  const specialistSuggestions = (insights?.specialists || [])
-    .map((specialist) => normalizeExamNarrative(specialist))
-    .filter(Boolean)
-    .slice(0, 4);
-  const lifestyleGuidance = insights?.lifestyle
-    ? [
-        { label: "Alimentação", text: normalizeExamNarrative(filterLifestyleText(insights.lifestyle.diet)) },
-        { label: "Exercícios", text: normalizeExamNarrative(filterLifestyleText(insights.lifestyle.exercise)) },
-        { label: "Sono", text: normalizeExamNarrative(filterLifestyleText(insights.lifestyle.sleep)) },
-        insights.lifestyle.stress_management
-          ? {
-              label: "Gerenciamento de estresse",
-              text: normalizeExamNarrative(filterLifestyleText(insights.lifestyle.stress_management)),
-            }
-          : null,
-      ].filter((item): item is { label: string; text: string } => Boolean(item?.text))
-    : [];
   const conciseClinicalBlocks = [
     ...diagnosticImpression.slice(0, 2).map((item) => ({
       label: "Impressão",
@@ -824,69 +626,6 @@ export default function ExamReport() {
                                 </div>
                               </div>
                             ))}
-                          </div>
-                        </section>
-                      )}
-
-                      {(conciseRecommendations.length > 0 || specialistSuggestions.length > 0 || lifestyleGuidance.length > 0) && (
-                        <section className="space-y-3">
-                          <div>
-                            <h3 className="font-medium text-lg text-foreground">Próximos passos sugeridos</h3>
-                            <p className="text-sm text-muted-foreground">Orientações condensadas para conduta, sem duplicar o que já foi dito acima.</p>
-                          </div>
-
-                          <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
-                            <div className="rounded-xl border border-border bg-card p-4">
-                              {isLoadingInsights ? (
-                                <div className="space-y-3">
-                                  {[...Array(3)].map((_, index) => (
-                                    <Skeleton key={index} className="h-14 w-full" />
-                                  ))}
-                                </div>
-                              ) : conciseRecommendations.length > 0 ? (
-                                <ul className="space-y-3">
-                                  {conciseRecommendations.map((recommendation, index) => (
-                                    <li key={`${recommendation}-${index}`} className="flex items-start gap-3 rounded-lg bg-muted/30 p-3">
-                                      <CheckCircle2 className="mt-0.5 h-4 w-4 text-primary" />
-                                      <span className="text-sm text-foreground">{normalizeExamNarrative(recommendation)}</span>
-                                    </li>
-                                  ))}
-                                </ul>
-                              ) : (
-                                <p className="text-sm text-muted-foreground">
-                                  Nenhuma orientação adicional foi destacada para este exame.
-                                </p>
-                              )}
-                            </div>
-
-                            <div className="space-y-4">
-                              {specialistSuggestions.length > 0 && (
-                                <div className="rounded-xl border border-border bg-card p-4">
-                                  <p className="text-sm font-medium text-foreground">Especialistas sugeridos</p>
-                                  <div className="mt-3 flex flex-wrap gap-2">
-                                    {specialistSuggestions.map((specialist, index) => (
-                                      <Badge key={`${specialist}-${index}`} variant="outline">
-                                        {specialist}
-                                      </Badge>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
-
-                              {lifestyleGuidance.length > 0 && (
-                                <div className="rounded-xl border border-border bg-card p-4">
-                                  <p className="text-sm font-medium text-foreground">Cuidados gerais</p>
-                                  <ul className="mt-3 space-y-3">
-                                    {lifestyleGuidance.slice(0, 3).map((item) => (
-                                      <li key={item.label} className="text-sm text-foreground">
-                                        <span className="font-medium">{item.label}:</span>{" "}
-                                        <span className="text-muted-foreground">{item.text}</span>
-                                      </li>
-                                    ))}
-                                  </ul>
-                                </div>
-                              )}
-                            </div>
                           </div>
                         </section>
                       )}
