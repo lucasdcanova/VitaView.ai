@@ -322,23 +322,56 @@ export default function ExamReport() {
       : suggestedDiagnoses.length > 0
         ? buildDiagnosisDescription(suggestedDiagnoses[0])
         : normalizeExamNarrative(diagnosticImpression[0]?.notes || clinicalFindings[0]?.interpretation) || "A interpretação final deve sempre ser correlacionada ao contexto clínico do paciente.";
+  const summarizeFindingForReport = (finding: any) => {
+    const title = normalizeExamNarrative(finding?.title);
+    if (!title) return "";
+
+    const bodySite = normalizeExamNarrative(finding?.bodySite);
+    const value = `${finding?.value || ""}`.trim();
+    const unit = `${finding?.unit || ""}`.trim();
+    const qualitativeResult = normalizeExamNarrative(finding?.qualitativeResult);
+    const status = normalizeExamNarrative(finding?.status);
+    const interpretation = normalizeExamNarrative(finding?.interpretation);
+
+    const headline = bodySite ? `${title} em ${bodySite}` : title;
+    const detail =
+      value
+        ? `${value}${unit ? ` ${unit}` : ""}`
+        : qualitativeResult || interpretation;
+
+    const suffix = status && status.toLowerCase() !== "normal" ? ` (${status})` : "";
+
+    return normalizeExamNarrative(
+      detail ? `${headline}: ${detail}${suffix}` : `${headline}${suffix}`
+    );
+  };
+
+  const conciseFindingItems = clinicalFindings
+    .slice(0, 4)
+    .map((finding) => summarizeFindingForReport(finding))
+    .filter(Boolean);
+
+  const diagnosisItems = suggestedDiagnoses
+    .slice(0, 2)
+    .map((diagnosis) => buildDiagnosisDescription(diagnosis))
+    .filter(Boolean);
+
   const conciseClinicalBlocks = [
-    ...diagnosticImpression.slice(0, 2).map((item) => ({
-      label: "Impressão",
-      tone: "border-emerald-200/80 bg-emerald-50/70 dark:border-emerald-900/60 dark:bg-emerald-950/20",
-      text: buildImpressionDescription(item),
-    })),
-    ...clinicalFindings.slice(0, 3).map((finding) => ({
-      label: "Achado",
-      tone: "border-border/70 bg-muted/25",
-      text: buildFindingDescription(finding),
-    })),
-    ...suggestedDiagnoses.slice(0, 2).map((diagnosis) => ({
-      label: "Diagnóstico sugerido",
-      tone: "border-blue-200/80 bg-blue-50/70 dark:border-blue-900/60 dark:bg-blue-950/20",
-      text: buildDiagnosisDescription(diagnosis),
-    })),
-  ].filter((item) => item.text);
+    ...(conciseFindingItems.length > 0
+      ? [{
+          label: "Achados principais",
+          tone: "border-border/70 bg-muted/25",
+          items: conciseFindingItems,
+        }]
+      : []),
+    ...(diagnosisItems.length > 0
+      ? [{
+          label: diagnosisItems.length > 1 ? "Diagnósticos sugeridos" : "Diagnóstico sugerido",
+          tone: "border-blue-200/80 bg-blue-50/70 dark:border-blue-900/60 dark:bg-blue-950/20",
+          items: diagnosisItems,
+        }]
+      : []),
+  ];
   const showComplementaryNarrative =
     Boolean(narrativeAnalysis) &&
     conciseClinicalBlocks.length === 0 &&
@@ -619,9 +652,19 @@ export default function ExamReport() {
 
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {conciseClinicalBlocks.map((item, index) => (
-                              <div key={`${item.label}-${item.text}-${index}`} className={`rounded-xl border p-4 ${item.tone}`}>
+                              <div key={`${item.label}-${index}`} className={`rounded-xl border p-4 ${item.tone}`}>
                                 <p className="text-xs uppercase tracking-wide text-muted-foreground">{item.label}</p>
-                                <p className="mt-2 text-sm text-foreground leading-6">{item.text}</p>
+                                {item.items.length === 1 ? (
+                                  <p className="mt-2 text-sm text-foreground leading-6">{item.items[0]}</p>
+                                ) : (
+                                  <ul className="mt-2 space-y-2">
+                                    {item.items.map((entry, entryIndex) => (
+                                      <li key={`${entry}-${entryIndex}`} className="text-sm text-foreground leading-6">
+                                        {entry}
+                                      </li>
+                                    ))}
+                                  </ul>
+                                )}
                               </div>
                             ))}
                           </div>
