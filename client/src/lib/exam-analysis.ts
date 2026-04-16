@@ -213,11 +213,27 @@ export const buildImpressionDescription = (item: StructuredExamImpression) => {
   return normalizeExamNarrative(extras.length > 0 ? `${description} (${extras.join(" | ")})` : description);
 };
 
+const translateConfidenceLabel = (value: NullableText) => {
+  const confidence = toText(value).toLocaleLowerCase("pt-BR");
+
+  switch (confidence) {
+    case "high":
+      return "alta";
+    case "medium":
+    case "med":
+      return "média";
+    case "low":
+      return "baixa";
+    default:
+      return toText(value);
+  }
+};
+
 export const buildDiagnosisDescription = (diagnosis: StructuredExamDiagnosis) => {
   const condition = normalizeExamNarrative(diagnosis.condition) || "Condição sugerida";
   const extras = [
     diagnosis.cidCode ? `CID ${toText(diagnosis.cidCode)}` : "",
-    diagnosis.confidence ? `Confiança ${toText(diagnosis.confidence)}` : "",
+    diagnosis.confidence ? `Confiança ${translateConfidenceLabel(diagnosis.confidence)}` : "",
     diagnosis.basis ? normalizeExamNarrative(diagnosis.basis) : ""
   ].filter(Boolean);
 
