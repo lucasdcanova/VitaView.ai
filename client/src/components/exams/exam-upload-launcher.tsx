@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { format } from "date-fns";
@@ -6,6 +6,7 @@ import { ptBR } from "date-fns/locale";
 import type { Exam } from "@shared/schema";
 import { useProfiles } from "@/hooks/use-profiles";
 import { useUploadManager } from "@/hooks/use-upload-manager";
+import { getExamUploadHint, setExamUploadHint } from "@/lib/exam-upload-hint";
 import { captureCurrentExamReturnContext, setExamReturnContext } from "@/lib/exam-navigation";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -63,7 +64,7 @@ export function ExamUploadLauncher({
   showUploadStatusHint = false,
 }: ExamUploadLauncherProps) {
   const [, setLocation] = useLocation();
-  const { activeProfile } = useProfiles();
+  const { activeProfile, inServiceAppointmentId } = useProfiles();
   const { uploads } = useUploadManager();
   const [open, setOpen] = useState(false);
 
@@ -96,6 +97,28 @@ export function ExamUploadLauncher({
     [...scopedUploads]
       .reverse()
       .find((upload) => upload.status === "analyzed" && upload.examId) ?? null;
+  const persistedHintExamId = useMemo(
+    () =>
+      getExamUploadHint({
+        profileId: activeProfile?.id ?? null,
+        appointmentId: inServiceAppointmentId,
+      }),
+    [activeProfile?.id, inServiceAppointmentId]
+  );
+  const hintExamId = latestCompletedUpload?.examId ?? persistedHintExamId ?? null;
+
+  useEffect(() => {
+    if (!showUploadStatusHint || !latestCompletedUpload?.examId || !activeProfile?.id) return;
+
+    setExamUploadHint(
+      {
+        profileId: activeProfile.id,
+        appointmentId: inServiceAppointmentId,
+      },
+      { examId: latestCompletedUpload.examId }
+    );
+  }, [activeProfile?.id, inServiceAppointmentId, latestCompletedUpload?.examId, showUploadStatusHint]);
+
   const latestExams = useMemo(() => {
     return [...examList]
       .sort((left, right) => {
@@ -142,15 +165,15 @@ export function ExamUploadLauncher({
             </div>
 
             <div className={cn("flex gap-3", compact ? "flex-col" : "items-center")}>
-              {showUploadStatusHint && (latestCompletedUpload || activeUploads.length > 0) ? (
+              {showUploadStatusHint && (hintExamId || activeUploads.length > 0) ? (
                 <div className="flex min-w-0 flex-col items-start text-left">
                   <p className="text-xs font-medium text-emerald-700/90 dark:text-emerald-300/90">
-                    {latestCompletedUpload ? "Exame enviado e analisado" : "Exame enviado para análise"}
+                    {hintExamId ? "Exame enviado e analisado" : "Exame enviado para análise"}
                   </p>
-                  {latestCompletedUpload?.examId ? (
+                  {hintExamId ? (
                     <button
                       type="button"
-                      onClick={() => openExamReport(latestCompletedUpload.examId as number)}
+                      onClick={() => openExamReport(hintExamId)}
                       className="text-xs text-emerald-700/75 transition hover:text-emerald-800 hover:underline dark:text-emerald-300/75 dark:hover:text-emerald-200"
                     >
                       Ver resultado

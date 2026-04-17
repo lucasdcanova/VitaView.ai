@@ -3,6 +3,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { useAuth } from "./use-auth";
 import { useToast } from "./use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { clearExamUploadHint } from "@/lib/exam-upload-hint";
 import { Profile } from "@shared/schema";
 import { z } from "zod";
 
@@ -63,6 +64,10 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
   };
 
   const clearActiveProfile = () => {
+    clearExamUploadHint({
+      profileId: activeProfile?.id ?? null,
+      appointmentId: inServiceAppointmentId,
+    });
     setActiveProfileState(null);
     setInServiceAppointmentId(null);
     persistActiveProfileCookie(null);
@@ -296,6 +301,10 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
 
   // Clear patient in service
   const clearPatientInService = () => {
+    clearExamUploadHint({
+      profileId: activeProfile?.id ?? null,
+      appointmentId: inServiceAppointmentId,
+    });
     setInServiceAppointmentId(null);
   };
 
