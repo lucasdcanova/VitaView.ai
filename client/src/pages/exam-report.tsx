@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useRoute, useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Exam, ExamResult } from "@shared/schema";
-import { buildObjectiveMetricSummary, formatMetricDisplayName } from "@shared/exam-normalizer";
+import { buildObjectiveMetricSummary, formatMetricDisplayName, getObjectiveMetricStatus } from "@shared/exam-normalizer";
 import { getExamDetails, deleteExam } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { useProfiles } from "@/hooks/use-profiles";
@@ -231,8 +231,7 @@ export default function ExamReport() {
   const clinicalFindings = structuredAnalysis?.clinicalFindings || [];
   const diagnosticImpression = structuredAnalysis?.diagnosticImpression || [];
   const abnormalMetrics = healthMetrics.filter((metric) => {
-    const status = metric?.status?.toLowerCase?.() || "";
-    return status && status !== "normal";
+    return getObjectiveMetricStatus(metric) !== "normal";
   });
   const objectiveMetricItems = abnormalMetrics
     .slice(0, 4)
@@ -563,20 +562,27 @@ export default function ExamReport() {
                           </div>
 
                           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                            {healthMetrics.map((metric, index) => (
-                              <div key={index} className={`p-4 rounded-lg ${metric.status === 'alto' || metric.status === 'high' ? 'bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/50' :
-                                metric.status === 'baixo' || metric.status === 'low' ? 'bg-blue-50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/50' :
-                                  metric.status === 'atenção' || metric.status === 'atencao' ? 'bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/50' : 'bg-muted/30 border border-border'
+                            {healthMetrics.map((metric, index) => {
+                              const effectiveStatus = getObjectiveMetricStatus(metric);
+                              const statusLabel =
+                                effectiveStatus === "atencao"
+                                  ? "Atenção"
+                                  : normalizeExamNarrative(effectiveStatus);
+
+                              return (
+                              <div key={index} className={`p-4 rounded-lg ${effectiveStatus === 'alto' ? 'bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/50' :
+                                effectiveStatus === 'baixo' ? 'bg-blue-50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/50' :
+                                  effectiveStatus === 'atencao' ? 'bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/50' : 'bg-muted/30 border border-border'
                                 }`}>
                                 <div className="flex justify-between mb-1">
                                   <span className="text-sm font-medium text-foreground flex items-center">
                                     {formatMetricDisplayName(metric.name)}
-                                    {metric.status !== 'normal' && (
-                                      <Badge variant="outline" className={`ml-2 ${metric.status === 'alto' || metric.status === 'high' ? 'bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300 border-red-200 dark:border-red-900' :
-                                        metric.status === 'baixo' || metric.status === 'low' ? 'bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300 border-blue-200 dark:border-blue-900' :
+                                    {effectiveStatus !== 'normal' && (
+                                      <Badge variant="outline" className={`ml-2 ${effectiveStatus === 'alto' ? 'bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300 border-red-200 dark:border-red-900' :
+                                        effectiveStatus === 'baixo' ? 'bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300 border-blue-200 dark:border-blue-900' :
                                           'bg-amber-100 dark:bg-amber-900/20 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-900'
                                         }`}>
-                                        {normalizeExamNarrative(metric.status)}
+                                        {statusLabel}
                                       </Badge>
                                     )}
                                   </span>
@@ -625,7 +631,7 @@ export default function ExamReport() {
 
                                   {(() => {
                                     const status = getMetricStatusForUI(
-                                      metric.status,
+                                      effectiveStatus,
                                       metric.value,
                                       metric.referenceMin,
                                       metric.referenceMax
@@ -663,7 +669,7 @@ export default function ExamReport() {
                                   </div>
                                 </div>
                               </div>
-                            ))}
+                            )})}
                           </div>
                         </section>
                       )}

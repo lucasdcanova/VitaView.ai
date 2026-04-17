@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Exam, ExamResult } from "@shared/schema";
-import { buildObjectiveMetricSummary } from "@shared/exam-normalizer";
+import { buildObjectiveMetricSummary, getObjectiveMetricStatus } from "@shared/exam-normalizer";
 import { Link, useRoute, useLocation } from "wouter";
 
 import Sidebar from "@/components/layout/sidebar";
@@ -165,15 +165,11 @@ function MetricCard({ metric }: { metric: any }) {
   const max = parseFloat(metric.referenceMax);
   const value = parseFloat(metric.value);
   const hasRange = !isNaN(min) && !isNaN(max) && !isNaN(value);
+  const effectiveStatus = getObjectiveMetricStatus(metric);
 
-  const isNormal = metric.status?.toLowerCase() === "normal";
-  const isHigh =
-    metric.status?.toLowerCase() === "alto" ||
-    metric.status?.toLowerCase() === "high" ||
-    metric.status?.toLowerCase() === "elevado";
-  const isLow =
-    metric.status?.toLowerCase() === "baixo" ||
-    metric.status?.toLowerCase() === "low";
+  const isNormal = effectiveStatus === "normal";
+  const isHigh = effectiveStatus === "alto";
+  const isLow = effectiveStatus === "baixo";
 
   const borderColor = isNormal
     ? "border-l-green-400"
@@ -206,11 +202,11 @@ function MetricCard({ metric }: { metric: any }) {
           <Badge
             className={cn(
               "text-[10px] px-2 py-0.5 shrink-0 gap-1 font-heading",
-              getStatusColor(metric.status)
+              getStatusColor(effectiveStatus)
             )}
           >
-            {getStatusIcon(metric.status)}
-            {getStatusLabel(metric.status)}
+            {getStatusIcon(effectiveStatus)}
+            {getStatusLabel(effectiveStatus)}
           </Badge>
         </div>
 
@@ -387,7 +383,7 @@ export default function ExamResultSingle() {
 
   // Altered metrics for "Visão Geral" quick view
   const alteredMetrics = useMemo(
-    () => healthMetrics.filter((m) => m.status?.toLowerCase() !== "normal"),
+    () => healthMetrics.filter((metric) => getObjectiveMetricStatus(metric) !== "normal"),
     [healthMetrics]
   );
   const objectiveMetricHighlights = useMemo(

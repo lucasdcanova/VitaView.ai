@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { Exam, HealthMetric } from "@shared/schema";
-import { buildObjectiveMetricSummary, formatMetricDisplayName } from "@shared/exam-normalizer";
+import { buildObjectiveMetricSummary, formatMetricDisplayName, getObjectiveMetricStatus } from "@shared/exam-normalizer";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
@@ -67,10 +67,7 @@ const isReady = (status?: string | null) => READY_STATUSES.has(normalizeStatus(s
 
 const isInProgress = (status?: string | null) => IN_PROGRESS_STATUSES.has(normalizeStatus(status));
 
-const isMetricAbnormal = (status?: string | null) => {
-  const normalized = normalizeStatus(status);
-  return Boolean(normalized) && normalized !== "normal";
-};
+const isMetricAbnormal = (metric: any) => getObjectiveMetricStatus(metric) !== "normal";
 
 const getStatusMeta = (status?: string | null) => {
   const normalized = normalizeStatus(status);
@@ -135,7 +132,7 @@ export function AppointmentExamWorkspace({
   );
   const abnormalMetricCount = new Set(
     healthMetrics
-      .filter((metric) => isMetricAbnormal(metric.status))
+      .filter((metric) => isMetricAbnormal(metric))
       .map((metric) => `${metric.examId ?? "sem-exame"}:${metric.name}`)
   ).size;
 
@@ -176,7 +173,7 @@ export function AppointmentExamWorkspace({
   const previewMetrics = Array.isArray(previewResult?.healthMetrics)
     ? (previewResult.healthMetrics as any[])
     : healthMetrics.filter((metric) => metric.examId === previewExam?.id);
-  const abnormalPreviewMetrics = previewMetrics.filter((metric: any) => isMetricAbnormal(metric?.status));
+  const abnormalPreviewMetrics = previewMetrics.filter((metric: any) => isMetricAbnormal(metric));
   const objectivePreviewMetricHighlights = abnormalPreviewMetrics
     .slice(0, 2)
     .map((metric: any) => buildObjectiveMetricSummary(metric))
@@ -523,7 +520,7 @@ export function AppointmentExamWorkspace({
                                 key={`${metric?.name || "metric"}-${index}`}
                                 className={cn(
                                   "rounded-2xl border p-3",
-                                  isMetricAbnormal(metric?.status)
+                                  isMetricAbnormal(metric)
                                     ? "border-amber-200/80 bg-amber-50/80 dark:border-amber-900/60 dark:bg-amber-950/20"
                                     : "border-border/70 bg-muted/25"
                                 )}

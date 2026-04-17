@@ -14,7 +14,7 @@
 import type { Exam } from '@shared/schema';
 import { analyzeDocumentWithOpenAI } from './openai';
 import { storage } from '../storage';
-import { buildObjectiveMetricSummary, normalizeHealthMetrics } from '../../shared/exam-normalizer';
+import { buildObjectiveMetricSummary, getObjectiveMetricStatus, normalizeHealthMetrics } from '../../shared/exam-normalizer';
 import logger from '../logger';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -166,8 +166,7 @@ const buildExtractionSummary = (examName: string, extractionResult: any, normali
   const explicitSummary = safeText(extractionResult?.summary);
 
   const firstAbnormalMetric = normalizedMetrics.find((metric: any) => {
-    const status = safeText(metric?.status).toLowerCase();
-    return status && status !== "normal";
+    return getObjectiveMetricStatus(metric) !== "normal";
   });
 
   if (firstAbnormalMetric) {
@@ -188,8 +187,7 @@ const buildExtractionSummary = (examName: string, extractionResult: any, normali
 
   if (normalizedMetrics.length > 0) {
     const abnormalCount = normalizedMetrics.filter((metric: any) => {
-      const status = safeText(metric?.status).toLowerCase();
-      return status && status !== "normal";
+      return getObjectiveMetricStatus(metric) !== "normal";
     }).length;
 
     if (abnormalCount > 0) {

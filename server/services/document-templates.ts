@@ -1,5 +1,5 @@
 import { CID10_DATABASE } from "@shared/data/cid10-database";
-import { buildObjectiveMetricSummary } from "@shared/exam-normalizer";
+import { buildObjectiveMetricSummary, getObjectiveMetricStatus } from "@shared/exam-normalizer";
 
 // List of common controlled medications in Brazil (can be expanded)
 export const CONTROLLED_MEDICATIONS = [
@@ -599,7 +599,7 @@ export function generateExamReportHTML({ user, exam, metrics }: any) {
     const findings = Array.isArray(structured?.clinicalFindings) ? structured.clinicalFindings : [];
     const impressions = Array.isArray(structured?.diagnosticImpression) ? structured.diagnosticImpression : [];
     const abnormalMetrics = Array.isArray(metrics)
-        ? metrics.filter((metric: any) => `${metric?.status || ''}`.toLowerCase() !== 'normal')
+        ? metrics.filter((metric: any) => getObjectiveMetricStatus(metric) !== 'normal')
         : [];
     const objectiveMetricItems = abnormalMetrics
         .slice(0, 4)
