@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { Exam, HealthMetric } from "@shared/schema";
 import { buildObjectiveMetricSummary, formatMetricDisplayName, getObjectiveMetricStatus } from "@shared/exam-normalizer";
@@ -10,7 +10,6 @@ import {
   ArrowUpRight,
   BarChart3,
   CheckCircle2,
-  ChevronRight,
   Clock3,
   FileText,
   FlaskConical,
@@ -28,7 +27,6 @@ import { useUploadManager } from "@/hooks/use-upload-manager";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface AppointmentExamWorkspaceProps {
@@ -138,20 +136,7 @@ export function AppointmentExamWorkspace({
 
   const latestAnalyzedExam = sortedExams.find((exam) => isReady(exam.status)) ?? null;
 
-  const [selectedExamId, setSelectedExamId] = useState<number | null>(sortedExams[0]?.id ?? null);
-
-  useEffect(() => {
-    if (sortedExams.length === 0) {
-      setSelectedExamId(null);
-      return;
-    }
-
-    const stillExists = sortedExams.some((exam) => exam.id === selectedExamId);
-    if (!stillExists) {
-      setSelectedExamId(sortedExams[0].id);
-    }
-  }, [selectedExamId, sortedExams]);
-
+  const selectedExamId = latestAnalyzedExam?.id ?? sortedExams[0]?.id ?? null;
   const selectedExam = sortedExams.find((exam) => exam.id === selectedExamId) ?? null;
 
   const { data: selectedExamDetails, isLoading: isSelectedExamLoading } = useQuery({
@@ -225,7 +210,7 @@ export function AppointmentExamWorkspace({
             </Button>
             <Button variant="outline" size="sm" className="gap-2" onClick={onOpenHistory} disabled={showEmptyState}>
               <ArrowUpRight className="h-4 w-4" />
-              Histórico completo
+              Histórico de resultados
             </Button>
           </div>
         </div>
@@ -292,80 +277,7 @@ export function AppointmentExamWorkspace({
             </p>
           </div>
         ) : (
-          <div className="grid gap-5 xl:grid-cols-[330px_minmax(0,1fr)]">
-            <div className="space-y-3">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <p className="text-sm font-semibold text-foreground">Últimos exames enviados</p>
-                  <p className="text-xs text-muted-foreground">Selecione um exame para revisar a leitura rápida</p>
-                </div>
-                <Badge variant="outline">{sortedExams.length} itens</Badge>
-              </div>
-
-              <ScrollArea className="h-[440px]">
-                <div className="space-y-3 pr-3">
-                  {sortedExams.map((exam) => {
-                    const statusMeta = getStatusMeta(exam.status);
-                    const StatusIcon = statusMeta.icon;
-                    const isSelected = exam.id === selectedExamId;
-
-                    return (
-                      <button
-                        key={exam.id}
-                        type="button"
-                        onClick={() => setSelectedExamId(exam.id)}
-                        className={cn(
-                          "w-full rounded-2xl border p-4 text-left transition-all duration-200",
-                          isSelected
-                            ? "border-primary/60 bg-primary/5 shadow-sm"
-                            : "border-border/70 bg-card hover:border-border hover:bg-muted/35"
-                        )}
-                      >
-                        <div className="flex items-start gap-3">
-                          <div className={cn("rounded-2xl border p-2.5 shadow-sm", statusMeta.toneClassName)}>
-                            <StatusIcon className={cn("h-4 w-4", statusMeta.iconClassName)} />
-                          </div>
-
-                          <div className="min-w-0 flex-1">
-                            <div className="flex flex-wrap items-center gap-2">
-                              <p className="truncate text-sm font-semibold text-foreground">
-                                {exam.name || "Exame sem título"}
-                              </p>
-                              <Badge variant={statusMeta.badgeVariant}>{statusMeta.label}</Badge>
-                            </div>
-
-                            <p className="mt-2 text-xs text-muted-foreground">
-                              {formatExamDate(exam.examDate || exam.uploadDate)}
-                            </p>
-
-                            {exam.laboratoryName && (
-                              <p className="mt-1 truncate text-xs text-muted-foreground">
-                                {exam.laboratoryName}
-                              </p>
-                            )}
-
-                            {exam.processingError && (
-                              <p className="mt-2 text-xs font-medium text-red-700 dark:text-red-300">
-                                {exam.processingError}
-                              </p>
-                            )}
-                          </div>
-
-                          <ChevronRight
-                            className={cn(
-                              "mt-0.5 h-4 w-4 flex-shrink-0",
-                              isSelected ? "text-primary" : "text-muted-foreground"
-                            )}
-                          />
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              </ScrollArea>
-            </div>
-
-            <div className="rounded-3xl border border-border/70 bg-gradient-to-br from-card via-card to-muted/15 p-5 shadow-sm">
+          <div className="rounded-3xl border border-border/70 bg-gradient-to-br from-card via-card to-muted/15 p-5 shadow-sm">
               {isSelectedExamLoading ? (
                 <div className="space-y-4">
                   <Skeleton className="h-6 w-40" />
@@ -546,10 +458,9 @@ export function AppointmentExamWorkspace({
                 </div>
               ) : (
                 <div className="rounded-2xl border border-dashed border-border/80 bg-muted/20 px-6 py-12 text-center">
-                  <p className="text-sm text-muted-foreground">Selecione um exame para visualizar a leitura rápida.</p>
+                  <p className="text-sm text-muted-foreground">Nenhum resultado disponível para leitura rápida no momento.</p>
                 </div>
               )}
-            </div>
           </div>
         )}
       </CardContent>
