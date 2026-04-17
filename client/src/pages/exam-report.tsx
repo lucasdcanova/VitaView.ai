@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useRoute, useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Exam, ExamResult } from "@shared/schema";
-import { formatMetricDisplayName } from "@shared/exam-normalizer";
+import { buildObjectiveMetricSummary, formatMetricDisplayName } from "@shared/exam-normalizer";
 import { getExamDetails, deleteExam } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { useProfiles } from "@/hooks/use-profiles";
@@ -63,7 +63,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
-  buildDiagnosisDescription,
   buildFindingDescription,
   buildImpressionDescription,
   formatStructuredDate,
@@ -231,11 +230,14 @@ export default function ExamReport() {
   const structuredMetadata = structuredAnalysis?.examMetadata || {};
   const clinicalFindings = structuredAnalysis?.clinicalFindings || [];
   const diagnosticImpression = structuredAnalysis?.diagnosticImpression || [];
-  const suggestedDiagnoses = structuredAnalysis?.suggestedDiagnoses || [];
   const abnormalMetrics = healthMetrics.filter((metric) => {
     const status = metric?.status?.toLowerCase?.() || "";
     return status && status !== "normal";
   });
+  const objectiveMetricItems = abnormalMetrics
+    .slice(0, 4)
+    .map((metric) => buildObjectiveMetricSummary(metric))
+    .filter(Boolean);
   const narrativeAnalysis =
     normalizeExamNarrative(
       structuredAnalysis?.detailedAnalysis ||
@@ -276,7 +278,7 @@ export default function ExamReport() {
       navigator
         .share({
           title: `Relatório de Exame - ${data?.exam.name}`,
-          text: data?.result?.summary || undefined,
+          text: headlineText || data?.result?.summary || undefined,
           url: window.location.href,
         })
         .catch(() => {
@@ -298,29 +300,30 @@ export default function ExamReport() {
   const physicianName =
     data?.exam?.requestingPhysician || structuredMetadata.requestingPhysician;
   const headlineTitle =
-    suggestedDiagnoses.length > 0
-      ? "Hipóteses clínicas derivadas do exame"
-      : diagnosticImpression.length > 0
-        ? "Conclusão principal do laudo"
-        : healthMetrics.length > 0 && abnormalMetrics.length === 0
-          ? "Resultado predominantemente estável"
-          : "Resumo clínico do exame";
+    objectiveMetricItems.length > 0
+      ? "Alterações objetivas do exame"
+      : clinicalFindings.length > 0
+        ? "Achado principal do laudo"
+        : diagnosticImpression.length > 0
+          ? "Síntese objetiva do laudo"
+          : healthMetrics.length > 0 && abnormalMetrics.length === 0
+            ? "Resultado predominantemente estável"
+            : "Resumo clínico do exame";
   const headlineText =
-    suggestedDiagnoses.length > 0
-      ? buildDiagnosisDescription(suggestedDiagnoses[0])
+    objectiveMetricItems[0] ||
+    (clinicalFindings.length > 0
+      ? buildFindingDescription(clinicalFindings[0])
       : diagnosticImpression.length > 0
         ? buildImpressionDescription(diagnosticImpression[0])
         : healthMetrics.length > 0 && abnormalMetrics.length === 0
           ? "Os parâmetros estruturados ficaram majoritariamente em faixa estável."
-          : clinicalFindings.length > 0
-            ? buildFindingDescription(clinicalFindings[0])
-            : narrativeAnalysis || "O exame foi processado e estruturado no prontuário do paciente.";
+          : narrativeAnalysis || "O exame foi processado e estruturado no prontuário do paciente.");
   const attentionText =
-    abnormalMetrics.length > 0
-      ? `${formatMetricDisplayName(abnormalMetrics[0]?.name || "Alguns parâmetros")} merecem acompanhamento clínico.`
-      : suggestedDiagnoses.length > 0
-        ? buildDiagnosisDescription(suggestedDiagnoses[0])
-        : normalizeExamNarrative(diagnosticImpression[0]?.notes || clinicalFindings[0]?.interpretation) || "A interpretação final deve sempre ser correlacionada ao contexto clínico do paciente.";
+    objectiveMetricItems[1] ||
+    normalizeExamNarrative(clinicalFindings[0]?.interpretation || diagnosticImpression[0]?.notes) ||
+    (objectiveMetricItems.length > 0
+      ? "Correlacione as alterações descritas com o contexto clínico do paciente."
+      : "A interpretação final deve sempre ser correlacionada ao contexto clínico do paciente.");
   const normalizeComparableText = (text: string) =>
     text
       .toLocaleLowerCase("pt-BR")
@@ -380,12 +383,19 @@ export default function ExamReport() {
     .map((finding) => summarizeFindingForReport(finding))
     .filter(Boolean);
 
-  const diagnosisItems = suggestedDiagnoses
+  const conciseImpressionItems = diagnosticImpression
     .slice(0, 2)
-    .map((diagnosis) => buildDiagnosisDescription(diagnosis))
+    .map((item) => buildImpressionDescription(item))
     .filter(Boolean);
 
   const conciseClinicalBlocks = [
+    ...(objectiveMetricItems.length > 0
+      ? [{
+          label: objectiveMetricItems.length > 1 ? "Alterações objetivas" : "Alteração objetiva",
+          tone: "border-amber-200/80 bg-amber-50/70 dark:border-amber-900/60 dark:bg-amber-950/20",
+          items: objectiveMetricItems,
+        }]
+      : []),
     ...(conciseFindingItems.length > 0
       ? [{
           label: "Achados principais",
@@ -393,11 +403,11 @@ export default function ExamReport() {
           items: conciseFindingItems,
         }]
       : []),
-    ...(diagnosisItems.length > 0
+    ...(conciseImpressionItems.length > 0
       ? [{
-          label: diagnosisItems.length > 1 ? "Diagnósticos sugeridos" : "Diagnóstico sugerido",
-          tone: "border-blue-200/80 bg-blue-50/70 dark:border-blue-900/60 dark:bg-blue-950/20",
-          items: diagnosisItems,
+          label: conciseImpressionItems.length > 1 ? "Sínteses do laudo" : "Síntese do laudo",
+          tone: "border-sky-200/80 bg-sky-50/70 dark:border-sky-900/60 dark:bg-sky-950/20",
+          items: conciseImpressionItems,
         }]
       : []),
   ];
@@ -662,7 +672,7 @@ export default function ExamReport() {
                         <section className="space-y-3">
                           <div>
                             <h3 className="font-medium text-lg text-foreground">Leitura clínica do laudo</h3>
-                            <p className="text-sm text-muted-foreground">Achados objetivos e hipóteses que realmente ajudam na conversa clínica.</p>
+                            <p className="text-sm text-muted-foreground">Achados objetivos e sínteses descritivas úteis para a conversa clínica.</p>
                           </div>
 
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

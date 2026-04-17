@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Exam, ExamResult } from "@shared/schema";
+import { buildObjectiveMetricSummary } from "@shared/exam-normalizer";
 import { Link, useRoute, useLocation } from "wouter";
 
 import Sidebar from "@/components/layout/sidebar";
@@ -60,7 +61,6 @@ import {
 import { getExamDetails, deleteExam } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import {
-  buildDiagnosisDescription,
   buildFindingDescription,
   buildImpressionDescription,
   formatStructuredDate,
@@ -364,7 +364,6 @@ export default function ExamResultSingle() {
   const structuredMetadata = structuredAnalysis?.examMetadata || {};
   const clinicalFindings = structuredAnalysis?.clinicalFindings || [];
   const diagnosticImpression = structuredAnalysis?.diagnosticImpression || [];
-  const suggestedDiagnoses = structuredAnalysis?.suggestedDiagnoses || [];
   const recommendations = splitRecommendations(
     examData?.result?.recommendations ||
       structuredAnalysis?.recommendations ||
@@ -391,11 +390,24 @@ export default function ExamResultSingle() {
     () => healthMetrics.filter((m) => m.status?.toLowerCase() !== "normal"),
     [healthMetrics]
   );
+  const objectiveMetricHighlights = useMemo(
+    () =>
+      alteredMetrics
+        .slice(0, 3)
+        .map((metric: any) => buildObjectiveMetricSummary(metric))
+        .filter(Boolean),
+    [alteredMetrics]
+  );
+  const overviewSummary =
+    objectiveMetricHighlights[0] ||
+    (clinicalFindings[0] ? buildFindingDescription(clinicalFindings[0]) : "") ||
+    (diagnosticImpression[0] ? buildImpressionDescription(diagnosticImpression[0]) : "") ||
+    examData?.result?.summary ||
+    "A análise detalhada ainda está sendo preparada.";
 
   const hasStructuredData =
     clinicalFindings.length > 0 ||
     diagnosticImpression.length > 0 ||
-    suggestedDiagnoses.length > 0 ||
     !!narrativeAnalysis;
 
   if (!examId) {
@@ -532,8 +544,7 @@ export default function ExamResultSingle() {
                       </CardHeader>
                       <CardContent>
                         <p className="text-sm text-foreground leading-relaxed font-body">
-                          {examData.result?.summary ||
-                            "A análise detalhada ainda está sendo preparada."}
+                          {overviewSummary}
                         </p>
                       </CardContent>
                     </Card>
@@ -750,10 +761,10 @@ export default function ExamResultSingle() {
                           <CardHeader className="pb-3">
                             <CardTitle className="text-lg font-heading flex items-center gap-2">
                               <ClipboardList className="h-5 w-5 text-muted-foreground" />
-                              Impressão Diagnóstica
+                              Síntese do Laudo
                             </CardTitle>
                             <CardDescription className="font-body">
-                              Síntese clínica do laudo
+                              Leitura objetiva do que está descrito no exame
                             </CardDescription>
                           </CardHeader>
                           <CardContent className="space-y-3">
@@ -777,52 +788,6 @@ export default function ExamResultSingle() {
                         </Card>
                       )}
 
-                      {/* Suggested Diagnoses */}
-                      {suggestedDiagnoses.length > 0 && (
-                        <Card className="border-green-100">
-                          <CardHeader className="pb-3">
-                            <div className="flex items-center justify-between">
-                              <CardTitle className="text-lg font-heading flex items-center gap-2">
-                                <Stethoscope className="h-5 w-5 text-green-600" />
-                                Diagnósticos Sugeridos
-                              </CardTitle>
-                              <Badge className="bg-green-50 text-green-700 border-green-200 text-xs">
-                                {suggestedDiagnoses.length}
-                              </Badge>
-                            </div>
-                            <CardDescription className="font-body">
-                              Hipóteses diagnósticas sustentadas pelo exame
-                            </CardDescription>
-                          </CardHeader>
-                          <CardContent className="space-y-2">
-                            {suggestedDiagnoses.map((diagnosis, index) => (
-                              <div
-                                key={`${buildDiagnosisDescription(diagnosis)}-${index}`}
-                                className="rounded-lg border border-green-200 bg-green-50/50 p-4 transition-colors hover:bg-green-50"
-                              >
-                                <div className="flex items-start gap-3">
-                                  <div className="mt-0.5 h-8 w-8 rounded-full bg-green-100 flex items-center justify-center shrink-0">
-                                    <CheckCircle2 className="h-4 w-4 text-green-600" />
-                                  </div>
-                                  <div>
-                                    <p className="font-heading font-semibold text-sm text-green-900">
-                                      {diagnosis.condition || "Condição sugerida"}
-                                    </p>
-                                    <p className="mt-1 text-xs text-green-800 leading-relaxed font-body">
-                                      {buildDiagnosisDescription(diagnosis)}
-                                    </p>
-                                    {diagnosis.notes && (
-                                      <p className="mt-2 text-xs text-green-700 font-body italic">
-                                        {diagnosis.notes}
-                                      </p>
-                                    )}
-                                  </div>
-                                </div>
-                              </div>
-                            ))}
-                          </CardContent>
-                        </Card>
-                      )}
                     </TabsContent>
                   )}
 

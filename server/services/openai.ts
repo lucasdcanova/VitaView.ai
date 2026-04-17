@@ -1915,8 +1915,8 @@ export async function analyzeDocumentWithOpenAI(fileContent: string, fileType: s
 
                 Responda APENAS em JSON válido com esta estrutura:
                 {
-                  "summary": "resumo clínico objetivo do exame em 1-2 frases",
-                  "detailedAnalysis": "interpretação clínica em linguagem natural, com foco no que o exame mostra",
+                  "summary": "resumo objetivo do exame em 1-2 frases, descrevendo apenas achados e alterações observadas",
+                  "detailedAnalysis": "leitura objetiva do exame em linguagem natural, sem inferir diagnósticos",
                   "recommendations": ["orientação 1", "orientação 2"],
                   "healthMetrics": [
                     {
@@ -1950,7 +1950,7 @@ export async function analyzeDocumentWithOpenAI(fileContent: string, fileType: s
                   ],
                   "diagnosticImpression": [
                     {
-                      "description": "conclusão, impressão diagnóstica ou síntese do laudo",
+                      "description": "síntese objetiva do laudo, restrita ao que está descrito no exame",
                       "severity": "leve|moderada|grave ou null",
                       "chronicity": "agudo|cronico|indeterminado ou null",
                       "laterality": "direita|esquerda|bilateral ou null",
@@ -1958,16 +1958,7 @@ export async function analyzeDocumentWithOpenAI(fileContent: string, fileType: s
                       "notes": "detalhes adicionais"
                     }
                   ],
-                  "suggestedDiagnoses": [
-                    {
-                      "condition": "condição sugerida pelo exame",
-                      "cidCode": "CID-10 mais provável ou null",
-                      "confidence": "high|medium|low",
-                      "basis": "trecho resumido do exame que sustenta o diagnóstico",
-                      "status": "ativo|em_tratamento|resolvido|cronico",
-                      "notes": "observações clínicas"
-                    }
-                  ],
+                  "suggestedDiagnoses": [],
                   "examMetadata": {
                     "documentTitle": "título clínico amigável",
                     "examType": "tipo curto do exame",
@@ -1993,8 +1984,11 @@ export async function analyzeDocumentWithOpenAI(fileContent: string, fileType: s
                 - Não invente campos ausentes. Use null, string vazia ou array vazio conforme a estrutura.
                 - Use "healthMetrics" apenas para parâmetros objetivos, valores medidos ou resultados qualitativos pontuais.
                 - Use "clinicalFindings" para achados descritivos de imagem, endoscopia, biópsia, anatomopatologia, ecografia, laudos funcionais e outros achados qualitativos.
-                - Use "diagnosticImpression" para conclusões e sínteses do laudo.
-                - Preencha "suggestedDiagnoses" apenas quando o exame sustentar essa inferência de forma razoável; associe CID-10 quando possível.
+                - Use "diagnosticImpression" apenas para conclusões textuais presentes no laudo ou para uma reformulação objetiva do conteúdo, sem hipótese diagnóstica nova.
+                - "suggestedDiagnoses" deve ser sempre [].
+                - Não proponha hipóteses diagnósticas, CID-10, síndromes ou condições prováveis a partir do exame.
+                - Descreva apenas alterações mensuráveis ou achados explicitamente presentes no documento.
+                - Quando o desvio for discreto, use linguagem proporcional como "levemente acima do limite de referência" ou "levemente abaixo do limite inferior".
                 - Remova prefixos Dr./Dra. dos nomes dos médicos.
                 - Datas devem estar em YYYY-MM-DD.
                 - "documentTitle" e "examType" devem ser clínicos e específicos ao conteúdo do exame, nunca genéricos como "scan" ou "arquivo".`;

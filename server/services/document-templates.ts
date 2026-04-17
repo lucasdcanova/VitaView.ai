@@ -1,4 +1,5 @@
 import { CID10_DATABASE } from "@shared/data/cid10-database";
+import { buildObjectiveMetricSummary } from "@shared/exam-normalizer";
 
 // List of common controlled medications in Brazil (can be expanded)
 export const CONTROLLED_MEDICATIONS = [
@@ -597,7 +598,18 @@ export function generateExamReportHTML({ user, exam, metrics }: any) {
         : splitRecommendations(exam.recommendations);
     const findings = Array.isArray(structured?.clinicalFindings) ? structured.clinicalFindings : [];
     const impressions = Array.isArray(structured?.diagnosticImpression) ? structured.diagnosticImpression : [];
-    const diagnoses = Array.isArray(structured?.suggestedDiagnoses) ? structured.suggestedDiagnoses : [];
+    const abnormalMetrics = Array.isArray(metrics)
+        ? metrics.filter((metric: any) => `${metric?.status || ''}`.toLowerCase() !== 'normal')
+        : [];
+    const objectiveMetricItems = abnormalMetrics
+        .slice(0, 4)
+        .map((metric: any) => buildObjectiveMetricSummary(metric))
+        .filter(Boolean);
+    const summaryText =
+        objectiveMetricItems[0] ||
+        (findings[0] ? buildFindingDescription(findings[0]) : '') ||
+        (impressions[0] ? buildImpressionDescription(impressions[0]) : '') ||
+        exam.summary;
 
     return `
     <!DOCTYPE html>
@@ -694,11 +706,11 @@ export function generateExamReportHTML({ user, exam, metrics }: any) {
         ` : ''}
       </div>
 
-      ${exam.summary ? `
+      ${summaryText ? `
       <div class="section">
         <div class="section-title">📋 Resumo Executivo</div>
         <div class="summary-box">
-          ${escapeHtml(exam.summary)}
+          ${escapeHtml(summaryText)}
         </div>
       </div>
       ` : ''}
@@ -718,6 +730,17 @@ export function generateExamReportHTML({ user, exam, metrics }: any) {
       </div>
       ` : ''}
 
+      ${objectiveMetricItems.length > 0 ? `
+      <div class="section">
+        <div class="section-title">⚠️ Alterações Objetivas</div>
+        <div class="analysis-box">
+          <ul class="structured-list">
+            ${objectiveMetricItems.map((item: string) => `<li>${escapeHtml(item)}</li>`).join('')}
+          </ul>
+        </div>
+      </div>
+      ` : ''}
+
       ${findings.length > 0 ? `
       <div class="section">
         <div class="section-title">🧾 Achados Estruturados</div>
@@ -731,21 +754,10 @@ export function generateExamReportHTML({ user, exam, metrics }: any) {
 
       ${impressions.length > 0 ? `
       <div class="section">
-        <div class="section-title">🔎 Impressão Diagnóstica</div>
+        <div class="section-title">🔎 Síntese do Laudo</div>
         <div class="analysis-box">
           <ul class="structured-list">
             ${impressions.map((item: any) => `<li>${escapeHtml(buildImpressionDescription(item))}</li>`).join('')}
-          </ul>
-        </div>
-      </div>
-      ` : ''}
-
-      ${diagnoses.length > 0 ? `
-      <div class="section">
-        <div class="section-title">🩺 Diagnósticos Sugeridos</div>
-        <div class="analysis-box">
-          <ul class="structured-list">
-            ${diagnoses.map((diagnosis: any) => `<li>${escapeHtml(buildDiagnosisDescription(diagnosis))}</li>`).join('')}
           </ul>
         </div>
       </div>

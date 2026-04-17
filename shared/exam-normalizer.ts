@@ -519,3 +519,114 @@ export function formatMetricDisplayName(name: string): string {
 
   return formattedWords.join(' ');
 }
+
+type ObjectiveMetricSummaryInput = {
+  name?: string | number | null;
+  value?: string | number | null;
+  unit?: string | number | null;
+  status?: string | number | null;
+  referenceMin?: string | number | null;
+  referenceMax?: string | number | null;
+  referenceRange?: string | number | null;
+};
+
+const toMetricText = (value: unknown): string => {
+  if (value === null || value === undefined) return '';
+  return String(value).trim();
+};
+
+const parseMetricNumericValue = (value: unknown): number | null => {
+  const text = toMetricText(value);
+  if (!text) return null;
+
+  const normalized = text.replace(',', '.');
+  const match = normalized.match(/-?\d+(?:\.\d+)?/);
+  if (!match) return null;
+
+  const parsed = Number(match[0]);
+  return Number.isFinite(parsed) ? parsed : null;
+};
+
+const buildMetricDetail = (
+  valueText: string,
+  unitText: string,
+  referenceMinText: string,
+  referenceMaxText: string,
+  referenceRangeText: string
+) => {
+  const parts: string[] = [];
+
+  if (valueText) {
+    parts.push(`${valueText}${unitText ? ` ${unitText}` : ''}`);
+  }
+
+  if (referenceMinText && referenceMaxText) {
+    parts.push(`ref. ${referenceMinText}-${referenceMaxText}${unitText ? ` ${unitText}` : ''}`);
+  } else if (referenceRangeText) {
+    parts.push(`ref. ${referenceRangeText}`);
+  }
+
+  return parts.length > 0 ? ` (${parts.join('; ')})` : '';
+};
+
+const getDeviationQualifier = (delta: number, bound: number, range: number | null) => {
+  const mildThreshold = range && range > 0
+    ? range * 0.1
+    : Math.max(Math.abs(bound) * 0.05, 0.1);
+
+  return delta <= mildThreshold ? 'levemente ' : '';
+};
+
+export function buildObjectiveMetricSummary(metric: ObjectiveMetricSummaryInput): string {
+  const metricName = formatMetricDisplayName(toMetricText(metric.name) || 'Parâmetro');
+  const valueText = toMetricText(metric.value);
+  const unitText = toMetricText(metric.unit);
+  const referenceMinText = toMetricText(metric.referenceMin);
+  const referenceMaxText = toMetricText(metric.referenceMax);
+  const referenceRangeText = toMetricText(metric.referenceRange);
+  const status = toMetricText(metric.status).toLowerCase();
+
+  const value = parseMetricNumericValue(metric.value);
+  const referenceMin = parseMetricNumericValue(metric.referenceMin);
+  const referenceMax = parseMetricNumericValue(metric.referenceMax);
+  const range =
+    referenceMin !== null && referenceMax !== null
+      ? Math.abs(referenceMax - referenceMin)
+      : null;
+
+  const detail = buildMetricDetail(
+    valueText,
+    unitText,
+    referenceMinText,
+    referenceMaxText,
+    referenceRangeText
+  );
+
+  if (value !== null && referenceMin !== null && value < referenceMin) {
+    const qualifier = getDeviationQualifier(referenceMin - value, referenceMin, range);
+    return `${metricName} ${qualifier}abaixo do limite inferior${detail}.`;
+  }
+
+  if (value !== null && referenceMax !== null && value > referenceMax) {
+    const qualifier = getDeviationQualifier(value - referenceMax, referenceMax, range);
+    return `${metricName} ${qualifier}acima do limite superior${detail}.`;
+  }
+
+  if (status === 'baixo' || status === 'low') {
+    return `${metricName} abaixo da faixa de referência${detail}.`;
+  }
+
+  if (status === 'alto' || status === 'high' || status === 'elevado') {
+    return `${metricName} acima da faixa de referência${detail}.`;
+  }
+
+  if (status === 'atencao' || status === 'atenção') {
+    return `${metricName} com alteração que merece atenção${detail}.`;
+  }
+
+  if (valueText) {
+    return `${metricName}: ${valueText}${unitText ? ` ${unitText}` : ''}${detail ? detail.replace(/^\s*/, ' ') : ''}.`;
+  }
+
+  return metricName;
+}

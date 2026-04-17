@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { Exam, HealthMetric } from "@shared/schema";
-import { formatMetricDisplayName } from "@shared/exam-normalizer";
+import { buildObjectiveMetricSummary, formatMetricDisplayName } from "@shared/exam-normalizer";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
@@ -18,7 +18,6 @@ import {
 } from "lucide-react";
 import { getExamDetails } from "@/lib/api";
 import {
-  buildDiagnosisDescription,
   buildFindingDescription,
   buildImpressionDescription,
   normalizeExamNarrative,
@@ -174,25 +173,27 @@ export function AppointmentExamWorkspace({
     );
   const clinicalFindings = structuredAnalysis?.clinicalFindings || [];
   const diagnosticImpression = structuredAnalysis?.diagnosticImpression || [];
-  const suggestedDiagnoses = structuredAnalysis?.suggestedDiagnoses || [];
   const previewMetrics = Array.isArray(previewResult?.healthMetrics)
     ? (previewResult.healthMetrics as any[])
     : healthMetrics.filter((metric) => metric.examId === previewExam?.id);
   const abnormalPreviewMetrics = previewMetrics.filter((metric: any) => isMetricAbnormal(metric?.status));
+  const objectivePreviewMetricHighlights = abnormalPreviewMetrics
+    .slice(0, 2)
+    .map((metric: any) => buildObjectiveMetricSummary(metric))
+    .filter(Boolean);
   const previewStatus = getStatusMeta(previewExam?.status);
   const PreviewStatusIcon = previewStatus.icon;
 
   const quickHighlights = [
-    suggestedDiagnoses[0] ? buildDiagnosisDescription(suggestedDiagnoses[0]) : "",
-    diagnosticImpression[0] ? buildImpressionDescription(diagnosticImpression[0]) : "",
+    objectivePreviewMetricHighlights[0] || "",
     clinicalFindings[0] ? buildFindingDescription(clinicalFindings[0]) : "",
+    diagnosticImpression[0] ? buildImpressionDescription(diagnosticImpression[0]) : "",
   ].filter(Boolean);
 
   const keySummary = quickHighlights[0] || structuredSummary || "A análise estará disponível assim que a IA concluir o processamento.";
   const attentionSummary =
-    abnormalPreviewMetrics.length > 0
-      ? `${formatMetricDisplayName(abnormalPreviewMetrics[0]?.name || "Parâmetro")} fora do esperado para revisão clínica.`
-      : normalizeExamNarrative(diagnosticImpression[0]?.notes || clinicalFindings[0]?.interpretation) ||
+    objectivePreviewMetricHighlights[1] ||
+    normalizeExamNarrative(clinicalFindings[0]?.interpretation || diagnosticImpression[0]?.notes) ||
         "Correlacione a leitura da IA com o contexto clínico do atendimento.";
   const labName =
     normalizeExamNarrative(

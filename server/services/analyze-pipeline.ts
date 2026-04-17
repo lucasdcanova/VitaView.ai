@@ -14,7 +14,7 @@
 import type { Exam } from '@shared/schema';
 import { analyzeDocumentWithOpenAI } from './openai';
 import { storage } from '../storage';
-import { normalizeHealthMetrics } from '../../shared/exam-normalizer';
+import { buildObjectiveMetricSummary, normalizeHealthMetrics } from '../../shared/exam-normalizer';
 import logger from '../logger';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -152,7 +152,7 @@ const buildStructuredExamPayload = (extractionResult: any) => ({
   healthMetrics: Array.isArray(extractionResult?.healthMetrics) ? extractionResult.healthMetrics : [],
   clinicalFindings: Array.isArray(extractionResult?.clinicalFindings) ? extractionResult.clinicalFindings : [],
   diagnosticImpression: Array.isArray(extractionResult?.diagnosticImpression) ? extractionResult.diagnosticImpression : [],
-  suggestedDiagnoses: Array.isArray(extractionResult?.suggestedDiagnoses) ? extractionResult.suggestedDiagnoses : [],
+  suggestedDiagnoses: [],
   examMetadata: extractionResult?.examMetadata && typeof extractionResult.examMetadata === "object"
     ? extractionResult.examMetadata
     : {},
@@ -160,20 +160,18 @@ const buildStructuredExamPayload = (extractionResult: any) => ({
 });
 
 const buildExtractionSummary = (examName: string, extractionResult: any, normalizedMetrics: any[]) => {
-  const explicitSummary = safeText(extractionResult?.summary);
-  if (explicitSummary) return explicitSummary;
-
-  const diagnoses = Array.isArray(extractionResult?.suggestedDiagnoses) ? extractionResult.suggestedDiagnoses : [];
-  const impressions = Array.isArray(extractionResult?.diagnosticImpression) ? extractionResult.diagnosticImpression : [];
   const findings = Array.isArray(extractionResult?.clinicalFindings) ? extractionResult.clinicalFindings : [];
+  const impressions = Array.isArray(extractionResult?.diagnosticImpression) ? extractionResult.diagnosticImpression : [];
   const metadata = extractionResult?.examMetadata || {};
+  const explicitSummary = safeText(extractionResult?.summary);
 
-  if (diagnoses.length > 0) {
-    return `O exame ${examName} sugere ${diagnoses.slice(0, 2).map((item: any) => safeText(item.condition)).filter(Boolean).join(" e ")}.`;
-  }
+  const firstAbnormalMetric = normalizedMetrics.find((metric: any) => {
+    const status = safeText(metric?.status).toLowerCase();
+    return status && status !== "normal";
+  });
 
-  if (impressions.length > 0) {
-    return safeText(impressions[0]?.description) || `O exame ${examName} foi analisado com sucesso.`;
+  if (firstAbnormalMetric) {
+    return buildObjectiveMetricSummary(firstAbnormalMetric);
   }
 
   if (findings.length > 0) {
@@ -181,6 +179,12 @@ const buildExtractionSummary = (examName: string, extractionResult: any, normali
     const bodySite = safeText(firstFinding?.bodySite);
     return `O exame ${examName} identificou ${safeText(firstFinding?.title)}${bodySite ? ` em ${bodySite}` : ""}.`;
   }
+
+  if (impressions.length > 0) {
+    return safeText(impressions[0]?.description) || `O exame ${examName} foi analisado com sucesso.`;
+  }
+
+  if (explicitSummary) return explicitSummary;
 
   if (normalizedMetrics.length > 0) {
     const abnormalCount = normalizedMetrics.filter((metric: any) => {
@@ -467,9 +471,6 @@ export async function runAnalysisPipeline(examId: number): Promise<AnalysisResul
       read: false
     });
 
-    // Se a extração já trouxe análise, usamos ela. Caso contrário, geramos um fallback simples.
-    const diagnosesCreated = await persistSuggestedDiagnoses(exam, examName, extractedExamDate, extractionResult);
-
     // Atualizar o resultado do exame que foi criado na etapa 3 com a análise final (que agora vem da etapa 1)
     await storage.updateExamResult(examResult.id, {
       summary: summarizedExtraction,
@@ -477,15 +478,6 @@ export async function runAnalysisPipeline(examId: number): Promise<AnalysisResul
       recommendations: recommendationText,
       aiProvider: extractionResult.aiProvider || "openai:fast-extraction"
     });
-
-    if (diagnosesCreated > 0) {
-      logger.info("[Pipeline] Diagnósticos derivados do exame foram registrados", {
-        examId: exam.id,
-        userId: exam.userId,
-        profileId: exam.profileId,
-        diagnosesCreated
-      });
-    }
 
     return {
       exam,
