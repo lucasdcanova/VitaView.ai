@@ -964,6 +964,7 @@ export function AnamnesisCard() {
                         title="Exames no contexto da consulta"
                         description="Envie exames e laudos durante o atendimento."
                         buttonLabel="Enviar exames"
+                        showUploadStatusHint
                     />
                     {/* Action buttons */}
                     <div className={isMobile ? "grid grid-cols-2 gap-2" : "flex flex-wrap items-center gap-3"}>

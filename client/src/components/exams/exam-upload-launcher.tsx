@@ -39,6 +39,7 @@ interface ExamUploadLauncherProps {
   exams?: Exam[];
   className?: string;
   compact?: boolean;
+  showUploadStatusHint?: boolean;
 }
 
 const formatExamDate = (value?: string | Date | null) => {
@@ -59,6 +60,7 @@ export function ExamUploadLauncher({
   exams,
   className,
   compact = false,
+  showUploadStatusHint = false,
 }: ExamUploadLauncherProps) {
   const [, setLocation] = useLocation();
   const { activeProfile } = useProfiles();
@@ -83,10 +85,17 @@ export function ExamUploadLauncher({
   });
 
   const examList = exams ?? fetchedExams;
+  const scopedUploads = uploads.filter((upload) =>
+    !activeProfile?.id || upload.profileId === activeProfile.id
+  );
   const activeUploads = uploads.filter((upload) =>
     ["uploading", "queued", "processing"].includes(upload.status) &&
     (!activeProfile?.id || upload.profileId === activeProfile.id)
   );
+  const latestCompletedUpload =
+    [...scopedUploads]
+      .reverse()
+      .find((upload) => upload.status === "analyzed" && upload.examId) ?? null;
   const latestExams = useMemo(() => {
     return [...examList]
       .sort((left, right) => {
@@ -133,6 +142,26 @@ export function ExamUploadLauncher({
             </div>
 
             <div className={cn("flex gap-3", compact ? "flex-col" : "items-center")}>
+              {showUploadStatusHint && (latestCompletedUpload || activeUploads.length > 0) ? (
+                <div className="flex min-w-0 flex-col items-start text-left">
+                  <p className="text-xs font-medium text-emerald-700/90 dark:text-emerald-300/90">
+                    {latestCompletedUpload ? "Exame enviado e analisado" : "Exame enviado para análise"}
+                  </p>
+                  {latestCompletedUpload?.examId ? (
+                    <button
+                      type="button"
+                      onClick={() => openExamReport(latestCompletedUpload.examId as number)}
+                      className="text-xs text-emerald-700/75 transition hover:text-emerald-800 hover:underline dark:text-emerald-300/75 dark:hover:text-emerald-200"
+                    >
+                      Ver resultado
+                    </button>
+                  ) : (
+                    <p className="text-xs text-emerald-700/70 dark:text-emerald-300/70">
+                      Resultado em processamento
+                    </p>
+                  )}
+                </div>
+              ) : null}
               <Button
                 type="button"
                 onClick={() => setOpen(true)}
