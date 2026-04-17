@@ -67,6 +67,7 @@ import { AllergiesCard } from "@/components/dashboard/allergies-card";
 import { DiagnosisDialog, diagnosisSchema, type DiagnosisFormData } from "@/components/dialogs/diagnosis-dialog";
 import { SurgeryDialog, surgerySchema, type SurgeryFormData } from "@/components/dialogs/surgery-dialog";
 import { RegisterDeathDialog } from "@/components/dialogs/register-death-dialog";
+import { AppointmentExamHistoryDialog } from "@/components/exams/appointment-exam-history-dialog";
 import { ExamUploadLauncher } from "@/components/exams/exam-upload-launcher";
 import { AppointmentExamWorkspace } from "@/components/exams/appointment-exam-workspace";
 
@@ -124,6 +125,7 @@ export default function PatientView() {
     const [isDiagnosisDialogOpen, setIsDiagnosisDialogOpen] = useState(false);
     const [isSurgeryDialogOpen, setIsSurgeryDialogOpen] = useState(false);
     const [isDeathDialogOpen, setIsDeathDialogOpen] = useState(false);
+    const [isExamHistoryDialogOpen, setIsExamHistoryDialogOpen] = useState(false);
 
     // Diagnosis Form & Mutation
     const diagnosisForm = useForm<DiagnosisFormData>({
@@ -266,6 +268,7 @@ export default function PatientView() {
     };
 
     const openExamReportFromAppointment = (examId: number) => {
+        setIsExamHistoryDialogOpen(false);
         setExamReturnContext({
             path: "/atendimento",
             label: "Voltar ao atendimento",
@@ -274,12 +277,12 @@ export default function PatientView() {
     };
 
     const openExamHistoryFromAppointment = () => {
-        setExamReturnContext({
-            path: "/atendimento",
-            label: "Voltar ao atendimento",
-        });
-        setLocation("/exam-history");
+        setIsExamHistoryDialogOpen(true);
     };
+
+    useEffect(() => {
+        setIsExamHistoryDialogOpen(false);
+    }, [activeProfile?.id]);
 
     return (
         <div className="flex h-full flex-col bg-background">
@@ -761,6 +764,16 @@ export default function PatientView() {
                                     open={isDeathDialogOpen}
                                     onOpenChange={setIsDeathDialogOpen}
                                     patient={activeProfile}
+                                />
+                            )}
+
+                            {activeProfile && (
+                                <AppointmentExamHistoryDialog
+                                    open={isExamHistoryDialogOpen}
+                                    onOpenChange={setIsExamHistoryDialogOpen}
+                                    exams={exams}
+                                    patientName={activeProfile.name}
+                                    onOpenExam={openExamReportFromAppointment}
                                 />
                             )}
 
