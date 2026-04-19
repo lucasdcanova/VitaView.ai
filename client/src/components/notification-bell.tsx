@@ -16,6 +16,7 @@ type Invitation = {
     clinicName: string;
     email: string;
     role: string;
+    status: string;
     token: string;
     createdAt: string;
     expiresAt: string;
@@ -90,6 +91,7 @@ export function NotificationBell() {
                     ? error.message
                     : error?.message || "Erro inesperado ao aceitar o convite.";
             setInvitationFeedback(token, { type: "error", message });
+            void refreshAfterMutation();
         },
     });
 
@@ -112,6 +114,7 @@ export function NotificationBell() {
                     ? error.message
                     : error?.message || "Erro inesperado ao recusar o convite.";
             setInvitationFeedback(token, { type: "error", message });
+            void refreshAfterMutation();
         },
     });
 
@@ -147,8 +150,16 @@ export function NotificationBell() {
                     <div className="max-h-[300px] overflow-y-auto w-full">
                         {invitations.map((inv) => {
                             const state = feedback[inv.token];
+                            const inviteExpiresAt = new Date(inv.expiresAt);
+                            const hasValidExpiry = Number.isFinite(inviteExpiresAt.getTime());
+                            const isExpired =
+                                inv.status === "expired" ||
+                                (hasValidExpiry && inviteExpiresAt.getTime() <= Date.now());
                             const isBusy = state?.type === "accepting" || state?.type === "rejecting";
                             const isDone = state?.type === "accepted" || state?.type === "rejected";
+                            const expirationLabel = hasValidExpiry
+                                ? inviteExpiresAt.toLocaleDateString("pt-BR")
+                                : null;
 
                             return (
                                 <div key={inv.id} className="p-4 border-b border-border last:border-0 flex flex-col gap-3">
@@ -163,6 +174,21 @@ export function NotificationBell() {
                                         </p>
                                     </div>
 
+                                    {isExpired ? (
+                                        <div className="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/10 p-2 text-xs text-destructive">
+                                            <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                                            <span className="leading-snug">
+                                                {expirationLabel
+                                                    ? `Este convite expirou em ${expirationLabel}.`
+                                                    : "Este convite expirou."}
+                                            </span>
+                                        </div>
+                                    ) : expirationLabel ? (
+                                        <p className="text-[11px] text-muted-foreground">
+                                            Expira em {expirationLabel}
+                                        </p>
+                                    ) : null}
+
                                     {state?.type === "error" && (
                                         <div className="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/10 p-2 text-xs text-destructive">
                                             <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
@@ -170,57 +196,59 @@ export function NotificationBell() {
                                         </div>
                                     )}
 
-                                    <div className="flex items-center gap-2">
-                                        <Button
-                                            size="sm"
-                                            type="button"
-                                            className="h-8 flex-1 text-xs bg-primary text-primary-foreground hover:bg-primary/90 cursor-pointer disabled:opacity-70"
-                                            disabled={isBusy || isDone}
-                                            onClick={() => {
-                                                console.log("[NotificationBell] Accept clicked", inv.token);
-                                                acceptMutation.mutate(inv.token);
-                                            }}
-                                        >
-                                            {state?.type === "accepting" ? (
-                                                <>
-                                                    <Loader2 className="mr-1 h-3 w-3 animate-spin" /> Aceitando...
-                                                </>
-                                            ) : state?.type === "accepted" ? (
-                                                <>
-                                                    <Check className="mr-1 h-3 w-3" /> Aceito
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <Check className="mr-1 h-3 w-3" /> Aceitar
-                                                </>
-                                            )}
-                                        </Button>
-                                        <Button
-                                            size="sm"
-                                            type="button"
-                                            variant="outline"
-                                            className="h-8 flex-1 text-xs cursor-pointer disabled:opacity-70"
-                                            disabled={isBusy || isDone}
-                                            onClick={() => {
-                                                console.log("[NotificationBell] Reject clicked", inv.token);
-                                                rejectMutation.mutate(inv.token);
-                                            }}
-                                        >
-                                            {state?.type === "rejecting" ? (
-                                                <>
-                                                    <Loader2 className="mr-1 h-3 w-3 animate-spin" /> Recusando...
-                                                </>
-                                            ) : state?.type === "rejected" ? (
-                                                <>
-                                                    <X className="mr-1 h-3 w-3" /> Recusado
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <X className="mr-1 h-3 w-3" /> Recusar
-                                                </>
-                                            )}
-                                        </Button>
-                                    </div>
+                                    {!isExpired && (
+                                        <div className="flex items-center gap-2">
+                                            <Button
+                                                size="sm"
+                                                type="button"
+                                                className="h-8 flex-1 text-xs bg-primary text-primary-foreground hover:bg-primary/90 cursor-pointer disabled:opacity-70"
+                                                disabled={isBusy || isDone}
+                                                onClick={() => {
+                                                    console.log("[NotificationBell] Accept clicked", inv.token);
+                                                    acceptMutation.mutate(inv.token);
+                                                }}
+                                            >
+                                                {state?.type === "accepting" ? (
+                                                    <>
+                                                        <Loader2 className="mr-1 h-3 w-3 animate-spin" /> Aceitando...
+                                                    </>
+                                                ) : state?.type === "accepted" ? (
+                                                    <>
+                                                        <Check className="mr-1 h-3 w-3" /> Aceito
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <Check className="mr-1 h-3 w-3" /> Aceitar
+                                                    </>
+                                                )}
+                                            </Button>
+                                            <Button
+                                                size="sm"
+                                                type="button"
+                                                variant="outline"
+                                                className="h-8 flex-1 text-xs cursor-pointer disabled:opacity-70"
+                                                disabled={isBusy || isDone}
+                                                onClick={() => {
+                                                    console.log("[NotificationBell] Reject clicked", inv.token);
+                                                    rejectMutation.mutate(inv.token);
+                                                }}
+                                            >
+                                                {state?.type === "rejecting" ? (
+                                                    <>
+                                                        <Loader2 className="mr-1 h-3 w-3 animate-spin" /> Recusando...
+                                                    </>
+                                                ) : state?.type === "rejected" ? (
+                                                    <>
+                                                        <X className="mr-1 h-3 w-3" /> Recusado
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <X className="mr-1 h-3 w-3" /> Recusar
+                                                    </>
+                                                )}
+                                            </Button>
+                                        </div>
+                                    )}
                                 </div>
                             );
                         })}

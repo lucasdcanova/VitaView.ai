@@ -205,8 +205,11 @@ export function setupAuth(app: Express) {
 
       console.log(`[AUTH] Registration attempt for email: ${email}`);
 
+      await storage.expireStaleClinicInvitations({ email: String(email) });
+      const invitationsForEmail = await storage.getAllClinicInvitationsByEmail(String(email));
+      const pendingInvitationsForEmail = invitationsForEmail.filter((inv) => inv.status === "pending");
+
       // If the email has pending secretary invitations, registration must happen via invitation flow.
-      const pendingInvitationsForEmail = await storage.getClinicInvitationsByEmail(String(email));
       const pendingSecretaryInvitations = pendingInvitationsForEmail.filter((inv) => inv.role === "secretary");
 
       if (
@@ -232,7 +235,7 @@ export function setupAuth(app: Express) {
             return res.status(400).json({ message: "Código de convite é obrigatório para cadastro de secretária" });
           }
 
-          const codeMatches = pendingInvitationsForEmail.filter(
+          const codeMatches = invitationsForEmail.filter(
             (inv) => inv.token.slice(0, 10).toUpperCase() === inviteCode
           );
 
@@ -257,7 +260,11 @@ export function setupAuth(app: Express) {
 
         if (matchedInvitation) {
           if (matchedInvitation.status !== "pending") {
-            return res.status(400).json({ message: "Este convite já foi utilizado" });
+            return res.status(400).json({
+              message: matchedInvitation.status === "expired"
+                ? "Este convite expirou"
+                : "Este convite já foi utilizado"
+            });
           }
 
           if (new Date() > matchedInvitation.expiresAt) {

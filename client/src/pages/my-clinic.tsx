@@ -619,37 +619,40 @@ const MyClinic = () => {
                                                 </div>
                                             </div>
 
-                                            <div className="mt-4 flex flex-wrap gap-2">
-                                                <Button
-                                                    size="sm"
-                                                    className="rounded-xl bg-primary hover:bg-primary/90"
-                                                    onClick={() => {
-                                                        if (isActiveClinic || selectClinicMutation.isPending) return;
-                                                        selectClinicMutation.mutate(accessibleClinic.id);
-                                                    }}
-                                                    disabled={isActiveClinic || selectClinicMutation.isPending}
-                                                >
-                                                    {isActiveClinic ? 'Em uso agora' : 'Usar nesta sessão'}
-                                                </Button>
-                                                <Button
-                                                    size="sm"
-                                                    variant="outline"
-                                                    className="rounded-xl"
-                                                    onClick={() => setDefaultClinicMutation.mutate(accessibleClinic.id)}
-                                                    disabled={isDefaultClinic || setDefaultClinicMutation.isPending}
-                                                >
-                                                    <Star className="h-4 w-4 mr-2" />
-                                                    {isDefaultClinic ? 'Clínica padrão' : compactIOSClinicLabels ? 'Padrão' : 'Definir como padrão'}
-                                                </Button>
-                                                {canRenameClinic && accessibleClinics.length > 1 && (
+                                            <div className="mt-4 flex flex-wrap items-center gap-2">
+                                                <div className="flex flex-wrap items-center gap-2">
+                                                    <Button
+                                                        size="sm"
+                                                        className="rounded-xl bg-primary hover:bg-primary/90"
+                                                        onClick={() => {
+                                                            if (isActiveClinic || selectClinicMutation.isPending) return;
+                                                            selectClinicMutation.mutate(accessibleClinic.id);
+                                                        }}
+                                                        disabled={isActiveClinic || selectClinicMutation.isPending}
+                                                    >
+                                                        {isActiveClinic ? 'Em uso agora' : 'Usar nesta sessão'}
+                                                    </Button>
                                                     <Button
                                                         size="sm"
                                                         variant="outline"
-                                                        className="rounded-xl text-destructive border-destructive/30 hover:bg-destructive/10"
-                                                        onClick={() => setDeletingClinicId(accessibleClinic.id)}
+                                                        className="rounded-xl"
+                                                        onClick={() => setDefaultClinicMutation.mutate(accessibleClinic.id)}
+                                                        disabled={isDefaultClinic || setDefaultClinicMutation.isPending}
                                                     >
-                                                        <Trash2 className="h-4 w-4 mr-2" />
-                                                        Excluir
+                                                        <Star className="h-4 w-4 mr-2" />
+                                                        {isDefaultClinic ? 'Clínica padrão' : compactIOSClinicLabels ? 'Padrão' : 'Definir como padrão'}
+                                                    </Button>
+                                                </div>
+                                                {canRenameClinic && accessibleClinics.length > 1 && (
+                                                    <Button
+                                                        size="icon"
+                                                        variant="ghost"
+                                                        className="ml-auto h-9 w-9 rounded-xl text-destructive hover:bg-destructive/10 hover:text-destructive"
+                                                        onClick={() => setDeletingClinicId(accessibleClinic.id)}
+                                                        aria-label={`Excluir clínica ${accessibleClinic.name}`}
+                                                        title={`Excluir clínica ${accessibleClinic.name}`}
+                                                    >
+                                                        <Trash2 className="h-4 w-4" />
                                                     </Button>
                                                 )}
                                             </div>
@@ -793,7 +796,9 @@ const MyClinic = () => {
                         {(() => {
                             const professionals = clinicData.members.filter(m => m.clinicRole === 'admin' || m.clinicRole === 'member');
                             const secretaries = clinicData.members.filter(m => m.clinicRole === 'secretary');
-                            const pendingInvites = clinicData.invitations.filter(i => i.status === 'pending');
+                            const pendingInvites = clinicData.invitations.filter(
+                                (i) => i.status === 'pending' || i.status === 'expired'
+                            );
                             const patientCount = clinicData.patientCount ?? 0;
 
                             const profLimit = clinic.maxProfessionals;
@@ -953,37 +958,51 @@ const MyClinic = () => {
                                             <CardHeader><CardTitle className="text-base text-foreground">Convites Pendentes</CardTitle></CardHeader>
                                             <CardContent>
                                                 <div className="space-y-2">
-                                                    {pendingInvites.map((invite) => (
-                                                        <div key={invite.id} className="flex items-center justify-between p-3 bg-muted rounded-xl border border-border">
-                                                            <div className="flex items-center gap-3">
-                                                                <Mail className="h-5 w-5 text-muted-foreground" />
-                                                                <div>
-                                                                    <span className="font-medium text-foreground block">{invite.email}</span>
-                                                                    <span className="text-xs text-muted-foreground">{invite.role === 'secretary' ? 'Secretária' : 'Profissional'}</span>
-                                                                    {invite.inviteCode && (
-                                                                        <span className="text-[11px] text-muted-foreground block">Código: {invite.inviteCode}</span>
+                                                    {pendingInvites.map((invite) => {
+                                                        const inviteExpiresAt = new Date(invite.expiresAt);
+                                                        const isInviteExpired =
+                                                            Number.isFinite(inviteExpiresAt.getTime()) &&
+                                                            inviteExpiresAt.getTime() <= Date.now();
+
+                                                        return (
+                                                            <div key={invite.id} className="flex items-center justify-between p-3 bg-muted rounded-xl border border-border">
+                                                                <div className="flex items-center gap-3">
+                                                                    <Mail className="h-5 w-5 text-muted-foreground" />
+                                                                    <div>
+                                                                        <span className="font-medium text-foreground block">{invite.email}</span>
+                                                                        <span className="text-xs text-muted-foreground">{invite.role === 'secretary' ? 'Secretária' : 'Profissional'}</span>
+                                                                        {invite.inviteCode && (
+                                                                            <span className="text-[11px] text-muted-foreground block">Código: {invite.inviteCode}</span>
+                                                                        )}
+                                                                    </div>
+                                                                </div>
+                                                                <div className="flex items-center gap-2">
+                                                                    <Badge
+                                                                        variant="outline"
+                                                                        className={isInviteExpired
+                                                                            ? "border-destructive/30 text-destructive"
+                                                                            : "border-border text-xs text-muted-foreground"}
+                                                                    >
+                                                                        {isInviteExpired
+                                                                            ? "Expirado"
+                                                                            : `Expira em ${inviteExpiresAt.toLocaleDateString('pt-BR')}`}
+                                                                    </Badge>
+                                                                    {clinicData.isAdmin && (
+                                                                        <Button
+                                                                            variant="ghost"
+                                                                            size="icon"
+                                                                            className="h-8 w-8 text-destructive hover:text-destructive/90 hover:bg-destructive/10"
+                                                                            onClick={() => cancelInvitationMutation.mutate(invite.id)}
+                                                                            disabled={cancelInvitationMutation.isPending}
+                                                                            title="Cancelar convite"
+                                                                        >
+                                                                            {cancelInvitationMutation.isPending ? <BrandLoader className="h-4 w-4 animate-spin" /> : <X className="h-4 w-4" />}
+                                                                        </Button>
                                                                     )}
                                                                 </div>
                                                             </div>
-                                                            <div className="flex items-center gap-2">
-                                                                <Badge variant="outline" className="text-xs text-muted-foreground border-border">
-                                                                    Expira em {new Date(invite.expiresAt).toLocaleDateString('pt-BR')}
-                                                                </Badge>
-                                                                {clinicData.isAdmin && (
-                                                                    <Button
-                                                                        variant="ghost"
-                                                                        size="icon"
-                                                                        className="h-8 w-8 text-destructive hover:text-destructive/90 hover:bg-destructive/10"
-                                                                        onClick={() => cancelInvitationMutation.mutate(invite.id)}
-                                                                        disabled={cancelInvitationMutation.isPending}
-                                                                        title="Cancelar convite"
-                                                                    >
-                                                                        {cancelInvitationMutation.isPending ? <BrandLoader className="h-4 w-4 animate-spin" /> : <X className="h-4 w-4" />}
-                                                                    </Button>
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                    ))}
+                                                        );
+                                                    })}
                                                 </div>
                                             </CardContent>
                                         </Card>

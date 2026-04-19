@@ -190,9 +190,11 @@ export interface IStorage {
   getClinicInvitation(id: number): Promise<ClinicInvitation | undefined>;
   getClinicInvitationByToken(token: string): Promise<ClinicInvitation | undefined>;
   updateClinicInvitation(id: number, data: Partial<ClinicInvitation>): Promise<ClinicInvitation | undefined>;
+  expireStaleClinicInvitations(filters?: { clinicId?: number; email?: string }): Promise<number>;
   getClinicInvitations(clinicId: number): Promise<ClinicInvitation[]>;
   getPendingClinicInvitationsByRole(clinicId: number, role: string): Promise<ClinicInvitation[]>;
   getClinicInvitationsByEmail(email: string): Promise<ClinicInvitation[]>;
+  getAllClinicInvitationsByEmail(email: string): Promise<ClinicInvitation[]>;
 
   // Triage operations
   createTriageRecord(record: any): Promise<any>;
@@ -1515,6 +1517,25 @@ export class MemStorage implements IStorage {
     return updated;
   }
 
+  async expireStaleClinicInvitations(filters?: { clinicId?: number; email?: string }): Promise<number> {
+    const now = Date.now();
+    const normalizedEmail = filters?.email?.toLowerCase();
+    let expiredCount = 0;
+
+    for (const [id, invitation] of this.clinicInvitationsMap.entries()) {
+      const matchesClinic = filters?.clinicId ? invitation.clinicId === filters.clinicId : true;
+      const matchesEmail = normalizedEmail ? invitation.email.toLowerCase() === normalizedEmail : true;
+      const isExpired = invitation.status === "pending" && invitation.expiresAt.getTime() <= now;
+
+      if (matchesClinic && matchesEmail && isExpired) {
+        this.clinicInvitationsMap.set(id, { ...invitation, status: "expired" });
+        expiredCount += 1;
+      }
+    }
+
+    return expiredCount;
+  }
+
   async getClinicInvitations(clinicId: number): Promise<ClinicInvitation[]> {
     return Array.from(this.clinicInvitationsMap.values()).filter(i => i.clinicId === clinicId);
   }
@@ -1638,6 +1659,13 @@ export class MemStorage implements IStorage {
     const emailLower = email.toLowerCase();
     return Array.from(this.clinicInvitationsMap.values()).filter(
       (invitation) => invitation.email.toLowerCase() === emailLower && invitation.status === 'pending'
+    );
+  }
+
+  async getAllClinicInvitationsByEmail(email: string): Promise<ClinicInvitation[]> {
+    const emailLower = email.toLowerCase();
+    return Array.from(this.clinicInvitationsMap.values()).filter(
+      (invitation) => invitation.email.toLowerCase() === emailLower
     );
   }
 
@@ -3364,6 +3392,29 @@ export class DatabaseStorage implements IStorage {
     return updated;
   }
 
+  async expireStaleClinicInvitations(filters?: { clinicId?: number; email?: string }): Promise<number> {
+    const conditions = [
+      eq(clinicInvitations.status, "pending"),
+      lte(clinicInvitations.expiresAt, new Date()),
+    ];
+
+    if (filters?.clinicId) {
+      conditions.push(eq(clinicInvitations.clinicId, filters.clinicId));
+    }
+
+    if (filters?.email) {
+      conditions.push(sql`LOWER(${clinicInvitations.email}) = ${filters.email.toLowerCase()}`);
+    }
+
+    const expiredInvitations = await db
+      .update(clinicInvitations)
+      .set({ status: "expired" })
+      .where(and(...conditions))
+      .returning({ id: clinicInvitations.id });
+
+    return expiredInvitations.length;
+  }
+
   async getClinicInvitations(clinicId: number): Promise<ClinicInvitation[]> {
     return await db.select().from(clinicInvitations).where(eq(clinicInvitations.clinicId, clinicId));
   }
@@ -3786,6 +3837,13 @@ export class DatabaseStorage implements IStorage {
           eq(clinicInvitations.status, 'pending')
         )
       );
+  }
+
+  async getAllClinicInvitationsByEmail(email: string): Promise<ClinicInvitation[]> {
+    return await db
+      .select()
+      .from(clinicInvitations)
+      .where(sql`LOWER(${clinicInvitations.email}) = ${email.toLowerCase()}`);
   }
 
   async getPendingClinicInvitationsByRole(clinicId: number, role: string): Promise<ClinicInvitation[]> {

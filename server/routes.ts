@@ -5006,6 +5006,7 @@ export async function registerRoutes(app: Express): Promise<void> {
         }
       }
 
+      await storage.expireStaleClinicInvitations({ clinicId: clinic.id });
       const members = await storage.getClinicMembers(clinic.id);
       const invitations = await storage.getClinicInvitations(clinic.id);
       const clinicProfiles = await storage.getProfilesByClinicId(clinic.id);
@@ -5034,7 +5035,14 @@ export async function registerRoutes(app: Express): Promise<void> {
           clinicRole: m.clinicRole
         })),
         invitations: invitations
-          .filter(i => i.status === 'pending')
+          .filter(i => i.status === 'pending' || i.status === 'expired')
+          .sort((a, b) => {
+            if (a.status !== b.status) {
+              return a.status === 'pending' ? -1 : 1;
+            }
+
+            return new Date(a.expiresAt).getTime() - new Date(b.expiresAt).getTime();
+          })
           .map((inv) => ({
             ...inv,
             inviteCode: inv.token.slice(0, 10).toUpperCase(),
@@ -5235,6 +5243,8 @@ export async function registerRoutes(app: Express): Promise<void> {
       if (requesterRole !== 'admin' && clinic.adminUserId !== userId) {
         return res.status(403).json({ message: "Apenas o administrador pode convidar membros" });
       }
+
+      await storage.expireStaleClinicInvitations({ clinicId });
 
       // Check member limit based on role
       const members = await storage.getClinicMembers(clinicId);
@@ -5480,11 +5490,9 @@ export async function registerRoutes(app: Express): Promise<void> {
         return res.status(400).json({ message: "Sua conta precisa ter email para validar o convite" });
       }
 
-      const invitations = await storage.getClinicInvitationsByEmail(user.email);
-      const matches = invitations.filter((inv) =>
-        inv.status === "pending" &&
-        inv.token.slice(0, 10).toUpperCase() === code
-      );
+      await storage.expireStaleClinicInvitations({ email: user.email });
+      const invitations = await storage.getAllClinicInvitationsByEmail(user.email);
+      const matches = invitations.filter((inv) => inv.token.slice(0, 10).toUpperCase() === code);
 
       if (matches.length === 0) {
         return res.status(404).json({ message: "Convite não encontrado para este código" });
@@ -5495,6 +5503,14 @@ export async function registerRoutes(app: Express): Promise<void> {
       }
 
       const invitation = matches[0];
+
+      if (invitation.status !== "pending") {
+        return res.status(400).json({
+          message: invitation.status === "expired"
+            ? "Este convite expirou"
+            : "Este convite já foi utilizado"
+        });
+      }
 
       if (new Date() > invitation.expiresAt) {
         await storage.updateClinicInvitation(invitation.id, { status: 'expired' });
@@ -5567,7 +5583,7 @@ export async function registerRoutes(app: Express): Promise<void> {
     }
   });
 
-  // Get user's pending clinic invitations
+  // Get user's clinic invitation notifications
   app.get("/api/my-invitations", ensureAuthenticated, async (req, res) => {
     try {
       const user = req.user!;
@@ -5578,12 +5594,23 @@ export async function registerRoutes(app: Express): Promise<void> {
         return res.json({ invitations: [] });
       }
 
-      const pendingInvitations = await storage.getClinicInvitationsByEmail(user.email);
-      console.log(`[DEBUG] /api/my-invitations - Found ${pendingInvitations.length} invitations pending.`);
+      await storage.expireStaleClinicInvitations({ email: user.email });
+      const emailInvitations = await storage.getAllClinicInvitationsByEmail(user.email);
+      const visibleInvitations = emailInvitations
+        .filter((inv) => inv.status === "pending" || inv.status === "expired")
+        .sort((a, b) => {
+          if (a.status !== b.status) {
+            return a.status === "pending" ? -1 : 1;
+          }
+
+          return new Date(a.expiresAt).getTime() - new Date(b.expiresAt).getTime();
+        });
+
+      console.log(`[DEBUG] /api/my-invitations - Found ${visibleInvitations.length} invitations visíveis.`);
 
       // Enrich with clinic names
       const enrichedInvitations = await Promise.all(
-        pendingInvitations.map(async (inv) => {
+        visibleInvitations.map(async (inv) => {
           const clinic = await storage.getClinic(inv.clinicId);
           return {
             ...inv,
