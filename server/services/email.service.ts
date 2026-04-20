@@ -362,3 +362,30 @@ export const sendSubscriptionCancelledEmail = async (
         text: `Sua assinatura ${planName} foi cancelada.\n\nAcesso mantido até: ${until}\n\nReative em: ${BASE_URL()}/assinatura`,
     });
 };
+
+// ─── Generic app notification ────────────────────────────────────────────────
+
+export const sendNotificationEmail = async (
+    email: string,
+    fullName: string,
+    notificationTitle: string,
+    notificationMessage: string,
+): Promise<boolean> => {
+    const firstName = fullName.split(' ')[0];
+
+    const html = em(`
+        ${h1(notificationTitle)}
+        ${p(`Olá, ${firstName}.`)}
+        ${p(notificationMessage)}
+        ${btn('Abrir VitaView AI →', BASE_URL())}
+        ${hr()}
+        ${small(`Você pode ajustar o recebimento desses avisos em Configurações dentro da sua conta.`)}
+    `);
+
+    return sendEmail({
+        to: email,
+        subject: `${notificationTitle} · VitaView AI`,
+        html,
+        text: `${notificationTitle}\n\nOlá, ${firstName}.\n${notificationMessage}\n\nAcesse: ${BASE_URL()}`,
+    });
+};

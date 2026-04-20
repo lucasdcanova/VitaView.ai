@@ -1,5 +1,6 @@
 import cron from "node-cron";
 import { storage } from "../storage";
+import { createUserNotification } from "./user-notification.service";
 
 class NotificationScheduler {
     start() {
@@ -53,7 +54,7 @@ class NotificationScheduler {
             // Schema says: userId references users.id. profileId references profiles.
             // So userId is the account owner (professional).
 
-            await storage.createNotification({
+            await createUserNotification({
                 userId: app.userId,
                 title: "Consulta Amanhã",
                 message: `Você tem uma consulta agendada com ${app.patientName} amanhã às ${app.time}.`,
@@ -86,7 +87,7 @@ class NotificationScheduler {
                 // storage.getExam(metric.examId) - assuming this exists. 
                 // If not, we'll use a generic message.
 
-                await storage.createNotification({
+                await createUserNotification({
                     userId: metric.userId,
                     title: "Resultado Crítico Detectado",
                     message: `O exame contém métricas anormais (${metric.name}: ${metric.value}). Verifique os resultados.`,

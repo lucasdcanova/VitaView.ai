@@ -7,6 +7,7 @@ import { promisify } from "util";
 import { storage } from "./storage";
 import { User as SelectUser } from "@shared/schema";
 import { sendWelcomeEmail, sendPasswordResetEmail, sendPasswordChangedEmail } from "./services/email.service";
+import { createUserNotification } from "./services/user-notification.service";
 
 declare global {
   namespace Express {
@@ -330,12 +331,12 @@ export function setupAuth(app: Express) {
       }
 
       // Create welcome notification
-      await storage.createNotification({
+      await createUserNotification({
         userId: user.id,
         title: "Bem-vindo ao VitaView",
         message: "Envie seus exames médicos para análise e obtenha insights valiosos sobre sua saúde.",
         read: false
-      });
+      }, { sendEmail: false });
 
       // LGPD: Record User Consents
       if (Array.isArray(consents)) {

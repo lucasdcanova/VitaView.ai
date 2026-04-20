@@ -19,6 +19,7 @@ import logger from '../logger';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { S3Service } from './s3.service';
+import { createUserNotification } from './user-notification.service';
 
 const stripFileExtension = (value: string) => value.replace(/\.[^.]+$/, '');
 
@@ -462,7 +463,7 @@ export async function runAnalysisPipeline(examId: number): Promise<AnalysisResul
     await storage.updateExam(exam.id, { status: "analyzed" });
 
     // Criar notificação para usuário
-    await storage.createNotification({
+    await createUserNotification({
       userId: exam.userId,
       title: "Análise Completa",
       message: `A análise do exame "${examName}" está disponível.`,

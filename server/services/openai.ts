@@ -7,6 +7,7 @@ import type { IStorage } from "../storage";
 import logger from "../logger";
 import { ModelRouter, type TaskComplexity } from "./model-router";
 import { AICacheService } from "./ai-cache";
+import { createUserNotification } from "./user-notification.service";
 
 const sanitizePhysicianName = (value?: string | null) => {
   if (!value) return null;
@@ -1848,7 +1849,7 @@ export async function analyzeExtractedExam(examId: number, userId: number, stora
     });
 
     // 9. Notificar o usuário
-    await storage.createNotification({
+    await createUserNotification({
       userId,
       title: "Análise completa disponível",
       message: `A análise detalhada do exame "${exam?.name || 'sem nome'}" está pronta para visualização`,

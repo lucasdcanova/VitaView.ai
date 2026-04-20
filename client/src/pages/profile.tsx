@@ -82,6 +82,10 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { isIOSAppShell } from "@/lib/app-shell";
+import {
+  getNotificationSettings,
+  type NotificationSettings,
+} from "@shared/notification-preferences";
 
 const supportWhatsAppUrl =
   "https://wa.me/555597032546?text=Ol%C3%A1%2C%20preciso%20de%20ajuda%20com%20a%20VitaView%20AI.";
@@ -166,6 +170,7 @@ export default function Profile() {
     user?.preferences && typeof user.preferences === "object"
       ? (user.preferences as Record<string, any>).professionalProfile
       : null;
+  const initialNotificationSettings = getNotificationSettings(user?.preferences);
 
   const onFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -341,6 +346,28 @@ export default function Profile() {
     },
   });
 
+  const updateNotificationSettingsMutation = useMutation({
+    mutationFn: async (nextSettings: NotificationSettings) => {
+      const res = await apiRequest("PATCH", "/api/user/preferences", {
+        preferences: {
+          notifications: nextSettings,
+        },
+      });
+      return await res.json();
+    },
+    onSuccess: (updatedUser) => {
+      queryClient.setQueryData(["/api/user"], updatedUser);
+      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Erro ao atualizar preferências",
+        description: error.message || "Não foi possível atualizar suas preferências de notificação.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const onProfileSubmit = (values: ProfileFormValues) => {
     const {
       fullName,
@@ -394,6 +421,32 @@ export default function Profile() {
     updatePasswordMutation.mutate(values);
   };
 
+  const [settings, setSettings] = useState<NotificationSettings>(initialNotificationSettings);
+
+  useEffect(() => {
+    setSettings(getNotificationSettings(user?.preferences));
+  }, [user]);
+
+  const handleNotificationSettingChange = (
+    key: keyof NotificationSettings,
+    checked: boolean,
+  ) => {
+    if (!user) return;
+
+    const previousSettings = settings;
+    const nextSettings = {
+      ...settings,
+      [key]: checked,
+    };
+
+    setSettings(nextSettings);
+    updateNotificationSettingsMutation.mutate(nextSettings, {
+      onError: () => {
+        setSettings(previousSettings);
+      },
+    });
+  };
+
   // Delete Account Mutation
   const [showSecondConfirmation, setShowSecondConfirmation] = useState(false);
   const deleteAccountMutation = useMutation({
@@ -416,17 +469,6 @@ export default function Profile() {
   });
 
   // Medical conditions state
-
-
-  // Settings and notification preferences state
-  const [settings, setSettings] = useState({
-    emailNotifications: true,
-    pushNotifications: true,
-    examReminders: false,
-    shareDoctors: true,
-    anonymousData: false
-  });
-
   return (
     <div className="flex h-full flex-col bg-background">
       <main className="flex-1 overflow-y-auto bg-background">
@@ -928,14 +970,15 @@ export default function Profile() {
                   <div className="flex items-center justify-between">
                     <div>
                       <h3 className="text-sm font-medium text-foreground">Notificações por email</h3>
-                      <p className="text-xs text-muted-foreground mt-1">Receba atualizações sobre suas análises</p>
+                      <p className="text-xs text-muted-foreground mt-1">Receba avisos importantes da sua conta por email</p>
                     </div>
                     <div className="flex items-center">
                       <Switch
                         id="email-notifications"
                         checked={settings.emailNotifications}
+                        disabled={updateNotificationSettingsMutation.isPending}
                         onCheckedChange={(checked) =>
-                          setSettings({ ...settings, emailNotifications: checked })
+                          handleNotificationSettingChange("emailNotifications", checked)
                         }
                       />
                     </div>
@@ -950,8 +993,9 @@ export default function Profile() {
                       <Switch
                         id="push-notifications"
                         checked={settings.pushNotifications}
+                        disabled={updateNotificationSettingsMutation.isPending}
                         onCheckedChange={(checked) =>
-                          setSettings({ ...settings, pushNotifications: checked })
+                          handleNotificationSettingChange("pushNotifications", checked)
                         }
                       />
                     </div>
@@ -966,8 +1010,9 @@ export default function Profile() {
                       <Switch
                         id="exam-reminders"
                         checked={settings.examReminders}
+                        disabled={updateNotificationSettingsMutation.isPending}
                         onCheckedChange={(checked) =>
-                          setSettings({ ...settings, examReminders: checked })
+                          handleNotificationSettingChange("examReminders", checked)
                         }
                       />
                     </div>
