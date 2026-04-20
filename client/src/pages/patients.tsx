@@ -278,9 +278,10 @@ export default function Patients() {
                 Busque e selecione um paciente para iniciar o atendimento.
               </p>
             </div>
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex flex-wrap items-center gap-2">
+            <div className="flex items-center gap-2">
+              <div className="flex min-w-0 flex-1 items-center gap-2">
                 <Button
+                  size="sm"
                   onClick={handleOpenCreatePatient}
                   className="bg-charcoal hover:bg-charcoal/85 text-pureWhite border border-border/30"
                 >
@@ -289,6 +290,7 @@ export default function Patients() {
                 </Button>
                 <Button
                   asChild
+                  size="sm"
                   variant="outline"
                   className="border-border/60 bg-background text-foreground hover:bg-muted"
                 >
@@ -303,8 +305,8 @@ export default function Patients() {
                   </a>
                 </Button>
               </div>
-              <p className="text-right text-sm font-medium text-muted-foreground">
-                <span className="font-bold text-foreground">{profiles.length}</span>{" "}
+              <p className="max-w-[4.75rem] shrink-0 text-right text-[11px] font-medium leading-tight text-muted-foreground">
+                <span className="block text-base font-bold text-foreground">{profiles.length}</span>
                 {profiles.length === 1 ? "paciente registrado" : "pacientes registrados"}
               </p>
             </div>
