@@ -83,6 +83,9 @@ import {
 } from "@/components/ui/alert-dialog";
 import { isIOSAppShell } from "@/lib/app-shell";
 
+const supportWhatsAppUrl =
+  "https://wa.me/555597032546?text=Ol%C3%A1%2C%20preciso%20de%20ajuda%20com%20a%20VitaView%20AI.";
+
 const MEDICAL_SPECIALTIES = [
   "Alergia e Imunologia",
   "Anestesiologia",
@@ -1047,26 +1050,55 @@ export default function Profile() {
                     <p className="text-sm text-muted-foreground mb-3">
                       Não encontrou o que procurava? Envie suas dúvidas ou sugestões:
                     </p>
-                    <a
-                      href="mailto:suporte@vitaview.ai?subject=Dúvida/Sugestão - VitaView AI"
-                      className="inline-flex items-center gap-2 px-4 py-2 bg-primary-50 text-primary-700 rounded-lg hover:bg-primary-100 transition-colors text-sm font-medium"
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-4 w-4"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        strokeWidth={2}
+                    <div className="flex flex-col items-start gap-3">
+                      <a
+                        href="mailto:suporte@vitaview.ai?subject=Dúvida/Sugestão - VitaView AI"
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-primary-50 text-primary-700 rounded-lg hover:bg-primary-100 transition-colors text-sm font-medium"
                       >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                        />
-                      </svg>
-                      Enviar e-mail para suporte
-                    </a>
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-4 w-4"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          strokeWidth={2}
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                          />
+                        </svg>
+                        Enviar e-mail para suporte
+                      </a>
+                      <a
+                        href={supportWhatsAppUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-700 rounded-lg hover:bg-emerald-100 transition-colors text-sm font-medium"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-4 w-4"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          strokeWidth={2}
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M8.5 18.5l-3 .8.8-3A7 7 0 1119 12a7 7 0 01-10.5 6.5z"
+                          />
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M9.8 10.1c.2-.5.5-.6.8-.6h.7c.2 0 .5.1.6.4l.6 1.4c.1.2.1.5-.1.7l-.6.8a5.7 5.7 0 002.7 2.7l.8-.6c.2-.2.5-.2.7-.1l1.4.6c.3.1.4.4.4.6v.7c0 .3-.2.6-.6.8-.6.2-1.9.3-3.9-.7-1.6-.8-3.3-2.5-4.1-4.1-1-2-.9-3.3-.7-3.9z"
+                          />
+                        </svg>
+                        Falar no WhatsApp
+                      </a>
+                    </div>
                   </div>
                 </div>
               </div>
