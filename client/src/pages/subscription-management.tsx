@@ -165,6 +165,9 @@ const formatCurrency = (amountInCents?: number | null) =>
     maximumFractionDigits: 2,
   })}`;
 
+const enterpriseConsultantWhatsAppUrl =
+  "https://wa.me/555597032546?text=Ol%C3%A1%2C%20quero%20falar%20com%20um%20consultor%20da%20VitaView%20AI%20sobre%20o%20plano%20Enterprise.";
+
 const getPlanMonthlyEquivalentInCents = (plan?: SubscriptionPlan | null) => {
   if (!plan || plan.price <= 0) return null;
 
@@ -1488,8 +1491,14 @@ const SubscriptionManagement = () => {
                     </ul>
                   </CardContent>
                   <CardFooter>
-                    <Button className="w-full text-xs font-bold h-10 bg-primary hover:bg-primary/90 text-primary-foreground">
-                      Falar com Consultor
+                    <Button asChild className="w-full text-xs font-bold h-10 bg-primary hover:bg-primary/90 text-primary-foreground">
+                      <a
+                        href={enterpriseConsultantWhatsAppUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        Falar com Consultor
+                      </a>
                     </Button>
                   </CardFooter>
                 </Card>
