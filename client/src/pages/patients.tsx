@@ -7,6 +7,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
   Search,
   User,
   Calendar,
@@ -98,6 +104,12 @@ function calculateAge(birthDate: string | Date | null | undefined): number | nul
   if (!date) return null;
   return differenceInYears(new Date(), date);
 }
+
+const migratePatientsWhatsAppUrl =
+  "https://wa.me/555597032546?text=Ol%C3%A1%2C%20quero%20migrar%20meus%20pacientes%20para%20a%20VitaView%20AI.";
+
+const migratePatientsTooltip =
+  "Traga seus pacientes existentes de outras plataformas sem esforço.";
 
 export default function Patients() {
   const [, setLocation] = useLocation();
@@ -266,13 +278,30 @@ export default function Patients() {
               </p>
             </div>
             <div className="flex items-center justify-between gap-3">
-              <Button
-                onClick={handleOpenCreatePatient}
-                className="bg-charcoal hover:bg-charcoal/85 text-pureWhite border border-border/30"
-              >
-                <UserPlus className="h-4 w-4 mr-2" />
-                Novo Paciente
-              </Button>
+              <div className="flex flex-wrap items-center gap-2">
+                <Button
+                  onClick={handleOpenCreatePatient}
+                  className="bg-charcoal hover:bg-charcoal/85 text-pureWhite border border-border/30"
+                >
+                  <UserPlus className="h-4 w-4 mr-2" />
+                  Novo Paciente
+                </Button>
+                <Button
+                  asChild
+                  variant="outline"
+                  className="border-border/60 bg-background text-foreground hover:bg-muted"
+                >
+                  <a
+                    href={migratePatientsWhatsAppUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    title={migratePatientsTooltip}
+                  >
+                    <Phone className="h-4 w-4 mr-2" />
+                    Migrar Pacientes
+                  </a>
+                </Button>
+              </div>
               <p className="text-right text-sm font-medium text-muted-foreground">
                 <span className="font-bold text-foreground">{profiles.length}</span>{" "}
                 {profiles.length === 1 ? "paciente registrado" : "pacientes registrados"}
@@ -295,6 +324,29 @@ export default function Patients() {
                 <UserPlus className="h-4 w-4 mr-2" />
                 Novo Paciente
               </Button>
+              <TooltipProvider delayDuration={200}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      asChild
+                      variant="outline"
+                      className="border-border/60 bg-background text-foreground hover:bg-muted"
+                    >
+                      <a
+                        href={migratePatientsWhatsAppUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        <Phone className="h-4 w-4 mr-2" />
+                        Migrar Pacientes
+                      </a>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom">
+                    {migratePatientsTooltip}
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </div>
           </PatientHeader>
         )}
