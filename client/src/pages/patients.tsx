@@ -17,6 +17,7 @@ import {
   User,
   Calendar,
   Building2,
+  FileUp,
   Phone,
   Mail,
   Heart,
@@ -297,7 +298,7 @@ export default function Patients() {
                     rel="noreferrer"
                     title={migratePatientsTooltip}
                   >
-                    <Phone className="h-4 w-4 mr-2" />
+                    <FileUp className="h-4 w-4 mr-2" />
                     Migrar Pacientes
                   </a>
                 </Button>
@@ -337,7 +338,7 @@ export default function Patients() {
                         target="_blank"
                         rel="noreferrer"
                       >
-                        <Phone className="h-4 w-4 mr-2" />
+                        <FileUp className="h-4 w-4 mr-2" />
                         Migrar Pacientes
                       </a>
                     </Button>
