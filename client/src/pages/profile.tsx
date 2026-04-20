@@ -489,7 +489,7 @@ export default function Profile() {
                 </div>
 
                 <Tabs defaultValue="personal">
-                  <TabsList className="border-b border-border w-full justify-start rounded-none bg-transparent pb-px mb-6 overflow-x-auto flex-nowrap">
+                  <TabsList className="border-b border-border w-full justify-start rounded-none bg-transparent pb-px mb-6 overflow-x-auto flex-nowrap scrollbar-hide">
                     <TabsTrigger
                       value="personal"
                       className="data-[state=active]:border-primary data-[state=active]:text-primary-foreground data-[state=active]:bg-primary border-b-2 border-transparent rounded-md bg-transparent px-3 py-1.5 text-xs sm:text-sm sm:px-4 sm:py-2 text-muted-foreground hover:text-foreground whitespace-nowrap"
