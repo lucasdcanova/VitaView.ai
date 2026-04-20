@@ -1,5 +1,4 @@
 import { motion } from "framer-motion";
-import { ChevronRight } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 const supportWhatsAppUrl =
@@ -65,32 +64,6 @@ export function LandingFooter() {
                             Prontuário eletrônico inteligente com IA para médicos e clínicas. Simples, objetivo e completo.
                         </p>
 
-                        <div className="mt-4 hidden md:flex flex-col gap-3">
-                            <motion.a
-                                href="mailto:contato@vitaview.ai"
-                                className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-2.5 text-sm text-white/80 transition-colors hover:bg-white/[0.06] hover:text-white"
-                                whileHover={{ y: -1, scale: 1.015 }}
-                                whileTap={{ scale: 0.97 }}
-                            >
-                                <span>contato@vitaview.ai</span>
-                                <span aria-hidden="true" className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-white/[0.06]">
-                                    <ChevronRight className="w-4 h-4" />
-                                </span>
-                            </motion.a>
-                            <motion.a
-                                href={supportWhatsAppUrl}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-2.5 text-sm text-white/80 transition-colors hover:bg-white/[0.06] hover:text-white"
-                                whileHover={{ y: -1, scale: 1.015 }}
-                                whileTap={{ scale: 0.97 }}
-                            >
-                                <span>WhatsApp: +55 55 9703-2546</span>
-                                <span aria-hidden="true" className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-white/[0.06]">
-                                    <ChevronRight className="w-4 h-4" />
-                                </span>
-                            </motion.a>
-                        </div>
                     </motion.div>
 
                     <div className="grid grid-cols-2 gap-5 md:ml-auto md:w-[min(100%,48rem)] md:grid-cols-[1fr_auto] md:gap-10 md:self-start">
