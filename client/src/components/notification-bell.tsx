@@ -34,6 +34,14 @@ type InvitationFeedback =
     | { type: "rejected" }
     | { type: "error"; message: string };
 
+const pushableNotificationTitles = new Set([
+    "Paciente aguardando",
+    "Análise Completa",
+    "Análise completa disponível",
+    "Transcrição concluída",
+    "Assinatura prestes a expirar",
+]);
+
 const formatNotificationDate = (value: string | Date) => {
     const notificationDate = new Date(value);
     if (!Number.isFinite(notificationDate.getTime())) {
@@ -51,8 +59,8 @@ const formatNotificationDate = (value: string | Date) => {
     return notificationDate.toLocaleDateString("pt-BR");
 };
 
-const isWaitingRoomNotification = (notification: AppNotification) =>
-    notification.title === "Paciente aguardando";
+const isPushableAppNotification = (notification: AppNotification) =>
+    pushableNotificationTitles.has(notification.title);
 
 export function NotificationBell() {
     const [, setLocation] = useLocation();
@@ -63,6 +71,8 @@ export function NotificationBell() {
     const pushNotificationsEnabled = getNotificationSettings(user?.preferences).pushNotifications;
     const knownNotificationIdsRef = useRef<Set<number>>(new Set());
     const initializedNotificationsRef = useRef(false);
+    const knownInvitationTokensRef = useRef<Set<string>>(new Set());
+    const initializedInvitationsRef = useRef(false);
 
     // Feedback inline por convite — necessario porque o <Toaster/> global esta
     // desabilitado por decisao de produto. Sem isso, mutations falhavam ou
@@ -83,6 +93,9 @@ export function NotificationBell() {
 
     const { data: invitationData, isLoading: isLoadingInvitations } = useQuery<{ invitations: Invitation[] }>({
         queryKey: ["/api/my-invitations"],
+        staleTime: 0,
+        refetchInterval: 15000,
+        refetchIntervalInBackground: true,
     });
 
     const { data: notifications = [], isLoading: isLoadingNotifications } = useQuery<AppNotification[]>({
@@ -109,11 +122,11 @@ export function NotificationBell() {
             return;
         }
 
-        const newWaitingRoomNotifications = notifications.filter(
+        const newPushNotifications = notifications.filter(
             (notification) =>
                 !knownNotificationIdsRef.current.has(notification.id) &&
                 !notification.read &&
-                isWaitingRoomNotification(notification),
+                isPushableAppNotification(notification),
         );
 
         notifications.forEach((notification) => {
@@ -122,14 +135,14 @@ export function NotificationBell() {
 
         if (
             !pushNotificationsEnabled ||
-            newWaitingRoomNotifications.length === 0 ||
+            newPushNotifications.length === 0 ||
             typeof Notification === "undefined" ||
             Notification.permission !== "granted"
         ) {
             return;
         }
 
-        newWaitingRoomNotifications
+        newPushNotifications
             .slice()
             .reverse()
             .forEach((notification) => {
@@ -139,6 +152,47 @@ export function NotificationBell() {
                 });
             });
     }, [actions, notifications, pushNotificationsEnabled]);
+
+    useEffect(() => {
+        const pendingInvitations = invitations.filter((invitation) => invitation.status === "pending");
+
+        if (!initializedInvitationsRef.current) {
+            pendingInvitations.forEach((invitation) => {
+                knownInvitationTokensRef.current.add(invitation.token);
+            });
+            initializedInvitationsRef.current = true;
+            return;
+        }
+
+        const newInvitations = pendingInvitations.filter(
+            (invitation) => !knownInvitationTokensRef.current.has(invitation.token),
+        );
+
+        pendingInvitations.forEach((invitation) => {
+            knownInvitationTokensRef.current.add(invitation.token);
+        });
+
+        if (
+            !pushNotificationsEnabled ||
+            newInvitations.length === 0 ||
+            typeof Notification === "undefined" ||
+            Notification.permission !== "granted"
+        ) {
+            return;
+        }
+
+        newInvitations
+            .slice()
+            .reverse()
+            .forEach((invitation) => {
+                const roleLabel = invitation.role === "secretary" ? "Secretária(o)" : "Profissional";
+
+                void actions.showNotification("Convite de clínica recebido", {
+                    body: `${invitation.clinicName} convidou você para atuar como ${roleLabel}.`,
+                    tag: `invitation-${invitation.token}`,
+                });
+            });
+    }, [actions, invitations, pushNotificationsEnabled]);
 
     const refreshAfterMutation = async () => {
         // refetchQueries (em vez de invalidateQueries) garante o pull imediato

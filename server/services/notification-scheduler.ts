@@ -36,6 +36,16 @@ class NotificationScheduler {
             }
         });
 
+        // 4. Subscriptions ending soon after scheduled cancellation (Daily at 10:00 AM)
+        cron.schedule("0 10 * * *", async () => {
+            console.log("Running subscription ending soon check...");
+            try {
+                await this.checkSubscriptionsEndingSoon();
+            } catch (error) {
+                console.error("Error checking subscriptions ending soon:", error);
+            }
+        });
+
         console.log("Notification scheduler started successfully.");
     }
 
@@ -114,6 +124,55 @@ class NotificationScheduler {
         // I didn't add getAllUsers.
         // I will implement a placeholder log.
         console.log("Pending checkups check not fully implemented (requires iterating all users).");
+    }
+
+    async checkSubscriptionsEndingSoon() {
+        const users = await storage.getAllUsers();
+        const now = new Date();
+        const warningThreshold = new Date(now);
+        warningThreshold.setDate(warningThreshold.getDate() + 3);
+
+        for (const user of users) {
+            const subscription = await storage.getUserSubscription(user.id);
+            if (!subscription || subscription.status !== "active" || !subscription.canceledAt) {
+                continue;
+            }
+
+            const currentPeriodEnd = new Date(subscription.currentPeriodEnd);
+            if (
+                !Number.isFinite(currentPeriodEnd.getTime()) ||
+                currentPeriodEnd <= now ||
+                currentPeriodEnd > warningThreshold
+            ) {
+                continue;
+            }
+
+            const plan = subscription.planId
+                ? await storage.getSubscriptionPlan(subscription.planId)
+                : null;
+            const endDateLabel = currentPeriodEnd.toLocaleDateString("pt-BR");
+            const message = plan
+                ? `Sua assinatura ${plan.name} está agendada para encerrar em ${endDateLabel}. Reative para manter o acesso.`
+                : `Sua assinatura está agendada para encerrar em ${endDateLabel}. Reative para manter o acesso.`;
+
+            const existingNotifications = await storage.getNotificationsByUserId(user.id);
+            const alreadyNotified = existingNotifications.some(
+                (notification) =>
+                    notification.title === "Assinatura prestes a expirar" &&
+                    notification.message === message,
+            );
+
+            if (alreadyNotified) {
+                continue;
+            }
+
+            await createUserNotification({
+                userId: user.id,
+                title: "Assinatura prestes a expirar",
+                message,
+                read: false,
+            });
+        }
     }
 }
 

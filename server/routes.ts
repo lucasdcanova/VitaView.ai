@@ -3498,6 +3498,15 @@ export async function registerRoutes(app: Express): Promise<void> {
           });
         }
 
+        await createUserNotification({
+          userId: req.user!.id,
+          title: "Transcrição concluída",
+          message: patientName
+            ? `A transcrição da gravação de ${patientName} foi finalizada e está pronta para revisão.`
+            : "A transcrição da sua gravação foi finalizada e está pronta para revisão.",
+          read: false,
+        }, { sendEmail: false });
+
         await trackUsage(req.user!.id, 'aiRequests', 1);
 
         logger.info("[Transcription] Finalize concluído", {
