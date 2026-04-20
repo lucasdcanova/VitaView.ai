@@ -14,7 +14,6 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link } from "wouter";
 import { tokens } from "./landing-tokens";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -47,6 +46,9 @@ const FALLBACK_ZONE = {
 };
 
 const HUB_Y_RATIO = 0.72;
+
+const migrationWhatsAppUrl =
+  "https://wa.me/555597032546?text=Ol%C3%A1%2C%20quero%20migrar%20com%20a%20minha%20equipe%20para%20a%20VitaView%20AI.";
 
 const ASSETS: AssetDef[] = [
   {
@@ -373,12 +375,15 @@ export function LandingMigration() {
             </div>
 
             <div className="mt-6 flex flex-col items-start gap-3">
-              <Link href="/auth">
-                <Button className="group h-auto w-full sm:w-auto rounded-xl bg-[#212121] px-5 py-3 sm:px-6 sm:py-3.5 font-heading text-sm font-bold text-white shadow-lg transition-all hover:bg-[#3A3A3A] hover:shadow-xl">
+              <Button
+                asChild
+                className="group h-auto w-full sm:w-auto rounded-xl bg-[#212121] px-5 py-3 sm:px-6 sm:py-3.5 font-heading text-sm font-bold text-white shadow-lg transition-all hover:bg-[#3A3A3A] hover:shadow-xl"
+              >
+                <a href={migrationWhatsAppUrl} target="_blank" rel="noreferrer">
                   {"Quero migrar com a equipe"}
                   <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
-                </Button>
-              </Link>
+                </a>
+              </Button>
               <p className="text-xs sm:text-sm text-[#666666]">
                 {"Sem planilha, sem copiar e colar, sem parar a rotina do consultório."}
               </p>
