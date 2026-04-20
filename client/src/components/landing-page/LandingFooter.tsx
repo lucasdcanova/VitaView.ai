@@ -2,6 +2,9 @@ import { motion } from "framer-motion";
 import { ChevronRight } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 
+const supportWhatsAppUrl =
+    "https://wa.me/555597032546?text=Ol%C3%A1%2C%20quero%20falar%20com%20a%20equipe%20da%20VitaView%20AI.";
+
 export function LandingFooter() {
     const isMobile = useIsMobile();
 
@@ -62,7 +65,7 @@ export function LandingFooter() {
                             Prontuário eletrônico inteligente com IA para médicos e clínicas. Simples, objetivo e completo.
                         </p>
 
-                        <div className="mt-4 hidden md:block">
+                        <div className="mt-4 hidden md:flex flex-col gap-3">
                             <motion.a
                                 href="mailto:contato@vitaview.ai"
                                 className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-2.5 text-sm text-white/80 transition-colors hover:bg-white/[0.06] hover:text-white"
@@ -70,6 +73,19 @@ export function LandingFooter() {
                                 whileTap={{ scale: 0.97 }}
                             >
                                 <span>contato@vitaview.ai</span>
+                                <span aria-hidden="true" className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-white/[0.06]">
+                                    <ChevronRight className="w-4 h-4" />
+                                </span>
+                            </motion.a>
+                            <motion.a
+                                href={supportWhatsAppUrl}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-2.5 text-sm text-white/80 transition-colors hover:bg-white/[0.06] hover:text-white"
+                                whileHover={{ y: -1, scale: 1.015 }}
+                                whileTap={{ scale: 0.97 }}
+                            >
+                                <span>WhatsApp: +55 55 9703-2546</span>
                                 <span aria-hidden="true" className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-white/[0.06]">
                                     <ChevronRight className="w-4 h-4" />
                                 </span>
@@ -193,6 +209,41 @@ export function LandingFooter() {
                                 </svg>
                                 <span className="text-sm font-medium group-hover:text-[#E0E0E0] transition-colors">
                                     contato@vitaview.ai
+                                </span>
+                            </div>
+                        </motion.a>
+
+                        <motion.a
+                            href={supportWhatsAppUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-[#9E9E9E] hover:text-white transition-colors group"
+                            initial={{ opacity: 0, y: 10 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            viewport={{ once: true }}
+                            transition={{ duration: 0.3, delay: 0.49 }}
+                            whileHover={{ y: -2, scale: 1.03 }}
+                            whileTap={{ scale: 0.95 }}
+                        >
+                            <div className="flex items-center space-x-2">
+                                <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                    <path
+                                        d="M8.5 18.5l-3 .8.8-3A7 7 0 1119 12a7 7 0 01-10.5 6.5Z"
+                                        stroke="currentColor"
+                                        strokeWidth="1.5"
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                    />
+                                    <path
+                                        d="M9.8 10.1c.2-.5.5-.6.8-.6h.7c.2 0 .5.1.6.4l.6 1.4c.1.2.1.5-.1.7l-.6.8a5.7 5.7 0 002.7 2.7l.8-.6c.2-.2.5-.2.7-.1l1.4.6c.3.1.4.4.4.6v.7c0 .3-.2.6-.6.8-.6.2-1.9.3-3.9-.7-1.6-.8-3.3-2.5-4.1-4.1-1-2-.9-3.3-.7-3.9z"
+                                        stroke="currentColor"
+                                        strokeWidth="1.5"
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                    />
+                                </svg>
+                                <span className="text-sm font-medium group-hover:text-[#E0E0E0] transition-colors">
+                                    WhatsApp
                                 </span>
                             </div>
                         </motion.a>

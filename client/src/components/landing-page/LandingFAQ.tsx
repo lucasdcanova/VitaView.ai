@@ -3,6 +3,9 @@ import { ChevronDown, Clock, ShieldCheck } from "lucide-react";
 import { useState } from "react";
 import { tokens } from "./landing-tokens";
 
+const supportWhatsAppUrl =
+    "https://wa.me/555597032546?text=Ol%C3%A1%2C%20quero%20falar%20com%20a%20equipe%20da%20VitaView%20AI.";
+
 export function LandingFAQ() {
     const [activeFaq, setActiveFaq] = useState<number | null>(null);
 
@@ -140,6 +143,23 @@ export function LandingFAQ() {
                                     <div>
                                         <div className="text-[13px] text-[#9E9E9E]">Email de Suporte</div>
                                         <div className="text-[15px] md:text-base font-semibold text-white group-hover:text-[#E0E0E0] transition-colors">contato@vitaview.ai</div>
+                                    </div>
+                                </a>
+                                <a
+                                    href={supportWhatsAppUrl}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="flex items-center p-2.5 md:p-3 bg-white/5 rounded-xl border border-white/10 hover:bg-white/10 transition-colors group"
+                                >
+                                    <div className="w-11 h-11 md:w-12 md:h-12 rounded-full bg-[#E0E0E0]/20 flex items-center justify-center mr-3 md:mr-4 group-hover:scale-110 transition-transform">
+                                        <svg className="w-6 h-6 text-[#E0E0E0]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M8.5 18.5l-3 .8.8-3A7 7 0 1119 12a7 7 0 01-10.5 6.5z" />
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M9.8 10.1c.2-.5.5-.6.8-.6h.7c.2 0 .5.1.6.4l.6 1.4c.1.2.1.5-.1.7l-.6.8a5.7 5.7 0 002.7 2.7l.8-.6c.2-.2.5-.2.7-.1l1.4.6c.3.1.4.4.4.6v.7c0 .3-.2.6-.6.8-.6.2-1.9.3-3.9-.7-1.6-.8-3.3-2.5-4.1-4.1-1-2-.9-3.3-.7-3.9z" />
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <div className="text-[13px] text-[#9E9E9E]">WhatsApp Business</div>
+                                        <div className="text-[15px] md:text-base font-semibold text-white group-hover:text-[#E0E0E0] transition-colors">+55 55 9703-2546</div>
                                     </div>
                                 </a>
                             </div>
