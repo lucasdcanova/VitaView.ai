@@ -55,6 +55,7 @@ import {
   sendPaymentFailedEmail,
   sendSubscriptionCancelledEmail,
 } from "./services/email.service";
+import { createUserNotification } from "./services/user-notification.service";
 import { financialService } from "./services/financial_service";
 import fs from "fs";
 import path from "path";
@@ -1285,6 +1286,11 @@ export async function registerRoutes(app: Express): Promise<void> {
         return res.status(400).json({ message: "Invalid appointment ID" });
       }
 
+      const existingAppointment = await storage.getAppointment(id);
+      if (!existingAppointment) {
+        return res.status(404).json({ message: "Appointment not found" });
+      }
+
       // If setting status to in_progress, first clear any other in_progress appointments for this user
       if (req.body.status === 'in_progress') {
         console.log(`[APPOINTMENT] Starting service for appointment ${id}, clearing other in_progress appointments...`);
@@ -1309,6 +1315,20 @@ export async function registerRoutes(app: Express): Promise<void> {
       if (!updated) {
         return res.status(404).json({ message: "Appointment not found" });
       }
+
+      const becameWaiting =
+        req.body.status === "waiting" &&
+        existingAppointment.status !== "waiting";
+
+      if (becameWaiting && updated.userId !== req.user.id) {
+        await createUserNotification({
+          userId: updated.userId,
+          title: "Paciente aguardando",
+          message: `${updated.patientName} foi registrado(a) na sala de espera para a consulta das ${updated.time}.`,
+          read: false,
+        }, { sendEmail: false });
+      }
+
       console.log(`[APPOINTMENT] Updated appointment ${id} to status: ${updated.status}`);
       res.json(updated);
     } catch (error) {

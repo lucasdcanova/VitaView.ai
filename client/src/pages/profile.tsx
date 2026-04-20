@@ -5,6 +5,7 @@ import { useLocation } from "wouter";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useAuth } from "@/hooks/use-auth";
+import { usePWA } from "@/hooks/use-pwa";
 import { useTheme } from "@/hooks/use-theme";
 import { useMutation } from "@tanstack/react-query";
 import { updateUserProfile } from "@/lib/api";
@@ -156,6 +157,7 @@ import { BrandLoader } from "@/components/ui/brand-loader";
 export default function Profile() {
   const [activeTab, setActiveTab] = useState("personal");
   const { user } = useAuth();
+  const { actions: pwaActions } = usePWA();
   const { theme, setTheme } = useTheme();
   const [, navigate] = useLocation();
   const { toast } = useToast();
@@ -427,11 +429,28 @@ export default function Profile() {
     setSettings(getNotificationSettings(user?.preferences));
   }, [user]);
 
-  const handleNotificationSettingChange = (
+  const handleNotificationSettingChange = async (
     key: keyof NotificationSettings,
     checked: boolean,
   ) => {
     if (!user) return;
+
+    if (key === "pushNotifications" && checked) {
+      const permission = await pwaActions.requestNotifications();
+
+      if (permission === "denied") {
+        toast({
+          title: "Permissão de notificações bloqueada",
+          description: "Ative as notificações do navegador para receber alertas em tempo real.",
+          variant: "destructive",
+        });
+      } else if (permission === "default") {
+        toast({
+          title: "Permissão pendente",
+          description: "As notificações push dependem da permissão do navegador para aparecerem no app.",
+        });
+      }
+    }
 
     const previousSettings = settings;
     const nextSettings = {

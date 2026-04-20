@@ -186,14 +186,21 @@ class PWAManager {
   }
 
   public async showNotification(title: string, options?: NotificationOptions): Promise<void> {
-    if (this.swRegistration && 'Notification' in window && Notification.permission === 'granted') {
+    if (!('Notification' in window) || Notification.permission !== 'granted') {
+      return;
+    }
+
+    if (this.swRegistration) {
       const iconPath = this.getThemeAwareIconPath();
       await this.swRegistration.showNotification(title, {
         badge: iconPath,
         icon: iconPath,
         ...options
       });
+      return;
     }
+
+    new Notification(title, options);
   }
 
   // Background sync

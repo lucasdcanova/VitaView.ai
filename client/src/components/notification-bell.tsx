@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useRef, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Bell, Check, X, Loader2, AlertCircle } from "lucide-react";
 import {
     Popover,
@@ -8,7 +8,12 @@ import {
 } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { apiRequest, ApiError } from "@/lib/queryClient";
+import { cn } from "@/lib/utils";
 import { useLocation } from "wouter";
+import { useAuth } from "@/hooks/use-auth";
+import { usePWA } from "@/hooks/use-pwa";
+import { getNotificationSettings } from "@shared/notification-preferences";
+import type { Notification as AppNotification } from "@shared/schema";
 
 type Invitation = {
     id: number;
@@ -29,10 +34,35 @@ type InvitationFeedback =
     | { type: "rejected" }
     | { type: "error"; message: string };
 
+const formatNotificationDate = (value: string | Date) => {
+    const notificationDate = new Date(value);
+    if (!Number.isFinite(notificationDate.getTime())) {
+        return "";
+    }
+
+    const now = new Date();
+    const diffMinutes = Math.floor((now.getTime() - notificationDate.getTime()) / (1000 * 60));
+
+    if (diffMinutes < 1) return "Agora";
+    if (diffMinutes < 60) return `${diffMinutes}m atrás`;
+    if (diffMinutes < 24 * 60) return `${Math.floor(diffMinutes / 60)}h atrás`;
+    if (diffMinutes < 48 * 60) return "Ontem";
+
+    return notificationDate.toLocaleDateString("pt-BR");
+};
+
+const isWaitingRoomNotification = (notification: AppNotification) =>
+    notification.title === "Paciente aguardando";
+
 export function NotificationBell() {
     const [, setLocation] = useLocation();
+    const { user } = useAuth();
+    const { actions } = usePWA();
     const [isOpen, setIsOpen] = useState(false);
     const queryClient = useQueryClient();
+    const pushNotificationsEnabled = getNotificationSettings(user?.preferences).pushNotifications;
+    const knownNotificationIdsRef = useRef<Set<number>>(new Set());
+    const initializedNotificationsRef = useRef(false);
 
     // Feedback inline por convite — necessario porque o <Toaster/> global esta
     // desabilitado por decisao de produto. Sem isso, mutations falhavam ou
@@ -51,13 +81,64 @@ export function NotificationBell() {
         });
     };
 
-    // Fetch pending invitations
-    const { data, isLoading } = useQuery<{ invitations: Invitation[] }>({
+    const { data: invitationData, isLoading: isLoadingInvitations } = useQuery<{ invitations: Invitation[] }>({
         queryKey: ["/api/my-invitations"],
     });
 
-    const invitations = data?.invitations || [];
-    const hasInvitations = invitations.length > 0;
+    const { data: notifications = [], isLoading: isLoadingNotifications } = useQuery<AppNotification[]>({
+        queryKey: ["/api/notifications"],
+        queryFn: async () => {
+            const res = await apiRequest("GET", "/api/notifications");
+            return res.json();
+        },
+        staleTime: 0,
+        refetchInterval: 15000,
+        refetchIntervalInBackground: true,
+    });
+
+    const invitations = invitationData?.invitations || [];
+    const unreadNotifications = notifications.filter((notification) => !notification.read);
+    const hasUnreadItems = invitations.length > 0 || unreadNotifications.length > 0;
+
+    useEffect(() => {
+        if (!initializedNotificationsRef.current) {
+            notifications.forEach((notification) => {
+                knownNotificationIdsRef.current.add(notification.id);
+            });
+            initializedNotificationsRef.current = true;
+            return;
+        }
+
+        const newWaitingRoomNotifications = notifications.filter(
+            (notification) =>
+                !knownNotificationIdsRef.current.has(notification.id) &&
+                !notification.read &&
+                isWaitingRoomNotification(notification),
+        );
+
+        notifications.forEach((notification) => {
+            knownNotificationIdsRef.current.add(notification.id);
+        });
+
+        if (
+            !pushNotificationsEnabled ||
+            newWaitingRoomNotifications.length === 0 ||
+            typeof Notification === "undefined" ||
+            Notification.permission !== "granted"
+        ) {
+            return;
+        }
+
+        newWaitingRoomNotifications
+            .slice()
+            .reverse()
+            .forEach((notification) => {
+                void actions.showNotification(notification.title, {
+                    body: notification.message,
+                    tag: `notification-${notification.id}`,
+                });
+            });
+    }, [actions, notifications, pushNotificationsEnabled]);
 
     const refreshAfterMutation = async () => {
         // refetchQueries (em vez de invalidateQueries) garante o pull imediato
@@ -66,8 +147,19 @@ export function NotificationBell() {
             queryClient.refetchQueries({ queryKey: ["/api/my-invitations"] }),
             queryClient.refetchQueries({ queryKey: ["/api/my-clinic"] }),
             queryClient.refetchQueries({ queryKey: ["/api/user"] }),
+            queryClient.refetchQueries({ queryKey: ["/api/notifications"] }),
         ]);
     };
+
+    const markAsReadMutation = useMutation({
+        mutationFn: async (notificationId: number) => {
+            const res = await apiRequest("POST", `/api/notifications/${notificationId}/read`);
+            return res.json();
+        },
+        onSuccess: async () => {
+            await queryClient.refetchQueries({ queryKey: ["/api/notifications"] });
+        },
+    });
 
     const acceptMutation = useMutation({
         mutationFn: async (token: string) => {
@@ -78,7 +170,6 @@ export function NotificationBell() {
         onSuccess: async (token) => {
             setInvitationFeedback(token, { type: "accepted" });
             await refreshAfterMutation();
-            // Pequeno delay para o usuario ver o "Aceito" antes do redirect
             setTimeout(() => {
                 setInvitationFeedback(token, null);
                 setIsOpen(false);
@@ -118,7 +209,7 @@ export function NotificationBell() {
         },
     });
 
-    if (isLoading) {
+    if (isLoadingInvitations || isLoadingNotifications) {
         return (
             <Button variant="ghost" size="icon" className="relative text-charcoal opacity-50">
                 <Bell className="h-5 w-5" />
@@ -131,7 +222,7 @@ export function NotificationBell() {
             <PopoverTrigger asChild>
                 <Button variant="ghost" size="icon" className="relative text-charcoal hover:bg-lightGray/80">
                     <Bell className="h-5 w-5" />
-                    {hasInvitations && (
+                    {hasUnreadItems && (
                         <span className="absolute top-1 right-1 flex h-2.5 w-2.5">
                             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
                             <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500"></span>
@@ -142,116 +233,156 @@ export function NotificationBell() {
             <PopoverContent align="end" sideOffset={8} className="z-[100] w-80 p-0">
                 <div className="px-4 py-3 border-b border-border font-medium">Notificações</div>
 
-                {invitations.length === 0 ? (
+                {notifications.length === 0 && invitations.length === 0 ? (
                     <div className="py-4 text-center text-sm text-muted-foreground p-4">
                         Nenhuma notificação no momento.
                     </div>
                 ) : (
-                    <div className="max-h-[300px] overflow-y-auto w-full">
-                        {invitations.map((inv) => {
-                            const state = feedback[inv.token];
-                            const inviteExpiresAt = new Date(inv.expiresAt);
-                            const hasValidExpiry = Number.isFinite(inviteExpiresAt.getTime());
-                            const isExpired =
-                                inv.status === "expired" ||
-                                (hasValidExpiry && inviteExpiresAt.getTime() <= Date.now());
-                            const isBusy = state?.type === "accepting" || state?.type === "rejecting";
-                            const isDone = state?.type === "accepted" || state?.type === "rejected";
-                            const expirationLabel = hasValidExpiry
-                                ? inviteExpiresAt.toLocaleDateString("pt-BR")
-                                : null;
-
-                            return (
-                                <div key={inv.id} className="p-4 border-b border-border last:border-0 flex flex-col gap-3">
-                                    <div>
-                                        <p className="text-sm font-medium">Convite para clínica</p>
-                                        <p className="text-xs text-muted-foreground mt-1">
-                                            Você foi convidado para ser{" "}
-                                            <span className="font-semibold text-foreground">
-                                                {inv.role === "secretary" ? "Secretária(o)" : "Profissional"}
-                                            </span>{" "}
-                                            na clínica <span className="font-semibold text-foreground">{inv.clinicName}</span>.
-                                        </p>
-                                    </div>
-
-                                    {isExpired ? (
-                                        <div className="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/10 p-2 text-xs text-destructive">
-                                            <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-                                            <span className="leading-snug">
-                                                {expirationLabel
-                                                    ? `Este convite expirou em ${expirationLabel}.`
-                                                    : "Este convite expirou."}
+                    <div className="max-h-[380px] overflow-y-auto w-full">
+                        {notifications.length > 0 && (
+                            <>
+                                <div className="px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground border-b border-border/70">
+                                    Avisos do App
+                                </div>
+                                {notifications.map((notification) => (
+                                    <button
+                                        key={notification.id}
+                                        type="button"
+                                        className={cn(
+                                            "w-full p-4 border-b border-border text-left transition-colors hover:bg-muted/40",
+                                            !notification.read && "bg-primary/5",
+                                        )}
+                                        onClick={() => {
+                                            if (!notification.read) {
+                                                markAsReadMutation.mutate(notification.id);
+                                            }
+                                        }}
+                                    >
+                                        <div className="flex items-start justify-between gap-3">
+                                            <div className="min-w-0">
+                                                <p className="text-sm font-medium text-foreground">{notification.title}</p>
+                                                <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                                                    {notification.message}
+                                                </p>
+                                            </div>
+                                            <span className="shrink-0 text-[11px] text-muted-foreground">
+                                                {formatNotificationDate(notification.date)}
                                             </span>
                                         </div>
-                                    ) : expirationLabel ? (
-                                        <p className="text-[11px] text-muted-foreground">
-                                            Expira em {expirationLabel}
-                                        </p>
-                                    ) : null}
+                                    </button>
+                                ))}
+                            </>
+                        )}
 
-                                    {state?.type === "error" && (
-                                        <div className="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/10 p-2 text-xs text-destructive">
-                                            <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-                                            <span className="leading-snug">{state.message}</span>
-                                        </div>
-                                    )}
-
-                                    {!isExpired && (
-                                        <div className="flex items-center gap-2">
-                                            <Button
-                                                size="sm"
-                                                type="button"
-                                                className="h-8 flex-1 text-xs bg-primary text-primary-foreground hover:bg-primary/90 cursor-pointer disabled:opacity-70"
-                                                disabled={isBusy || isDone}
-                                                onClick={() => {
-                                                    console.log("[NotificationBell] Accept clicked", inv.token);
-                                                    acceptMutation.mutate(inv.token);
-                                                }}
-                                            >
-                                                {state?.type === "accepting" ? (
-                                                    <>
-                                                        <Loader2 className="mr-1 h-3 w-3 animate-spin" /> Aceitando...
-                                                    </>
-                                                ) : state?.type === "accepted" ? (
-                                                    <>
-                                                        <Check className="mr-1 h-3 w-3" /> Aceito
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        <Check className="mr-1 h-3 w-3" /> Aceitar
-                                                    </>
-                                                )}
-                                            </Button>
-                                            <Button
-                                                size="sm"
-                                                type="button"
-                                                variant="outline"
-                                                className="h-8 flex-1 text-xs cursor-pointer disabled:opacity-70"
-                                                disabled={isBusy || isDone}
-                                                onClick={() => {
-                                                    console.log("[NotificationBell] Reject clicked", inv.token);
-                                                    rejectMutation.mutate(inv.token);
-                                                }}
-                                            >
-                                                {state?.type === "rejecting" ? (
-                                                    <>
-                                                        <Loader2 className="mr-1 h-3 w-3 animate-spin" /> Recusando...
-                                                    </>
-                                                ) : state?.type === "rejected" ? (
-                                                    <>
-                                                        <X className="mr-1 h-3 w-3" /> Recusado
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        <X className="mr-1 h-3 w-3" /> Recusar
-                                                    </>
-                                                )}
-                                            </Button>
-                                        </div>
-                                    )}
+                        {invitations.length > 0 && (
+                            <>
+                                <div className="px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground border-b border-border/70">
+                                    Convites Pendentes
                                 </div>
-                            );
-                        })}
+                                {invitations.map((inv) => {
+                                    const state = feedback[inv.token];
+                                    const inviteExpiresAt = new Date(inv.expiresAt);
+                                    const hasValidExpiry = Number.isFinite(inviteExpiresAt.getTime());
+                                    const isExpired =
+                                        inv.status === "expired" ||
+                                        (hasValidExpiry && inviteExpiresAt.getTime() <= Date.now());
+                                    const isBusy = state?.type === "accepting" || state?.type === "rejecting";
+                                    const isDone = state?.type === "accepted" || state?.type === "rejected";
+                                    const expirationLabel = hasValidExpiry
+                                        ? inviteExpiresAt.toLocaleDateString("pt-BR")
+                                        : null;
+
+                                    return (
+                                        <div key={inv.id} className="p-4 border-b border-border last:border-0 flex flex-col gap-3">
+                                            <div>
+                                                <p className="text-sm font-medium">Convite para clínica</p>
+                                                <p className="text-xs text-muted-foreground mt-1">
+                                                    Você foi convidado para ser{" "}
+                                                    <span className="font-semibold text-foreground">
+                                                        {inv.role === "secretary" ? "Secretária(o)" : "Profissional"}
+                                                    </span>{" "}
+                                                    na clínica <span className="font-semibold text-foreground">{inv.clinicName}</span>.
+                                                </p>
+                                            </div>
+
+                                            {isExpired ? (
+                                                <div className="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/10 p-2 text-xs text-destructive">
+                                                    <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                                                    <span className="leading-snug">
+                                                        {expirationLabel
+                                                            ? `Este convite expirou em ${expirationLabel}.`
+                                                            : "Este convite expirou."}
+                                                    </span>
+                                                </div>
+                                            ) : expirationLabel ? (
+                                                <p className="text-[11px] text-muted-foreground">
+                                                    Expira em {expirationLabel}
+                                                </p>
+                                            ) : null}
+
+                                            {state?.type === "error" && (
+                                                <div className="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/10 p-2 text-xs text-destructive">
+                                                    <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                                                    <span className="leading-snug">{state.message}</span>
+                                                </div>
+                                            )}
+
+                                            {!isExpired && (
+                                                <div className="flex items-center gap-2">
+                                                    <Button
+                                                        size="sm"
+                                                        type="button"
+                                                        className="h-8 flex-1 text-xs bg-primary text-primary-foreground hover:bg-primary/90 cursor-pointer disabled:opacity-70"
+                                                        disabled={isBusy || isDone}
+                                                        onClick={() => {
+                                                            acceptMutation.mutate(inv.token);
+                                                        }}
+                                                    >
+                                                        {state?.type === "accepting" ? (
+                                                            <>
+                                                                <Loader2 className="mr-1 h-3 w-3 animate-spin" /> Aceitando...
+                                                            </>
+                                                        ) : state?.type === "accepted" ? (
+                                                            <>
+                                                                <Check className="mr-1 h-3 w-3" /> Aceito
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                <Check className="mr-1 h-3 w-3" /> Aceitar
+                                                            </>
+                                                        )}
+                                                    </Button>
+                                                    <Button
+                                                        size="sm"
+                                                        type="button"
+                                                        variant="outline"
+                                                        className="h-8 flex-1 text-xs cursor-pointer disabled:opacity-70"
+                                                        disabled={isBusy || isDone}
+                                                        onClick={() => {
+                                                            rejectMutation.mutate(inv.token);
+                                                        }}
+                                                    >
+                                                        {state?.type === "rejecting" ? (
+                                                            <>
+                                                                <Loader2 className="mr-1 h-3 w-3 animate-spin" /> Recusando...
+                                                            </>
+                                                        ) : state?.type === "rejected" ? (
+                                                            <>
+                                                                <X className="mr-1 h-3 w-3" /> Recusado
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                <X className="mr-1 h-3 w-3" /> Recusar
+                                                            </>
+                                                        )}
+                                                    </Button>
+                                                </div>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                            </>
+                        )}
                     </div>
                 )}
             </PopoverContent>
