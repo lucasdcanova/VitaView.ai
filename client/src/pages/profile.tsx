@@ -44,7 +44,6 @@ import { Stethoscope,
   Star,
   MoreVertical,
   ImagePlus,
-  HelpCircle,
 } from "lucide-react";
 import DesktopUpdateCard from "@/components/desktop/desktop-update-card";
 import { useQuery } from "@tanstack/react-query";
@@ -495,7 +494,7 @@ export default function Profile() {
                       value="personal"
                       className="data-[state=active]:border-primary data-[state=active]:text-primary-foreground data-[state=active]:bg-primary border-b-2 border-transparent rounded-md bg-transparent px-3 py-1.5 text-xs sm:text-sm sm:px-4 sm:py-2 text-muted-foreground hover:text-foreground whitespace-nowrap"
                     >
-                      Dados<span className="hidden sm:inline"> Profissionais</span>
+                      Dados Profissionais
                     </TabsTrigger>
                     <TabsTrigger
                       value="security"
@@ -992,8 +991,7 @@ export default function Profile() {
 
                 {/* Help Section */}
                 <div>
-                  <div className="flex items-center gap-2 mb-4">
-                    <HelpCircle className="h-5 w-5 text-primary" />
+                  <div className="mb-4">
                     <h2 className="text-lg font-semibold text-foreground">Ajuda</h2>
                   </div>
 
