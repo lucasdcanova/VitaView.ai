@@ -1337,6 +1337,7 @@ export const consultationRecordingSessions = pgTable("consultation_recording_ses
   anamnesis: text("anamnesis"),
   extractedData: jsonb("extracted_data"),
   lastError: text("last_error"),
+  retryCount: integer("retry_count").default(0).notNull(),
   retentionExpiresAt: timestamp("retention_expires_at").notNull(),
   finalizedAt: timestamp("finalized_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -1354,6 +1355,7 @@ export const insertConsultationRecordingSessionSchema = createInsertSchema(consu
   anamnesis: true,
   extractedData: true,
   lastError: true,
+  retryCount: true,
   retentionExpiresAt: true,
   finalizedAt: true,
 });

@@ -849,6 +849,17 @@ export async function registerRoutes(app: Express): Promise<void> {
   // Set up authentication routes (/api/register, /api/login, /api/logout, /api/user)
   setupAuth(app);
 
+  // Inject transcription functions into the retention service so the background
+  // auto-retry cron can re-transcribe failed sessions without circular imports.
+  consultationAudioRetentionService.setTranscribeFn(
+    (audioBuffer, mimeType, userId) =>
+      transcribeConsultationAudio(audioBuffer, mimeType, userId)
+  );
+  consultationAudioRetentionService.setProcessTranscriptionFn(
+    (transcription, patientData, userId, clinicId) =>
+      processTranscriptionToAnamnesis(transcription, patientData, userId, clinicId)
+  );
+
   // Enforce Multi-Tenancy for all API routes defined below
   app.use("/api", ensureTenant);
 
@@ -3394,7 +3405,12 @@ export async function registerRoutes(app: Express): Promise<void> {
           segmentIndex,
           message: error instanceof Error ? error.message : String(error),
         });
+        // The audio was already saved to S3 before transcription was attempted.
+        // Inform the client so it knows the data is safe and can be retried.
         res.status(500).json({
+          success: false,
+          audioSaved: true,
+          canRetry: true,
           sessionId,
           segmentIndex,
           message: error instanceof Error ? error.message : "Erro ao transcrever segmento",
@@ -3540,6 +3556,144 @@ export async function registerRoutes(app: Express): Promise<void> {
         res.status(500).json({
           sessionId,
           message: error instanceof Error ? error.message : "Erro ao finalizar a consulta.",
+        });
+      }
+    }
+  );
+
+  // ============================================================================
+  // RETRY FAILED SESSION
+  // ----------------------------------------------------------------------------
+  // Allows the client to re-trigger transcription for a session that failed.
+  // The audio segments are still stored in S3 (24h retention). This endpoint
+  // fetches them, re-transcribes via Whisper/Gemini, and re-runs GPT finalize.
+  // ============================================================================
+
+  app.post(
+    "/api/consultation/retry-session",
+    (req, res, next) => {
+      req.setTimeout(180 * 1000);
+      res.setTimeout(180 * 1000);
+      next();
+    },
+    ensureAuthenticated,
+    async (req, res) => {
+      const sessionId =
+        typeof req.body?.sessionId === "string" && req.body.sessionId.trim()
+          ? req.body.sessionId.trim()
+          : null;
+
+      if (!sessionId) {
+        return res.status(400).json({
+          success: false,
+          message: "sessionId é obrigatório",
+        });
+      }
+
+      try {
+        // Fetch patient data if available
+        let patientData = null;
+        const rawProfileId = Number.parseInt(
+          String(req.body?.profileId ?? ""),
+          10
+        );
+        const profileId = Number.isFinite(rawProfileId)
+          ? rawProfileId
+          : null;
+
+        if (profileId) {
+          try {
+            const profile = await storage.getProfile(profileId);
+            if (profile && profile.userId === req.user!.id) {
+              patientData = {
+                name: profile.name,
+                gender: profile.gender,
+                birthDate: profile.birthDate,
+              };
+            }
+          } catch (err) {
+            logger.warn(
+              "[Transcription] Falha ao buscar perfil no retry",
+              { profileId, error: err }
+            );
+          }
+        }
+
+        logger.info("[Transcription] Retry manual solicitado", {
+          userId: req.user?.id,
+          sessionId,
+        });
+
+        const result =
+          await consultationAudioRetentionService.retrySession({
+            sessionId,
+            userId: req.user!.id,
+            transcribeSegment: (audioBuffer, mimeType, userId) =>
+              transcribeConsultationAudio(
+                audioBuffer,
+                mimeType,
+                userId,
+                req.tenantId
+              ),
+            processTranscription: (transcription, pd, userId, clinicId) =>
+              processTranscriptionToAnamnesis(
+                transcription,
+                pd,
+                userId,
+                clinicId
+              ),
+            patientData,
+          });
+
+        if (!result.success) {
+          return res.status(422).json({
+            success: false,
+            sessionId,
+            message:
+              result.error ||
+              "Não foi possível reprocessar a sessão.",
+          });
+        }
+
+        await createUserNotification(
+          {
+            userId: req.user!.id,
+            title: "Transcrição recuperada",
+            message: "A transcrição da sua consulta foi reprocessada com sucesso e está pronta para revisão.",
+            read: false,
+          },
+          { sendEmail: false }
+        );
+
+        await trackUsage(req.user!.id, "aiRequests", 1);
+
+        logger.info("[Transcription] Retry manual concluído", {
+          userId: req.user?.id,
+          sessionId,
+          transcriptionLength: result.transcription?.length ?? 0,
+        });
+
+        res.json({
+          success: true,
+          sessionId,
+          transcription: result.transcription,
+          anamnesis: result.anamnesis,
+          extractedData: result.extractedData,
+        });
+      } catch (error) {
+        logger.error("[Transcription] Falha no retry manual", {
+          userId: req.user?.id,
+          sessionId,
+          message:
+            error instanceof Error ? error.message : String(error),
+        });
+        res.status(500).json({
+          success: false,
+          sessionId,
+          message:
+            error instanceof Error
+              ? error.message
+              : "Erro ao reprocessar a sessão.",
         });
       }
     }

@@ -9,6 +9,8 @@ import {
   Pause,
   Play,
   Info,
+  Cloud as CloudIcon,
+  RefreshCw,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -55,6 +57,8 @@ export function ConsultationRecorder({
     stopRecording,
     cancelRecording,
     clearError,
+    failedSessionId,
+    retrySession,
   } = useConsultationRecording();
 
   const sessionPatientName = currentSession?.patientName || patientName || "Paciente atual";
@@ -66,6 +70,17 @@ export function ConsultationRecorder({
   const sessionContextText = isRecordingAnotherPatient
     ? `A gravacao ativa pertence a ${sessionPatientName}.`
     : `Paciente atual: ${sessionPatientName}.`;
+
+  const [isRetrying, setIsRetrying] = useState(false);
+
+  const handleRetry = async () => {
+    setIsRetrying(true);
+    try {
+      await retrySession();
+    } finally {
+      setIsRetrying(false);
+    }
+  };
 
   const handleConfirmedStart = () => {
     setShowConsentDialog(false);
@@ -239,9 +254,13 @@ export function ConsultationRecorder({
             <div className="flex items-center gap-3">
               <BrandLoader className="h-5 w-5 animate-spin text-muted-foreground" />
               <div>
-                <p className="font-medium text-foreground">Processando gravacao...</p>
+                <p className="font-medium text-foreground">
+                  {isRetrying ? "Reprocessando gravacao..." : "Processando gravacao..."}
+                </p>
                 <p className="text-xs text-muted-foreground">
-                  Transcrevendo audio e gerando a anamnese de {sessionPatientName}
+                  {isRetrying
+                    ? `Recuperando audio da nuvem e transcrevendo novamente para ${sessionPatientName}`
+                    : `Transcrevendo audio e gerando a anamnese de ${sessionPatientName}`}
                 </p>
               </div>
             </div>
@@ -267,28 +286,50 @@ export function ConsultationRecorder({
 
       case "error":
         return (
-          <Card className={cn("w-full rounded-2xl border-2 border-red-300 bg-red-50 p-3 dark:border-red-500/50 dark:bg-red-500/10", className)}>
-            <div className="flex items-center gap-3">
-              <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-300 flex-shrink-0" />
-              <div className="flex-1">
-                <p className="font-medium text-red-700 dark:text-red-300">
-                  Erro na gravacao
-                </p>
-                <p className="text-xs text-red-700/85 dark:text-red-200/85">
-                  {errorMessage}
-                </p>
-                <p className="text-[11px] text-red-700/75 dark:text-red-200/75 mt-1">
-                  {sessionContextText}
-                </p>
+          <Card className={cn("w-full rounded-2xl border-2 p-3", failedSessionId ? "border-amber-300 bg-amber-50 dark:border-amber-500/50 dark:bg-amber-500/10" : "border-red-300 bg-red-50 dark:border-red-500/50 dark:bg-red-500/10", className)}>
+            <div className="flex flex-col gap-2">
+              <div className="flex items-start gap-3">
+                {failedSessionId ? (
+                  <CloudIcon className="h-5 w-5 text-amber-600 dark:text-amber-300 flex-shrink-0 mt-0.5" />
+                ) : (
+                  <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-300 flex-shrink-0 mt-0.5" />
+                )}
+                <div className="flex-1">
+                  <p className={cn("font-medium", failedSessionId ? "text-amber-700 dark:text-amber-300" : "text-red-700 dark:text-red-300")}>
+                    {failedSessionId ? "Audio seguro na nuvem" : "Erro na gravacao"}
+                  </p>
+                  <p className={cn("text-xs mt-0.5", failedSessionId ? "text-amber-700/85 dark:text-amber-200/85" : "text-red-700/85 dark:text-red-200/85")}>
+                    {errorMessage}
+                  </p>
+                </div>
               </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={clearError}
-                className="text-red-700 dark:text-red-300 hover:text-red-800 dark:hover:text-red-200 hover:bg-red-100/80 dark:hover:bg-red-500/20"
-              >
-                Tentar novamente
-              </Button>
+
+              <div className="flex items-center gap-2 justify-end">
+                {failedSessionId && (
+                  <Button
+                    variant="default"
+                    size="sm"
+                    onClick={handleRetry}
+                    disabled={isRetrying}
+                    className="gap-1.5 bg-amber-600 text-white hover:bg-amber-700 dark:bg-amber-500 dark:hover:bg-amber-600"
+                  >
+                    <RefreshCw className={cn("h-3.5 w-3.5", isRetrying && "animate-spin")} />
+                    Reprocessar Agora
+                  </Button>
+                )}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={clearError}
+                  className={cn(
+                    failedSessionId
+                      ? "text-amber-700 dark:text-amber-300 hover:text-amber-800 dark:hover:text-amber-200 hover:bg-amber-100/80 dark:hover:bg-amber-500/20"
+                      : "text-red-700 dark:text-red-300 hover:text-red-800 dark:hover:text-red-200 hover:bg-red-100/80 dark:hover:bg-red-500/20"
+                  )}
+                >
+                  {failedSessionId ? "Descartar" : "Tentar novamente"}
+                </Button>
+              </div>
             </div>
           </Card>
         );

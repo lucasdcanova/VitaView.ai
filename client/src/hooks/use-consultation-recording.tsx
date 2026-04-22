@@ -193,6 +193,7 @@ interface ConsultationRecordingContextType {
   errorMessage: string | null;
   currentSession: ConsultationRecordingSession | null;
   completedResult: ConsultationTranscriptionResult | null;
+  failedSessionId: string | null;
   startRecording: (options?: {
     profileId?: number;
     patientName?: string | null;
@@ -203,6 +204,7 @@ interface ConsultationRecordingContextType {
   cancelRecording: () => void;
   clearError: () => void;
   clearCompletedResult: () => void;
+  retrySession: () => Promise<void>;
 }
 
 const ConsultationRecordingContext =
@@ -232,6 +234,7 @@ export function ConsultationRecordingProvider({
     useState<ConsultationRecordingSession | null>(null);
   const [completedResult, setCompletedResult] =
     useState<ConsultationTranscriptionResult | null>(null);
+  const [failedSessionId, setFailedSessionId] = useState<string | null>(null);
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -609,16 +612,32 @@ export function ConsultationRecordingProvider({
         anamnesis: result.anamnesis,
         extractedData: result.extractedData,
       });
+      setFailedSessionId(null);
       setErrorMessage(null);
       setRecordingState("success");
     } catch (error) {
       console.error("Erro ao processar audio:", error);
       setCompletedResult(null);
-      setErrorMessage(
-        error instanceof Error
-          ? error.message
-          : "Erro ao processar a gravacao. Tente novamente."
-      );
+
+      // Check if we have segments uploaded to the cloud
+      const hasCloudBackup =
+        segmentsRef.current.length > 0 && sessionRef.current?.sessionId;
+
+      if (hasCloudBackup) {
+        setFailedSessionId(sessionRef.current!.sessionId);
+        setErrorMessage(
+          "Houve um erro ao processar a gravacao, mas o audio esta seguro na nuvem. " +
+            "O sistema tentara reprocessar automaticamente em alguns minutos. " +
+            "Voce tambem pode tentar agora clicando em 'Reprocessar'."
+        );
+      } else {
+        setFailedSessionId(null);
+        setErrorMessage(
+          error instanceof Error
+            ? error.message
+            : "Erro ao processar a gravacao. Tente novamente."
+        );
+      }
       setRecordingState("error");
     } finally {
       cleanupMedia();
@@ -1029,8 +1048,54 @@ export function ConsultationRecordingProvider({
   const clearError = useCallback(() => {
     cleanupMedia();
     setCompletedResult(null);
+    setFailedSessionId(null);
     resetSessionState();
   }, [cleanupMedia, resetSessionState]);
+
+  const retrySession = useCallback(async () => {
+    if (!failedSessionId) return;
+
+    setRecordingState("processing");
+    setErrorMessage(null);
+
+    try {
+      const response = await fetch("/api/consultation/retry-session", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          sessionId: failedSessionId,
+          profileId: currentSession?.profileId ?? null,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(
+          result.message || "Nao foi possivel reprocessar a gravacao."
+        );
+      }
+
+      setCompletedResult({
+        profileId: currentSession?.profileId ?? null,
+        transcription: result.transcription,
+        anamnesis: result.anamnesis,
+        extractedData: result.extractedData,
+      });
+      setFailedSessionId(null);
+      setErrorMessage(null);
+      setRecordingState("success");
+    } catch (error) {
+      console.error("Erro ao reprocessar sessao:", error);
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : "Erro ao reprocessar. O sistema continuara tentando automaticamente."
+      );
+      setRecordingState("error");
+    }
+  }, [failedSessionId, currentSession]);
 
   const clearCompletedResult = useCallback(() => {
     setCompletedResult(null);
@@ -1068,12 +1133,14 @@ export function ConsultationRecordingProvider({
         errorMessage,
         currentSession,
         completedResult,
+        failedSessionId,
         startRecording,
         togglePause,
         stopRecording,
         cancelRecording,
         clearError,
         clearCompletedResult,
+        retrySession,
       }}
     >
       {children}
