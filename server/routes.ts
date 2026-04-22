@@ -6,7 +6,7 @@ import { pool, db } from "./db";
 import { inArray, and, eq, desc, sql } from "drizzle-orm";
 import { nanoid } from "nanoid";
 // ... imports ...
-import { prescriptions, medications, insertCustomMedicationSchema, insertCustomExamSchema, aiCostLogs, users } from "@shared/schema";
+import { prescriptions, medications, insertCustomMedicationSchema, insertCustomExamSchema, aiCostLogs, users, evolutions } from "@shared/schema";
 import type { Appointment, Profile, SubscriptionPlan } from "@shared/schema";
 import {
   IOS_APP_STORE_PRICE_MARKUP_PERCENT,
@@ -3554,6 +3554,9 @@ export async function registerRoutes(app: Express): Promise<void> {
           message: error instanceof Error ? error.message : String(error),
         });
         res.status(500).json({
+          success: false,
+          audioSaved: !!sessionId,
+          canRetry: !!sessionId,
           sessionId,
           message: error instanceof Error ? error.message : "Erro ao finalizar a consulta.",
         });
@@ -3588,6 +3591,24 @@ export async function registerRoutes(app: Express): Promise<void> {
           success: false,
           message: "sessionId é obrigatório",
         });
+      }
+
+      // Handle cancellation: mark session as cancelled so auto-retry skips it
+      if (req.body?.cancel === true) {
+        try {
+          await consultationAudioRetentionService.markSessionFailed(
+            sessionId,
+            req.user!.id,
+            "Cancelado pelo usuário"
+          );
+          logger.info("[Transcription] Sessão cancelada pelo usuário", {
+            userId: req.user?.id,
+            sessionId,
+          });
+        } catch (_) {
+          // Best-effort — session may not exist yet
+        }
+        return res.json({ success: true, cancelled: true });
       }
 
       try {
@@ -6475,6 +6496,23 @@ export async function registerRoutes(app: Express): Promise<void> {
       }).returning();
 
       console.log('✅ Receita salva:', insertedPrescription.id);
+
+      // Inserir registro no histórico (evolução) conforme dispositivo legal
+      try {
+        const medNames = medications.map((m: any) => m.name).join(", ");
+        const evolutionText = `Registro de prescrição de: ${medNames}.`;
+        await db.insert(evolutions).values({
+          userId: user.id,
+          profileId: profileId,
+          text: evolutionText,
+          professionalName: doctorName,
+          date: new Date(),
+        });
+        console.log('✅ Registro de prescrição adicionado ao histórico.');
+      } catch (evoError) {
+        console.error("Erro ao salvar histórico de prescrição:", evoError);
+        // We don't fail the prescription request if history log fails
+      }
 
       // Retornar com patientName para o frontend gerar o PDF
       res.json({

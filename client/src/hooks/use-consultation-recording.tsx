@@ -235,6 +235,10 @@ export function ConsultationRecordingProvider({
   const [completedResult, setCompletedResult] =
     useState<ConsultationTranscriptionResult | null>(null);
   const [failedSessionId, setFailedSessionId] = useState<string | null>(null);
+  const [failedSessionProfile, setFailedSessionProfile] = useState<{
+    profileId: number | null;
+    patientName: string | null;
+  } | null>(null);
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -251,6 +255,7 @@ export function ConsultationRecordingProvider({
   const consolidationTimerRef = useRef<number | null>(null);
   const autoRestartTimerRef = useRef<number | null>(null);
   const isAutoRestartingRef = useRef(false);
+  const isFinalStopRef = useRef(false);
   const recoveryAttemptsRef = useRef(0);
 
   // Streaming transcription refs — cada segmento é transcrito assim que sai
@@ -381,6 +386,7 @@ export function ConsultationRecordingProvider({
     pendingUploadsRef.current = [];
     uploadFailureRef.current = null;
     isAutoRestartingRef.current = false;
+    isFinalStopRef.current = false;
     recoveryAttemptsRef.current = 0;
   }, [clearTimer, clearReliabilityTimers, stopAudioLevelMonitor, stopStreamTracks]);
 
@@ -467,6 +473,7 @@ export function ConsultationRecordingProvider({
         console.log("[Recording] Segmento transcrito", {
           index,
           chars: result.text.length,
+          isEmpty: result.text.trim().length === 0,
           attempt,
         });
         return; // Sucesso — sai do loop
@@ -494,7 +501,9 @@ export function ConsultationRecordingProvider({
     if (lastError && !uploadFailureRef.current) {
       uploadFailureRef.current = lastError;
     }
-    console.error(`[Recording] Segmento ${index} falhou após ${UPLOAD_MAX_RETRIES} tentativas`);
+    // Mark this segment as failed (distinct from "empty transcription from server")
+    segmentTranscriptionsRef.current[index] = undefined as any;
+    console.error(`[Recording] Segmento ${index} falhou após ${UPLOAD_MAX_RETRIES} tentativas (upload/transcrição não obtida)`);
     // Não throw — permite que outros segmentos continuem processando.
     // O processAudio() checará segmentTranscriptionsRef e montará o que conseguir.
   }, []);
@@ -625,6 +634,10 @@ export function ConsultationRecordingProvider({
 
       if (hasCloudBackup) {
         setFailedSessionId(sessionRef.current!.sessionId);
+        setFailedSessionProfile({
+          profileId: sessionRef.current!.profileId,
+          patientName: sessionRef.current!.patientName,
+        });
         setErrorMessage(
           "Houve um erro ao processar a gravacao, mas o audio esta seguro na nuvem. " +
             "O sistema tentara reprocessar automaticamente em alguns minutos. " +
@@ -632,6 +645,7 @@ export function ConsultationRecordingProvider({
         );
       } else {
         setFailedSessionId(null);
+        setFailedSessionProfile(null);
         setErrorMessage(
           error instanceof Error
             ? error.message
@@ -761,6 +775,9 @@ export function ConsultationRecordingProvider({
             const mr = mediaRecorderRef.current;
             if (!mr) return;
 
+            // If user already clicked "Finalizar", don't auto-restart
+            if (isFinalStopRef.current) return;
+
             if (mr.state === "paused") {
               // Don't restart while paused; reschedule for later
               scheduleAutoRestart();
@@ -811,6 +828,11 @@ export function ConsultationRecordingProvider({
           };
 
           mr.onstop = async () => {
+            // If user triggered final stop, never auto-restart
+            if (isFinalStopRef.current) {
+              isAutoRestartingRef.current = false;
+            }
+
             // Auto-restart path: save segment and spin up a new recorder seamlessly
             if (isAutoRestartingRef.current) {
               isAutoRestartingRef.current = false;
@@ -998,6 +1020,7 @@ export function ConsultationRecordingProvider({
   }, [clearTimer, recordingState]);
 
   const stopRecording = useCallback(() => {
+    isFinalStopRef.current = true;
     isAutoRestartingRef.current = false;
 
     const mediaRecorder = mediaRecorderRef.current;
@@ -1026,8 +1049,10 @@ export function ConsultationRecordingProvider({
   }, [cleanupMedia]);
 
   const cancelRecording = useCallback(() => {
+    isFinalStopRef.current = true;
     isAutoRestartingRef.current = false;
     const mediaRecorder = mediaRecorderRef.current;
+    const cancelledSessionId = sessionRef.current?.sessionId;
 
     if (mediaRecorder && mediaRecorder.state !== "inactive") {
       mediaRecorder.ondataavailable = null;
@@ -1042,13 +1067,28 @@ export function ConsultationRecordingProvider({
 
     cleanupMedia();
     setCompletedResult(null);
+    setFailedSessionId(null);
+    setFailedSessionProfile(null);
     resetSessionState();
+
+    // Notify server so auto-retry cron won't re-transcribe this cancelled session
+    if (cancelledSessionId) {
+      fetch("/api/consultation/retry-session", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sessionId: cancelledSessionId, cancel: true }),
+      }).catch(() => {
+        // Best-effort — if it fails, the session expires in 24h anyway
+      });
+    }
   }, [cleanupMedia, resetSessionState]);
 
   const clearError = useCallback(() => {
     cleanupMedia();
     setCompletedResult(null);
     setFailedSessionId(null);
+    setFailedSessionProfile(null);
     resetSessionState();
   }, [cleanupMedia, resetSessionState]);
 
@@ -1065,7 +1105,7 @@ export function ConsultationRecordingProvider({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           sessionId: failedSessionId,
-          profileId: currentSession?.profileId ?? null,
+          profileId: failedSessionProfile?.profileId ?? currentSession?.profileId ?? null,
         }),
       });
 
@@ -1078,12 +1118,13 @@ export function ConsultationRecordingProvider({
       }
 
       setCompletedResult({
-        profileId: currentSession?.profileId ?? null,
+        profileId: failedSessionProfile?.profileId ?? currentSession?.profileId ?? null,
         transcription: result.transcription,
         anamnesis: result.anamnesis,
         extractedData: result.extractedData,
       });
       setFailedSessionId(null);
+      setFailedSessionProfile(null);
       setErrorMessage(null);
       setRecordingState("success");
     } catch (error) {
@@ -1095,7 +1136,7 @@ export function ConsultationRecordingProvider({
       );
       setRecordingState("error");
     }
-  }, [failedSessionId, currentSession]);
+  }, [failedSessionId, failedSessionProfile, currentSession]);
 
   const clearCompletedResult = useCallback(() => {
     setCompletedResult(null);

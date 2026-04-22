@@ -256,8 +256,7 @@ export function ContinuousMedicationsCard({
                         disabled={selectedMedications.size === 0}
                         onClick={onRenewPrescription}
                     >
-                        <RefreshCw className="h-4 w-4 mr-2" />
-                        Renovar Selecionados ({selectedMedications.size}) (Assinatura Digital)
+                        Renovar Selecionados ({selectedMedications.size})
                     </Button>
                     <Button
                         variant="outline"

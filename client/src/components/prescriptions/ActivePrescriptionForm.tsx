@@ -115,12 +115,12 @@ export function ActivePrescriptionForm({
                             {isEditing ? (
                                 <>
                                     <Save className="h-5 w-5 mr-2" />
-                                    Atualizar e Imprimir Receita (Assinatura Digital)
+                                    Atualizar e Imprimir Receita
                                 </>
                             ) : (
                                 <>
                                     <Printer className="h-5 w-5 mr-2" />
-                                    Salvar e Imprimir Receita (Assinatura Digital)
+                                    Salvar e Imprimir Receita
                                 </>
                             )}
                         </Button>
