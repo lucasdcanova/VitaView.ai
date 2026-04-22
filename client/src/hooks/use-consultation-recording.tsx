@@ -19,7 +19,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { isIOSAppShell } from "@/lib/app-shell";
+import { isIOSAppShell, isNativeIOSApp } from "@/lib/app-shell";
+import {
+  NativeAudioRecorder,
+  type NativeAudioRecorderListenerHandle,
+  type NativeAudioRecorderSegment,
+} from "@/lib/native-audio-recorder";
 
 // Reliability: chunked recording with periodic auto-restart to manter cada
 // segmento bem abaixo do limite de 25MB do Whisper, em qualquer plataforma.
@@ -72,6 +77,8 @@ interface RecordingFormat {
   recorderMimeType?: string;
   uploadMimeType: string;
 }
+
+type RecordingBackend = "web" | "native-ios";
 
 type LegacyNavigator = Navigator & {
   getUserMedia?: (
@@ -186,6 +193,17 @@ const getAudioStream = async (constraints: MediaStreamConstraints): Promise<Medi
   });
 };
 
+const base64ToBlob = (base64Data: string, mimeType: string) => {
+  const binaryString = window.atob(base64Data);
+  const bytes = new Uint8Array(binaryString.length);
+
+  for (let index = 0; index < binaryString.length; index++) {
+    bytes[index] = binaryString.charCodeAt(index);
+  }
+
+  return new Blob([bytes], { type: mimeType });
+};
+
 interface ConsultationRecordingContextType {
   recordingState: ConsultationRecordingState;
   recordingTime: number;
@@ -239,6 +257,7 @@ export function ConsultationRecordingProvider({
     profileId: number | null;
     patientName: string | null;
   } | null>(null);
+  const recordingStateRef = useRef<ConsultationRecordingState>("idle");
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -249,6 +268,13 @@ export function ConsultationRecordingProvider({
     uploadMimeType: "audio/webm",
     extension: "webm",
   });
+  const recordingBackendRef = useRef<RecordingBackend>("web");
+  const nativeSegmentIndexRef = useRef(0);
+  const nativeLevelListenerRef =
+    useRef<NativeAudioRecorderListenerHandle | null>(null);
+  const nativeErrorListenerRef =
+    useRef<NativeAudioRecorderListenerHandle | null>(null);
+  const nativeControlBusyRef = useRef(false);
 
   // Reliability refs for long-recording support
   const segmentsRef = useRef<Blob[]>([]);
@@ -278,11 +304,23 @@ export function ConsultationRecordingProvider({
     setCurrentSession(session);
   }, []);
 
+  useEffect(() => {
+    recordingStateRef.current = recordingState;
+  }, [recordingState]);
+
   const clearTimer = useCallback(() => {
     if (timerRef.current !== null) {
       window.clearInterval(timerRef.current);
       timerRef.current = null;
     }
+  }, []);
+
+  const startRecordingTimer = useCallback(() => {
+    if (timerRef.current !== null) return;
+
+    timerRef.current = window.setInterval(() => {
+      setRecordingTime((previous) => previous + 1);
+    }, 1000);
   }, []);
 
   const clearReliabilityTimers = useCallback(() => {
@@ -333,6 +371,22 @@ export function ConsultationRecordingProvider({
     setAudioLevel(0);
   }, []);
 
+  const stopNativeListeners = useCallback(() => {
+    const listeners = [
+      nativeLevelListenerRef.current,
+      nativeErrorListenerRef.current,
+    ];
+
+    nativeLevelListenerRef.current = null;
+    nativeErrorListenerRef.current = null;
+
+    for (const listener of listeners) {
+      listener?.remove().catch(() => undefined);
+    }
+
+    setAudioLevel(0);
+  }, []);
+
   const startAudioLevelMonitor = useCallback((stream: MediaStream) => {
     try {
       const AudioContextCtor: typeof AudioContext | undefined =
@@ -373,10 +427,46 @@ export function ConsultationRecordingProvider({
     }
   }, []);
 
+  const startNativeListeners = useCallback(async () => {
+    stopNativeListeners();
+
+    nativeLevelListenerRef.current = await NativeAudioRecorder.addListener(
+      "recordingLevel",
+      ({ level }) => {
+        setAudioLevel(Math.max(0, Math.min(1, level ?? 0)));
+      }
+    );
+
+    nativeErrorListenerRef.current = await NativeAudioRecorder.addListener(
+      "recordingError",
+      ({ message }) => {
+        console.error("[Recording] Native recorder error:", message);
+      }
+    );
+  }, [stopNativeListeners]);
+
+  const withNativeControlLock = useCallback(
+    async <T,>(operation: () => Promise<T>): Promise<T> => {
+      if (nativeControlBusyRef.current) {
+        throw new Error("NATIVE_CONTROL_BUSY");
+      }
+
+      nativeControlBusyRef.current = true;
+
+      try {
+        return await operation();
+      } finally {
+        nativeControlBusyRef.current = false;
+      }
+    },
+    []
+  );
+
   const cleanupMedia = useCallback(() => {
     clearTimer();
     clearReliabilityTimers();
     stopAudioLevelMonitor();
+    stopNativeListeners();
     stopStreamTracks();
 
     mediaRecorderRef.current = null;
@@ -388,7 +478,16 @@ export function ConsultationRecordingProvider({
     isAutoRestartingRef.current = false;
     isFinalStopRef.current = false;
     recoveryAttemptsRef.current = 0;
-  }, [clearTimer, clearReliabilityTimers, stopAudioLevelMonitor, stopStreamTracks]);
+    nativeControlBusyRef.current = false;
+    recordingBackendRef.current = "web";
+    nativeSegmentIndexRef.current = 0;
+  }, [
+    clearTimer,
+    clearReliabilityTimers,
+    stopAudioLevelMonitor,
+    stopNativeListeners,
+    stopStreamTracks,
+  ]);
 
   const resetSessionState = useCallback(() => {
     setRecordingState("idle");
@@ -508,29 +607,58 @@ export function ConsultationRecordingProvider({
     // O processAudio() checará segmentTranscriptionsRef e montará o que conseguir.
   }, []);
 
+  const queueSegmentUpload = useCallback(
+    (segment: Blob, index: number) => {
+      if (segment.size > MAX_SEGMENT_SIZE_BYTES) {
+        uploadFailureRef.current = new Error(
+          `Um trecho ficou muito grande (${(segment.size / (1024 * 1024)).toFixed(1)}MB). Whisper aceita até 25MB.`
+        );
+        return false;
+      }
+
+      segmentsRef.current[index] = segment;
+      segmentTranscriptionsRef.current[index] = "";
+
+      const uploadPromise = uploadSegment(segment, index).catch(() => undefined);
+      pendingUploadsRef.current.push(uploadPromise as Promise<void>);
+      return true;
+    },
+    [uploadSegment]
+  );
+
   const saveCurrentSegment = useCallback(() => {
     if (audioChunksRef.current.length === 0) return;
     const segment = new Blob(audioChunksRef.current, {
       type: recordingFormatRef.current.uploadMimeType,
     });
     audioChunksRef.current = [];
+    queueSegmentUpload(segment, segmentsRef.current.length);
+  }, [queueSegmentUpload]);
 
-    // Validação local: bloqueia segmentos > 24MB antes de subir.
-    if (segment.size > MAX_SEGMENT_SIZE_BYTES) {
-      uploadFailureRef.current = new Error(
-        `Um trecho ficou muito grande (${(segment.size / (1024 * 1024)).toFixed(1)}MB). Whisper aceita até 25MB.`
+  const queueNativeSegment = useCallback(
+    (segment?: NativeAudioRecorderSegment | null) => {
+      if (!segment?.base64Data) {
+        return false;
+      }
+
+      const uploadMimeType = normalizeUploadMimeType(
+        segment.mimeType,
+        "audio/mp4"
       );
-      return;
-    }
+      const extension = segment.extension || "m4a";
 
-    const index = segmentsRef.current.length;
-    segmentsRef.current.push(segment);
-    segmentTranscriptionsRef.current[index] = "";
+      recordingFormatRef.current = {
+        extension,
+        uploadMimeType,
+      };
 
-    // Dispara upload em background; .catch evita unhandledrejection.
-    const uploadPromise = uploadSegment(segment, index).catch(() => undefined);
-    pendingUploadsRef.current.push(uploadPromise as Promise<void>);
-  }, [uploadSegment]);
+      const blob = base64ToBlob(segment.base64Data, uploadMimeType);
+      const index = nativeSegmentIndexRef.current;
+      nativeSegmentIndexRef.current += 1;
+      return queueSegmentUpload(blob, index);
+    },
+    [queueSegmentUpload]
+  );
 
   const processAudio = useCallback(async () => {
     try {
@@ -658,6 +786,115 @@ export function ConsultationRecordingProvider({
     }
   }, [saveCurrentSegment, cleanupMedia, resetSessionState]);
 
+  const scheduleNativeSegmentRotation = useCallback(() => {
+    if (autoRestartTimerRef.current !== null) {
+      window.clearTimeout(autoRestartTimerRef.current);
+    }
+
+    autoRestartTimerRef.current = window.setTimeout(() => {
+      if (recordingBackendRef.current !== "native-ios" || isFinalStopRef.current) {
+        return;
+      }
+
+      if (recordingStateRef.current === "paused") {
+        scheduleNativeSegmentRotation();
+        return;
+      }
+
+      if (nativeControlBusyRef.current) {
+        autoRestartTimerRef.current = window.setTimeout(() => {
+          scheduleNativeSegmentRotation();
+        }, 1_000);
+        return;
+      }
+
+      void (async () => {
+        try {
+          const result = await withNativeControlLock(() =>
+            NativeAudioRecorder.rotateSegment()
+          );
+          queueNativeSegment(result.segment ?? null);
+          setErrorMessage(null);
+          console.log("[Recording] Native segment rotation OK", {
+            totalSegments: segmentsRef.current.length,
+          });
+          scheduleNativeSegmentRotation();
+        } catch (error) {
+          console.error("[Recording] Native segment rotation failed:", error);
+          await recoverNativeRecorderState({
+            message:
+              "Houve uma oscilacao ao salvar um trecho, mas a gravacao continua preservada. Continue a consulta e tente finalizar novamente ao terminar.",
+            fallbackState: "recording",
+            allowResumeFromIdle: true,
+          });
+        }
+      })();
+    }, SEGMENT_DURATION_MS);
+  }, [queueNativeSegment, withNativeControlLock]);
+
+  const recoverNativeRecorderState = useCallback(
+    async ({
+      message,
+      fallbackState,
+      allowResumeFromIdle = false,
+    }: {
+      message: string;
+      fallbackState: "recording" | "paused";
+      allowResumeFromIdle?: boolean;
+    }) => {
+      try {
+        const status = await NativeAudioRecorder.getStatus();
+
+        if (status.state === "recording") {
+          setErrorMessage(message);
+          setRecordingState("recording");
+          startRecordingTimer();
+          scheduleNativeSegmentRotation();
+          return "recording";
+        }
+
+        if (status.state === "paused") {
+          clearTimer();
+          setErrorMessage(message);
+          setRecordingState("paused");
+          return "paused";
+        }
+
+        if (allowResumeFromIdle) {
+          const resumedStatus = await withNativeControlLock(() =>
+            NativeAudioRecorder.resumeRecording()
+          );
+          recordingFormatRef.current = {
+            extension: resumedStatus.extension || "m4a",
+            uploadMimeType: normalizeUploadMimeType(
+              resumedStatus.mimeType,
+              "audio/mp4"
+            ),
+          };
+          setErrorMessage(message);
+          setRecordingState("recording");
+          startRecordingTimer();
+          scheduleNativeSegmentRotation();
+          return "recording";
+        }
+      } catch (recoveryError) {
+        console.error("[Recording] Falha ao recuperar estado nativo:", recoveryError);
+      }
+
+      setErrorMessage(message);
+      if (fallbackState === "recording") {
+        setRecordingState("recording");
+        startRecordingTimer();
+        scheduleNativeSegmentRotation();
+      } else {
+        clearTimer();
+        setRecordingState("paused");
+      }
+      return fallbackState;
+    },
+    [clearTimer, scheduleNativeSegmentRotation, startRecordingTimer, withNativeControlLock]
+  );
+
   const startRecording = useCallback(
     async (options?: {
       profileId?: number;
@@ -665,6 +902,14 @@ export function ConsultationRecordingProvider({
       returnPath?: string;
     }) => {
       try {
+        const nextSession = {
+          sessionId: createRecordingSessionId(),
+          profileId: options?.profileId ?? null,
+          patientName: options?.patientName?.trim() || null,
+          returnPath: options?.returnPath || "/atendimento",
+        };
+        const useNativeRecorder = isNativeIOSApp();
+
         setCompletedResult(null);
         setErrorMessage(null);
         setRecordingTime(0);
@@ -674,12 +919,38 @@ export function ConsultationRecordingProvider({
         pendingUploadsRef.current = [];
         uploadFailureRef.current = null;
         recoveryAttemptsRef.current = 0;
-        setSession({
-          sessionId: createRecordingSessionId(),
-          profileId: options?.profileId ?? null,
-          patientName: options?.patientName?.trim() || null,
-          returnPath: options?.returnPath || "/atendimento",
-        });
+        recordingBackendRef.current = useNativeRecorder ? "native-ios" : "web";
+        nativeSegmentIndexRef.current = 0;
+        setSession(nextSession);
+
+        if (useNativeRecorder) {
+          const permission = await withNativeControlLock(() =>
+            NativeAudioRecorder.requestPermission()
+          );
+
+          if (!permission.granted) {
+            throw new Error("PERMISSION_DENIED");
+          }
+
+          await startNativeListeners();
+
+          const nativeStatus = await withNativeControlLock(() =>
+            NativeAudioRecorder.startRecording()
+          );
+          recordingFormatRef.current = {
+            extension: nativeStatus.extension || "m4a",
+            uploadMimeType: normalizeUploadMimeType(
+              nativeStatus.mimeType,
+              "audio/mp4"
+            ),
+          };
+
+          setErrorMessage(null);
+          setRecordingState("recording");
+          startRecordingTimer();
+          scheduleNativeSegmentRotation();
+          return;
+        }
 
         if (
           !navigator.mediaDevices?.getUserMedia &&
@@ -937,9 +1208,7 @@ export function ConsultationRecordingProvider({
         createAndStartRecorder(stream);
         setRecordingState("recording");
 
-        timerRef.current = window.setInterval(() => {
-          setRecordingTime((previous) => previous + 1);
-        }, 1000);
+        startRecordingTimer();
 
         // Periodically merge small chunks into one Blob to reduce memory pressure
         consolidationTimerRef.current = window.setInterval(() => {
@@ -970,7 +1239,9 @@ export function ConsultationRecordingProvider({
             error.name === "NotAllowedError"
           ) {
             message =
-              "Permissao de microfone negada. Clique no icone de cadeado na barra de enderecos e permita o acesso ao microfone.";
+              recordingBackendRef.current === "native-ios"
+                ? "Permissao de microfone negada. Abra Ajustes > VitaView > Microfone e permita o acesso."
+                : "Permissao de microfone negada. Clique no icone de cadeado na barra de enderecos e permita o acesso ao microfone.";
           } else if (error.name === "NotFoundError") {
             message =
               "Nenhum microfone encontrado. Conecte um microfone e tente novamente.";
@@ -991,15 +1262,68 @@ export function ConsultationRecordingProvider({
       cleanupMedia,
       processAudio,
       resetSessionState,
+      scheduleNativeSegmentRotation,
       setSession,
       consolidateChunks,
       saveCurrentSegment,
       clearReliabilityTimers,
+      startRecordingTimer,
       startAudioLevelMonitor,
+      startNativeListeners,
+      withNativeControlLock,
     ]
   );
 
   const togglePause = useCallback(() => {
+    if (recordingBackendRef.current === "native-ios") {
+      if (nativeControlBusyRef.current) {
+        return;
+      }
+
+      void (async () => {
+        try {
+          if (recordingState === "recording") {
+            const result = await withNativeControlLock(() =>
+              NativeAudioRecorder.pauseRecording()
+            );
+            queueNativeSegment(result.segment ?? null);
+            clearTimer();
+            clearReliabilityTimers();
+            setErrorMessage(null);
+            setRecordingState("paused");
+            return;
+          }
+
+          if (recordingState === "paused") {
+            const status = await withNativeControlLock(() =>
+              NativeAudioRecorder.resumeRecording()
+            );
+            recordingFormatRef.current = {
+              extension: status.extension || "m4a",
+              uploadMimeType: normalizeUploadMimeType(
+                status.mimeType,
+                "audio/mp4"
+              ),
+            };
+            setErrorMessage(null);
+            startRecordingTimer();
+            setRecordingState("recording");
+            scheduleNativeSegmentRotation();
+          }
+        } catch (error) {
+          console.error("Erro ao pausar/retomar gravacao nativa:", error);
+          void recoverNativeRecorderState({
+            message:
+              recordingState === "recording"
+                ? "Nao foi possivel pausar agora, mas o audio continua preservado. Tente novamente em instantes."
+                : "Nao foi possivel retomar agora. O trecho anterior continua preservado e voce pode tentar novamente.",
+            fallbackState: recordingState === "recording" ? "recording" : "paused",
+          });
+        }
+      })();
+      return;
+    }
+
     const mediaRecorder = mediaRecorderRef.current;
     if (!mediaRecorder) return;
 
@@ -1012,16 +1336,53 @@ export function ConsultationRecordingProvider({
 
     if (recordingState === "paused" && mediaRecorder.state === "paused") {
       mediaRecorder.resume();
-      timerRef.current = window.setInterval(() => {
-        setRecordingTime((previous) => previous + 1);
-      }, 1000);
+      startRecordingTimer();
       setRecordingState("recording");
     }
-  }, [clearTimer, recordingState]);
+  }, [
+    clearReliabilityTimers,
+    clearTimer,
+    queueNativeSegment,
+    recordingState,
+    recoverNativeRecorderState,
+    scheduleNativeSegmentRotation,
+    startRecordingTimer,
+    withNativeControlLock,
+  ]);
 
   const stopRecording = useCallback(() => {
     isFinalStopRef.current = true;
     isAutoRestartingRef.current = false;
+
+    if (recordingBackendRef.current === "native-ios") {
+      if (nativeControlBusyRef.current) {
+        return;
+      }
+
+      clearTimer();
+      clearReliabilityTimers();
+      setRecordingState("processing");
+
+      void (async () => {
+        try {
+          const result = await withNativeControlLock(() =>
+            NativeAudioRecorder.stopRecording()
+          );
+          queueNativeSegment(result.segment ?? null);
+          setErrorMessage(null);
+          await processAudio();
+        } catch (error) {
+          console.error("Erro ao finalizar gravacao nativa:", error);
+          isFinalStopRef.current = false;
+          await recoverNativeRecorderState({
+            message:
+              "Nao foi possivel finalizar a consulta agora, mas o audio continua preservado no aparelho. Voce pode retomar a gravacao ou tentar finalizar novamente.",
+            fallbackState: "paused",
+          });
+        }
+      })();
+      return;
+    }
 
     const mediaRecorder = mediaRecorderRef.current;
     if (!mediaRecorder || mediaRecorder.state === "inactive") return;
@@ -1046,13 +1407,26 @@ export function ConsultationRecordingProvider({
       setRecordingState("error");
       return;
     }
-  }, [cleanupMedia]);
+  }, [
+    clearReliabilityTimers,
+    clearTimer,
+    processAudio,
+    queueNativeSegment,
+    recoverNativeRecorderState,
+    withNativeControlLock,
+  ]);
 
   const cancelRecording = useCallback(() => {
     isFinalStopRef.current = true;
     isAutoRestartingRef.current = false;
     const mediaRecorder = mediaRecorderRef.current;
     const cancelledSessionId = sessionRef.current?.sessionId;
+
+    if (recordingBackendRef.current === "native-ios") {
+      void NativeAudioRecorder.cancelRecording().catch((error) => {
+        console.error("Erro ao cancelar gravacao nativa:", error);
+      });
+    }
 
     if (mediaRecorder && mediaRecorder.state !== "inactive") {
       mediaRecorder.ondataavailable = null;
@@ -1145,6 +1519,9 @@ export function ConsultationRecordingProvider({
 
   useEffect(() => {
     return () => {
+      if (recordingBackendRef.current === "native-ios") {
+        void NativeAudioRecorder.cancelRecording().catch(() => undefined);
+      }
       cleanupMedia();
     };
   }, [cleanupMedia]);

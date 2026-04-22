@@ -108,13 +108,13 @@ export function ConsultationRecorder({
             </Button>
 
             <AlertDialog open={showConsentDialog} onOpenChange={setShowConsentDialog}>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle className="flex items-center gap-2">
-                    <Info className="h-5 w-5 text-blue-600" />
+              <AlertDialogContent className="w-[calc(100vw-2rem)] max-w-[22rem] rounded-2xl p-4 sm:max-w-md sm:p-6">
+                <AlertDialogHeader className="space-y-3">
+                  <AlertDialogTitle className="flex items-start gap-2 text-left text-base sm:text-lg">
+                    <Info className="mt-0.5 h-4 w-4 shrink-0 text-blue-600 sm:h-5 sm:w-5" />
                     Consentimento do Paciente
                   </AlertDialogTitle>
-                  <AlertDialogDescription className="text-base text-muted-foreground">
+                  <AlertDialogDescription className="text-sm leading-relaxed text-muted-foreground sm:text-base">
                     E extremamente importante solicitar e confirmar o
                     consentimento do paciente antes de iniciar a gravacao.
                     <br />
@@ -127,11 +127,11 @@ export function ConsultationRecorder({
                     </em>
                   </AlertDialogDescription>
                 </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                <AlertDialogFooter className="gap-2 sm:gap-0">
+                  <AlertDialogCancel className="mt-0 w-full sm:w-auto">Cancelar</AlertDialogCancel>
                   <AlertDialogAction
                     onClick={handleConfirmedStart}
-                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    className="w-full bg-destructive text-destructive-foreground hover:bg-destructive/90 sm:w-auto"
                   >
                     Entendi, Iniciar Gravacao
                   </AlertDialogAction>
@@ -244,6 +244,14 @@ export function ConsultationRecorder({
                   {sessionContextText}
                 </p>
               </div>
+
+              {errorMessage ? (
+                <div className="rounded-xl border border-amber-200/80 bg-amber-50/85 px-3 py-2 dark:border-amber-500/30 dark:bg-amber-950/20">
+                  <p className="text-[11px] leading-relaxed text-amber-800 dark:text-amber-100 sm:text-xs">
+                    {errorMessage}
+                  </p>
+                </div>
+              ) : null}
             </div>
           </Card>
         );
