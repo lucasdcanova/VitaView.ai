@@ -7,6 +7,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { Capacitor } from "@capacitor/core";
 import { Sparkles } from "lucide-react";
 import { useLocation } from "wouter";
 import {
@@ -202,6 +203,18 @@ const base64ToBlob = (base64Data: string, mimeType: string) => {
   }
 
   return new Blob([bytes], { type: mimeType });
+};
+
+const isNativeAudioRecorderAvailable = () => {
+  try {
+    return (
+      Capacitor.isNativePlatform() &&
+      Capacitor.getPlatform() === "ios" &&
+      Capacitor.isPluginAvailable("NativeAudioRecorder")
+    );
+  } catch {
+    return false;
+  }
 };
 
 interface ConsultationRecordingContextType {
@@ -908,7 +921,9 @@ export function ConsultationRecordingProvider({
           patientName: options?.patientName?.trim() || null,
           returnPath: options?.returnPath || "/atendimento",
         };
-        const useNativeRecorder = isNativeIOSApp();
+        const isNativeIOSShell = isNativeIOSApp();
+        const useNativeRecorder =
+          isNativeIOSShell && isNativeAudioRecorderAvailable();
 
         setCompletedResult(null);
         setErrorMessage(null);
@@ -950,6 +965,15 @@ export function ConsultationRecordingProvider({
           startRecordingTimer();
           scheduleNativeSegmentRotation();
           return;
+        }
+
+        if (isNativeIOSShell) {
+          console.warn(
+            "[Recording] NativeAudioRecorder indisponivel no shell iOS instalado; usando modo legado de navegador."
+          );
+          setErrorMessage(
+            "Esta instalacao do app iOS ainda nao inclui o gravador nativo mais estavel. A gravacao vai usar o modo legado ate publicarmos e instalarmos a nova build do app."
+          );
         }
 
         if (
@@ -1234,6 +1258,13 @@ export function ConsultationRecordingProvider({
           ) {
             message =
               "Este dispositivo nao expôs a gravacao de audio para o app. No iPhone/iPad, atualize o iOS e permita o microfone nas Configuracoes do app VitaView.";
+          } else if (
+            /plugin.*not implemented|unimplemented|not available/i.test(
+              error.message
+            )
+          ) {
+            message =
+              "A versao instalada do app iOS ainda nao contem o gravador nativo novo. Precisamos publicar e instalar a nova build do VitaView para usar essa gravacao com estabilidade.";
           } else if (
             error.message === "PERMISSION_DENIED" ||
             error.name === "NotAllowedError"
