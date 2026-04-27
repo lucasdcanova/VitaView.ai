@@ -188,14 +188,14 @@ export function serveStatic(app: Express) {
       immutable: true,
       setHeaders: (res, filePath) => {
         if (filePath.endsWith("index.html")) {
-          res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, private");
+          res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, private, no-transform");
           res.setHeader("Pragma", "no-cache");
           res.setHeader("Expires", "0");
           return;
         }
 
         if (/\.(js|mjs|css|png|jpe?g|gif|svg|webp|ico|woff2?|ttf|otf|map)$/i.test(filePath)) {
-          res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+          res.setHeader("Cache-Control", "public, max-age=31536000, immutable, no-transform");
         }
       },
     }),
